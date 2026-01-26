@@ -2,6 +2,7 @@ use percent_encoding;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
 pub enum Page {
+    Landing,
     // Guide ("Guide" mode)
     #[default]
     Introduction,
@@ -78,6 +79,7 @@ pub enum Page {
 impl ToString for Page {
     fn to_string(&self) -> String {
         match self {
+            Page::Landing => "Landing".to_string(),
             Page::Introduction => "Introduction".to_string(),
             Page::Roadmap => "Roadmap".to_string(),
             Page::Community => "Community".to_string(),
@@ -138,6 +140,7 @@ impl ToString for Page {
 impl From<String> for Page {
     fn from(s: String) -> Self {
         match s.as_str() {
+            "Landing" => Page::Landing,
             "Introduction" => Page::Introduction,
             "Roadmap" => Page::Roadmap,
             "Community" => Page::Community,
@@ -200,6 +203,8 @@ impl From<String> for Page {
 impl Page {
     pub fn to_path(&self) -> String {
         match self {
+            // Landing
+            Page::Landing => "/landing".to_string(),
             // Guide
             Page::Introduction => "/".to_string(),
             Page::Roadmap => "/guide/roadmap".to_string(),
@@ -284,6 +289,7 @@ impl Page {
         }
 
         let result = match path_str.as_str() {
+            "/landing" => Page::Landing,
             "/" | "" => Page::Introduction,
 
             "/guide/roadmap" => Page::Roadmap,
@@ -353,7 +359,8 @@ impl Page {
 
     pub fn navigation_mode(&self) -> String {
         match self {
-            Page::Introduction
+            Page::Landing
+            | Page::Introduction
             | Page::Overview
             | Page::Architecture
             | Page::ProjectStructure

@@ -12,6 +12,7 @@ pub mod hooks;
 pub mod hstack;
 pub mod icon;
 pub mod introduction;
+pub mod landing;
 pub mod layout;
 pub mod modal_doc;
 pub mod navigation_split;

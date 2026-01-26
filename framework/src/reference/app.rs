@@ -30,6 +30,7 @@ pub struct App {
     pub layout_lab: LayoutLabState,
     pub sizing_lab: SizingLabState,
     pub render_mode: RenderMode,
+    pub show_landing: bool,
     // Layout States
     pub sidebar_width: f32,
     pub inspector_width: f32,
@@ -149,6 +150,7 @@ pub enum Message {
     OpenContextMenu(iced::Point),
     CloseContextMenu,
     ContextMenuAction(String),
+    EnterApp,
 
     // Button Lab Messages
     UpdateButtonLabel(String),
@@ -190,6 +192,7 @@ pub enum Message {
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub enum Command {
+    EnterApp,
     SetTab(Page),
     ToggleSearch,
     ToggleInspector,
@@ -234,6 +237,7 @@ pub enum Command {
 impl Command {
     pub fn into_message(self) -> Message {
         match self {
+            Command::EnterApp => Message::EnterApp,
             Command::SetTab(page) => Message::SetTab(page),
             Command::ToggleSearch => Message::ToggleSearch,
             Command::ToggleInspector => Message::ToggleInspector,
@@ -303,6 +307,7 @@ impl Default for App {
             layout_lab: LayoutLabState::default(),
             sizing_lab: SizingLabState::default(),
             render_mode: RenderMode::Canvas,
+            show_landing: true,
             sidebar_width: 240.0,
             inspector_width: 300.0,
             is_resizing_sidebar: false,
@@ -313,9 +318,16 @@ impl Default for App {
     }
 }
 
+pub use crate::core::{Context, DeviceType};
+
 impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::EnterApp => {
+                self.show_landing = false;
+                self.show_sidebar = true;
+                Task::none()
+            }
             Message::SetTab(tab) => {
                 log::debug!(
                     "Setting Tab: {:?} (Category: {})",
@@ -344,9 +356,7 @@ impl App {
             }
             Message::ToggleSearch => {
                 self.show_search = !self.show_search;
-                if !self.show_search {
-                    self.search_query.clear();
-                }
+                self.search_query.clear();
                 Task::none()
             }
             Message::ToggleInspector => {
@@ -547,6 +557,19 @@ impl App {
         let tone = self.theme_tone;
         let tokens = ThemeTokens::with_theme(self.theme, tone);
 
+        if self.show_landing {
+            return crate::core::responsive(mode, tokens.clone(), move |context| {
+                iced::widget::container(super::pages::landing::view(&context))
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .style(move |_| iced::widget::container::Style {
+                        background: Some(tokens.colors.background.into()),
+                        ..Default::default()
+                    })
+                    .into()
+            });
+        }
+
         // 1. Prepare Content
         let content = super::views::ContentView::new(self);
         let context_menu_pos = self.context_menu_pos;
@@ -555,11 +578,7 @@ impl App {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let tokens = ThemeTokens::with_theme(self.theme, self.theme_tone);
-            let ctx = crate::core::Context::new(
-                crate::core::ShellMode::Desktop,
-                tokens,
-                iced::Size::new(1200.0, 800.0),
-            );
+            let ctx = Context::new(ShellMode::Desktop, tokens, iced::Size::new(1200.0, 800.0));
             let semantic_tree = content.describe(&ctx);
             let state = serde_json::json!({
                 "active_tab": self.active_tab,

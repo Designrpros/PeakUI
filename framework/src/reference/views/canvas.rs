@@ -114,9 +114,8 @@ impl CanvasView {
             Page::Shortcuts => pages::settings::shortcuts::view(context, is_mobile),
             Page::About | Page::Updates => pages::settings::about::view(context, is_mobile),
 
-            // Strict enforcement: Fallback to introduction if something goes wrong,
-            // but the compiler will now enforce that all variants above are handled.
-            Page::Unknown(_) => pages::introduction::view(context, is_mobile),
+            // Fallback
+            Page::Landing | Page::Unknown(_) => pages::introduction::view(context, is_mobile),
         };
 
         if is_mobile {
