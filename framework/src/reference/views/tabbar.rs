@@ -25,7 +25,14 @@ impl View<Message, IcedBackend> for TabBarView {
                     .active(nav_mode == "Start")
                     .on_press(Message::SetNavigationMode("Start".into())),
             )
-            // 2. Catalog: Visual Gallery & Components
+            // 2. Intelligence: AI Brain & Config
+            .push(
+                ToolbarItem::new()
+                    .icon("cpu")
+                    .active(nav_mode == "Intelligence")
+                    .on_press(Message::SetNavigationMode("Intelligence".into())),
+            )
+            // 3. Catalog: Visual Gallery & Components
             .push(
                 ToolbarItem::new()
                     .icon("grid")
@@ -35,7 +42,7 @@ impl View<Message, IcedBackend> for TabBarView {
             // 4. Data: PeakDB & Cloud
             .push(
                 ToolbarItem::new()
-                    .icon("system")
+                    .icon("database")
                     .active(nav_mode == "Data")
                     .on_press(Message::SetNavigationMode("Data".into())),
             )

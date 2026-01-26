@@ -262,6 +262,12 @@ impl SidebarView {
                 Page::Shortcuts,
                 *active_tab == Page::Shortcuts,
             ))
+            .push(sidebar_item(
+                "AI Assistant",
+                "zap",
+                Page::SettingsAI,
+                *active_tab == Page::SettingsAI,
+            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("SYSTEM"))
             .push(sidebar_item(
@@ -269,6 +275,24 @@ impl SidebarView {
                 "info",
                 Page::About,
                 *active_tab == Page::About,
+            ))
+    }
+
+    fn view_intelligence_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
+        let active_tab = &self.active_tab;
+        self.base_sidebar(context)
+            .push(sidebar_section_header("PEAK INTELLIGENCE"))
+            .push(sidebar_item(
+                "Intelligence",
+                "cpu",
+                Page::Intelligence,
+                *active_tab == Page::Intelligence,
+            ))
+            .push(sidebar_item(
+                "AI Assistant",
+                "zap",
+                Page::SettingsAI,
+                *active_tab == Page::SettingsAI,
             ))
     }
 }
@@ -282,6 +306,7 @@ impl View<Message, IcedBackend> for SidebarView {
             "Catalog" => self.view_components_sidebar(context),
             "Data" | "Ecosystem" => self.view_ecosystem_sidebar(context),
             "Settings" => self.view_settings_sidebar(context),
+            "Intelligence" => self.view_intelligence_sidebar(context),
             _ => self
                 .base_sidebar(context)
                 .push(Text::<IcedBackend>::new("Unknown Mode").secondary()),
@@ -312,6 +337,7 @@ impl View<Message, IcedBackend> for SidebarView {
             "Catalog" => self.view_components_sidebar(context),
             "Data" | "Ecosystem" => self.view_ecosystem_sidebar(context),
             "Settings" => self.view_settings_sidebar(context),
+            "Intelligence" => self.view_intelligence_sidebar(context),
             _ => self.base_sidebar(context),
         };
 

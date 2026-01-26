@@ -11,6 +11,7 @@ pub mod docks;
 pub mod hooks;
 pub mod hstack;
 pub mod icon;
+pub mod intelligence;
 pub mod introduction;
 pub mod landing;
 pub mod layout;

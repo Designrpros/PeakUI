@@ -67,7 +67,9 @@ In **PeakUI**, typography is semantic. Instead of choosing raw font sizes, you c
 }
 
 fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
-    let mut text = Text::<B>::new(lab.text.clone()).size(lab.size);
+    let base_size = lab.size;
+
+    let mut text = Text::<B>::new(lab.text.clone());
 
     if lab.is_bold {
         text = text.bold();
@@ -89,14 +91,14 @@ fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
                         .caption2()
                         .secondary(),
                 )
-                .push(text.clone().title1()),
+                .push(text.clone().title1().size(base_size * 2.25)),
         )
         .push(
             VStack::new_generic()
                 .spacing(12.0)
                 .width(Length::Shrink)
                 .push(Text::<B>::new("Sample Role: Body").caption2().secondary())
-                .push(text.clone().body()),
+                .push(text.clone().body().size(base_size)),
         )
         .push(
             VStack::new_generic()
@@ -107,7 +109,7 @@ fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
                         .caption2()
                         .secondary(),
                 )
-                .push(text.clone().caption1()),
+                .push(text.clone().caption1().size(base_size * 0.75)),
         )
 }
 

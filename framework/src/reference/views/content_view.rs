@@ -22,6 +22,12 @@ pub struct ContentView {
     pub inspector_width: f32,
     pub is_resizing_sidebar: bool,
     pub is_resizing_inspector: bool,
+    pub inspector_tab: super::super::app::InspectorTab,
+
+    // Chat State for Global Inspector
+    pub chat_messages: Vec<crate::views::chat::ChatMessage>,
+    pub chat_input: String,
+    pub api_key: String,
 }
 
 impl ContentView {
@@ -44,6 +50,10 @@ impl ContentView {
             inspector_width: app.inspector_width,
             is_resizing_sidebar: app.is_resizing_sidebar,
             is_resizing_inspector: app.is_resizing_inspector,
+            inspector_tab: app.inspector_tab,
+            chat_messages: app.chat_messages.clone(),
+            chat_input: app.chat_input.clone(),
+            api_key: app.api_key.clone(),
         }
     }
 
@@ -59,6 +69,7 @@ impl ContentView {
             self.layout_lab.clone(),
             self.sizing_lab.clone(),
             self.render_mode,
+            self.api_key.clone(),
         );
 
         let sidebar = SidebarView::new(
@@ -99,14 +110,75 @@ impl ContentView {
             .is_resizing_inspector(self.is_resizing_inspector)
             .on_none(Message::None);
 
-        // Decide which inspector to show: strictly page-specific
-        let has_inspector = page.inspector.is_some();
-        let active_inspector = page.inspector;
-
         if self.show_inspector {
-            if let Some(inspector) = active_inspector {
-                split_view = split_view.inspector(inspector);
-            }
+            // Determine available inspectors
+            let _page_inspector = page.inspector.as_ref();
+            let ai_inspector = crate::views::chat::AIChatView::new(
+                self.chat_messages.clone(),
+                self.chat_input.clone(),
+                Message::Chat,
+            );
+
+            // Logic:
+            // 1. If only page inspector -> show page inspector
+            // 2. If only AI inspector -> show AI inspector (default if no page inspector)
+            // 3. If both -> show Tab Bar + Selected Content
+
+            let inspector_content: Box<dyn View<Message, IcedBackend>> = if let Some(p_inspector) =
+                page.inspector
+            {
+                // Both available - Show Tabs
+                let tab_bar = HStack::new()
+                    .width(Length::Fill)
+                    .padding(16.0)
+                    .spacing(8.0)
+                    .push(
+                        Button::label("Feature")
+                            .variant(
+                                if self.inspector_tab == super::super::app::InspectorTab::Feature {
+                                    Variant::Soft
+                                } else {
+                                    Variant::Ghost
+                                },
+                            )
+                            .width(Length::Fill)
+                            .on_press(Message::SetInspectorTab(
+                                super::super::app::InspectorTab::Feature,
+                            )),
+                    )
+                    .push(
+                        Button::label("Assistant")
+                            .variant(
+                                if self.inspector_tab == super::super::app::InspectorTab::App {
+                                    Variant::Soft
+                                } else {
+                                    Variant::Ghost
+                                },
+                            )
+                            .width(Length::Fill)
+                            .on_press(Message::SetInspectorTab(
+                                super::super::app::InspectorTab::App,
+                            )),
+                    );
+
+                let content: Box<dyn View<Message, IcedBackend>> = match self.inspector_tab {
+                    super::super::app::InspectorTab::Feature => Box::new(p_inspector),
+                    super::super::app::InspectorTab::App => Box::new(ai_inspector),
+                };
+
+                Box::new(
+                    VStack::new()
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .push(tab_bar)
+                        .push(content),
+                )
+            } else {
+                // Only AI
+                Box::new(ai_inspector)
+            };
+
+            split_view = split_view.inspector(inspector_content);
         }
 
         // --- 3. UI Overlays (The Dynamic Notch) ---
@@ -184,15 +256,13 @@ impl ContentView {
                 notch_row = notch_row.push(item);
             }
 
-            // Global Inspector Toggle (only if page has an inspector)
-            if has_inspector {
-                notch_row = notch_row.push(
-                    ToolbarItem::new()
-                        .icon("sidebar")
-                        .active(show_inspector)
-                        .on_press(Message::ToggleInspector),
-                );
-            }
+            // Global Inspector Toggle
+            notch_row = notch_row.push(
+                ToolbarItem::new()
+                    .icon("sidebar")
+                    .active(show_inspector)
+                    .on_press(Message::ToggleInspector),
+            );
 
             notch_content = notch_content.push(notch_row);
         }
@@ -277,6 +347,7 @@ impl ContentView {
             self.layout_lab.clone(),
             self.sizing_lab.clone(),
             self.render_mode,
+            self.api_key.clone(),
         );
 
         let sidebar = SidebarView::new(

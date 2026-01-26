@@ -11,6 +11,7 @@ pub struct CanvasView {
     pub layout_lab: super::super::app::LayoutLabState,
     pub sizing_lab: super::super::app::SizingLabState,
     pub render_mode: super::super::app::RenderMode,
+    pub api_key: String,
 }
 
 use super::super::page::PageResult;
@@ -24,6 +25,7 @@ impl CanvasView {
         layout_lab: super::super::app::LayoutLabState,
         sizing_lab: super::super::app::SizingLabState,
         render_mode: super::super::app::RenderMode,
+        api_key: String,
     ) -> Self {
         Self {
             active_tab,
@@ -33,6 +35,7 @@ impl CanvasView {
             layout_lab,
             sizing_lab,
             render_mode,
+            api_key,
         }
     }
 
@@ -46,6 +49,9 @@ impl CanvasView {
             Page::ProjectStructure => pages::project_structure::view(context, is_mobile),
 
             Page::Roadmap => pages::roadmap::view(context, is_mobile),
+            Page::Intelligence => {
+                pages::intelligence::view(context, is_mobile, self.api_key.clone())
+            }
 
             // Ecosystem
             Page::PeakDB => pages::peak_db::view(context, is_mobile),
@@ -113,6 +119,7 @@ impl CanvasView {
             Page::Scaling => pages::settings::scaling::view(context, is_mobile),
             Page::Shortcuts => pages::settings::shortcuts::view(context, is_mobile),
             Page::About | Page::Updates => pages::settings::about::view(context, is_mobile),
+            Page::SettingsAI => pages::settings::ai::view(context, is_mobile, self.api_key.clone()),
 
             // Fallback
             Page::Landing | Page::Unknown(_) => pages::introduction::view(context, is_mobile),

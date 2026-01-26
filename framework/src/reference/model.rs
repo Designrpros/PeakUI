@@ -8,6 +8,7 @@ pub enum Page {
     Introduction,
     Roadmap,
     Community,
+    Intelligence,
 
     // Documentation ("Documentation" mode)
     Overview,
@@ -71,6 +72,7 @@ pub enum Page {
     Shortcuts,
     About,
     Updates,
+    SettingsAI,
 
     // Fallback
     Unknown(String),
@@ -83,6 +85,7 @@ impl ToString for Page {
             Page::Introduction => "Introduction".to_string(),
             Page::Roadmap => "Roadmap".to_string(),
             Page::Community => "Community".to_string(),
+            Page::Intelligence => "Intelligence".to_string(),
             Page::Overview => "Overview".to_string(),
             Page::Architecture => "Architecture".to_string(),
             Page::ProjectStructure => "Project Structure".to_string(),
@@ -131,6 +134,7 @@ impl ToString for Page {
             Page::Shortcuts => "Shortcuts".to_string(),
             Page::About => "About".to_string(),
             Page::Updates => "Updates".to_string(),
+            Page::SettingsAI => "AI".to_string(),
 
             Page::Unknown(s) => s.clone(),
         }
@@ -144,6 +148,7 @@ impl From<String> for Page {
             "Introduction" => Page::Introduction,
             "Roadmap" => Page::Roadmap,
             "Community" => Page::Community,
+            "Intelligence" => Page::Intelligence,
             "Overview" => Page::Overview,
             "Architecture" => Page::Architecture,
             "Project Structure" => Page::ProjectStructure,
@@ -194,6 +199,7 @@ impl From<String> for Page {
             "Shortcuts" => Page::Shortcuts,
             "About" => Page::About,
             "Updates" => Page::Updates,
+            "AI" => Page::SettingsAI,
 
             _ => Page::Unknown(s),
         }
@@ -209,6 +215,7 @@ impl Page {
             Page::Introduction => "/".to_string(),
             Page::Roadmap => "/guide/roadmap".to_string(),
             Page::Community => "/guide/community".to_string(),
+            Page::Intelligence => "/intelligence".to_string(),
 
             // Docs
             Page::Overview => "/docs/overview".to_string(),
@@ -268,6 +275,7 @@ impl Page {
             Page::Shortcuts => "/settings/shortcuts".to_string(),
             Page::About => "/settings/about".to_string(),
             Page::Updates => "/settings/updates".to_string(),
+            Page::SettingsAI => "/settings/ai".to_string(),
 
             // Fallback
             Page::Unknown(_) => "/".to_string(),
@@ -345,6 +353,7 @@ impl Page {
             "/settings/shortcuts" => Page::Shortcuts,
             "/settings/about" => Page::About,
             "/settings/updates" => Page::Updates,
+            "/settings/ai" => Page::SettingsAI,
 
             _ => Page::Introduction,
         };
@@ -370,6 +379,7 @@ impl Page {
             | Page::Customizations
             | Page::BasicSizing
             | Page::Layout => "Start".to_string(),
+            Page::Intelligence | Page::SettingsAI => "Intelligence".to_string(),
 
             Page::Text
             | Page::Icon

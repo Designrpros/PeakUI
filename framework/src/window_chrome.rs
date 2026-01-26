@@ -6,6 +6,7 @@ pub fn view<'a, Message>(
     content: Element<'a, Message>,
     on_close: Message,
     on_maximize: Option<Message>,
+    on_notch: Option<Message>,
     is_light: bool,
 ) -> Element<'a, Message>
 where
@@ -49,14 +50,43 @@ where
                 ..Padding::ZERO
             }),
             iced::widget::horizontal_space(),
-            text(title.to_uppercase())
-                .size(11)
-                .font(iced::Font::DEFAULT)
-                .color(if is_light {
-                    Color::from_rgb(0.4, 0.4, 0.4)
-                } else {
-                    Color::from_rgb(0.6, 0.6, 0.6)
-                }),
+            // Notch / Title
+            button(
+                container(
+                    text(title.to_uppercase())
+                        .size(11)
+                        .font(iced::Font::DEFAULT)
+                        .color(if is_light {
+                            Color::from_rgb(0.4, 0.4, 0.4)
+                        } else {
+                            Color::from_rgb(0.6, 0.6, 0.6)
+                        })
+                )
+                .padding(Padding {
+                    top: 4.0,
+                    bottom: 4.0,
+                    left: 12.0,
+                    right: 12.0
+                })
+                .style({
+                    let bg = if is_light {
+                        Color::from_rgba(0.0, 0.0, 0.0, 0.05)
+                    } else {
+                        Color::from_rgba(1.0, 1.0, 1.0, 0.1)
+                    };
+                    move |_| container::Style {
+                        background: Some(bg.into()),
+                        border: iced::Border {
+                            radius: 12.0.into(),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    }
+                })
+            )
+            .on_press_maybe(on_notch)
+            .padding(0)
+            .style(|_, _| button::Style::default()),
             iced::widget::horizontal_space(),
         ]
         .width(Length::Fill)

@@ -103,6 +103,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
 
 impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Button<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
+        // ... (existing view implementation)
         let theme = context.theme;
         let variant = self.variant;
         let size = self.size;
@@ -144,6 +145,17 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             context,
         )
     }
+
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            role: "button".to_string(),
+            label: Some(format!("{:?}_{:?}", self.intent, self.variant)),
+            content: None,
+            children: vec![self.content.describe(context)],
+            neural_tag: None,
+            documentation: None,
+        }
+    }
 }
 
 pub struct Toggle<Message, B: crate::core::Backend = crate::core::IcedBackend> {
@@ -179,6 +191,17 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Tog
             },
             context,
         )
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            role: "toggle".to_string(),
+            label: Some(self.label.clone()),
+            content: Some(self.is_active.to_string()),
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+        }
     }
 }
 
@@ -223,6 +246,17 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
             context,
         )
     }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            role: "slider".to_string(),
+            label: None,
+            content: Some(self.value.to_string()),
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+        }
+    }
 }
 
 pub struct Stepper<Message, B: crate::core::Backend = crate::core::IcedBackend> {
@@ -263,8 +297,7 @@ impl<Message, B: crate::core::Backend> Stepper<Message, B> {
 
 impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Stepper<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        // For simplicity in Phase 2, we just render a text label + value for generic Stepper
-        // Full interactive stepper logic would require more generic primitives
+        // ... (existing implementation)
         B::hstack(
             vec![
                 B::text(
@@ -324,6 +357,17 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
             context.theme.scaling,
         )
     }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            role: "stepper".to_string(),
+            label: Some(self.label.clone()),
+            content: Some(self.value.to_string()),
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+        }
+    }
 }
 pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBackend> {
     value: String,
@@ -331,6 +375,9 @@ pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBac
     on_change: Arc<dyn Fn(String) -> Message + Send + Sync>,
     on_submit: Option<Message>,
     font: Option<iced::Font>,
+    width: Length,
+    variant: Variant,
+    is_secure: bool,
     _phantom: std::marker::PhantomData<B>,
 }
 
@@ -346,8 +393,16 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
             on_change: Arc::new(on_change),
             on_submit: None,
             font: None,
+            width: Length::Fill,
+            variant: Variant::Solid,
+            is_secure: false,
             _phantom: std::marker::PhantomData,
         }
+    }
+
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
     }
 
     pub fn on_submit(mut self, msg: Message) -> Self {
@@ -355,8 +410,18 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
         self
     }
 
+    pub fn password(mut self) -> Self {
+        self.is_secure = true;
+        self
+    }
+
     pub fn font(mut self, font: iced::Font) -> Self {
         self.font = Some(font);
+        self
+    }
+
+    pub fn variant(mut self, variant: Variant) -> Self {
+        self.variant = variant;
         self
     }
 }
@@ -364,13 +429,31 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
 impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let on_change = self.on_change.clone();
-        B::text_input(
+        let input = B::text_input(
             self.value.clone(),
             self.placeholder.clone(),
             move |s| (on_change)(s),
             self.on_submit.clone(),
-            self.font,
+            self.font.clone(),
+            self.is_secure,
+            self.variant,
             context,
-        )
+        );
+        B::container(input, Padding::ZERO, self.width, Length::Shrink, context)
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            role: "text_input".to_string(),
+            label: Some(self.placeholder.clone()),
+            content: Some(if self.is_secure {
+                "********".to_string()
+            } else {
+                self.value.clone()
+            }),
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+        }
     }
 }

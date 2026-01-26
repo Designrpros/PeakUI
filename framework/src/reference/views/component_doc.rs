@@ -135,7 +135,8 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                                     Variant::Ghost
                                 },
                             )
-                            .on_press((on_change)(crate::reference::app::RenderMode::Canvas)),
+                            .on_press((on_change)(crate::reference::app::RenderMode::Canvas))
+                            .neural("lab_tab_canvas"),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Terminal")
@@ -146,7 +147,8 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                                     Variant::Ghost
                                 },
                             )
-                            .on_press((on_change)(crate::reference::app::RenderMode::Terminal)),
+                            .on_press((on_change)(crate::reference::app::RenderMode::Terminal))
+                            .neural("lab_tab_terminal"),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Neural")
@@ -157,7 +159,8 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                                     Variant::Ghost
                                 },
                             )
-                            .on_press((on_change)(crate::reference::app::RenderMode::Neural)),
+                            .on_press((on_change)(crate::reference::app::RenderMode::Neural))
+                            .neural("lab_tab_neural"),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Spatial")
@@ -168,7 +171,8 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                                     Variant::Ghost
                                 },
                             )
-                            .on_press((on_change)(crate::reference::app::RenderMode::Spatial)),
+                            .on_press((on_change)(crate::reference::app::RenderMode::Spatial))
+                            .neural("lab_tab_spatial"),
                     );
             }
 

@@ -42,8 +42,18 @@ The app will be available at [http://localhost:8080](http://localhost:8080) by d
 
 ---
 
-## Workspace Tips
+## Environment Variables
 
-- **Relative Paths:** Note that since `PeakUI` is a standalone workspace, all commands should be run from the root of the `PeakUI` directory or specific app directories.
-- **Dependencies:** If you are modifying the framework, `cargo run` will automatically recompile dependencies.
-- **WASM Features:** When running for the web, Trunk uses the configurations defined in `Trunk.toml` and `index.html`.
+Peak Intelligence requires an **OpenRouter API Key** for the AI Chat features to function in a hosted environment.
+
+### 🔑 Configuration
+The framework checks for the `OPENROUTER_API_KEY` in the following order:
+1.  **Local File:** `.peak/settings.json` (Native only)
+2.  **Build Environment:** Captured at compile-time via `option_env!("OPENROUTER_API_KEY")`.
+
+### 🚀 Vercel Deployment
+For Vercel or other CI/CD pipelines, add your secret to the environment variables:
+- **Key:** `OPENROUTER_API_KEY`
+- **Value:** `your-sk-or-key-here`
+
+During the build process (`trunk build`), Trunk will bake this key into the WASM binary.

@@ -384,10 +384,12 @@ impl Backend for SpatialBackend {
         _on_change: impl Fn(String) -> Message + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
+        is_secure: bool,
+        _variant: Variant,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("input:{}:{}", value, placeholder),
+            role: format!("input:{}:{}:{}", value, placeholder, is_secure),
             width: 200.0,
             height: 40.0,
             depth: 2.0,
@@ -625,6 +627,8 @@ pub trait Backend: Sized + Clone + 'static {
         on_change: impl Fn(String) -> Message + 'static,
         on_submit: Option<Message>,
         font: Option<iced::Font>,
+        is_secure: bool,
+        variant: Variant,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -1205,9 +1209,13 @@ impl Backend for IcedBackend {
         on_change: impl Fn(String) -> Message + 'static,
         on_submit: Option<Message>,
         font: Option<iced::Font>,
-        _context: &Context,
+        is_secure: bool,
+        variant: Variant,
+        context: &Context,
     ) -> Self::AnyView<Message> {
-        let mut input = iced::widget::text_input(&placeholder, &value).on_input(on_change);
+        let mut input = iced::widget::text_input(&placeholder, &value)
+            .on_input(on_change)
+            .secure(is_secure);
 
         if let Some(msg) = on_submit {
             input = input.on_submit(msg);
@@ -1216,6 +1224,24 @@ impl Backend for IcedBackend {
         if let Some(font) = font {
             input = input.font(font);
         }
+
+        // Apply variant style
+        input = match variant {
+            Variant::Ghost => {
+                input.style(move |theme: &iced::Theme, _status| {
+                    let palette = theme.extended_palette();
+                    iced::widget::text_input::Style {
+                        background: iced::Background::Color(iced::Color::TRANSPARENT),
+                        border: iced::Border::default(), // No individual border for ghost
+                        icon: palette.background.strong.text,
+                        placeholder: palette.background.strong.text.scale_alpha(0.5),
+                        value: palette.background.strong.text,
+                        selection: palette.primary.strong.color,
+                    }
+                })
+            }
+            _ => input,
+        };
 
         input.padding(10).into()
     }
@@ -1511,13 +1537,20 @@ impl Backend for TermBackend {
 
     fn text_input<Message: Clone + 'static>(
         value: String,
-        _placeholder: String,
+        placeholder: String,
         _on_change: impl Fn(String) -> Message + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
+        is_secure: bool,
+        _variant: Variant,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        format!("[Input: {}]", value)
+        format!(
+            "[Input:{}:{}:{}]",
+            value,
+            placeholder,
+            if is_secure { "***" } else { "" }
+        )
     }
 
     fn slider<Message: Clone + 'static>(
@@ -1880,11 +1913,13 @@ impl Backend for AIBackend {
         _on_change: impl Fn(String) -> Message + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
+        _is_secure: bool,
+        _variant: Variant,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             role: "text_input".to_string(),
-            label: None,
+            label: Some(value.clone()),
             content: Some(value),
             children: Vec::new(),
             neural_tag: None,

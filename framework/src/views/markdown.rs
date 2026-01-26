@@ -4,13 +4,32 @@ use iced::{font, Element, Length, Theme};
 
 pub struct MarkdownView {
     content: String,
+    size: f32,
+    padding: iced::Padding,
 }
 
 impl MarkdownView {
     pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
+            size: 16.0,
+            padding: iced::Padding {
+                top: 0.0,
+                right: 0.0,
+                bottom: 48.0,
+                left: 0.0,
+            },
         }
+    }
+
+    pub fn size(mut self, size: f32) -> Self {
+        self.size = size;
+        self
+    }
+
+    pub fn padding(mut self, padding: impl Into<iced::Padding>) -> Self {
+        self.padding = padding.into();
+        self
     }
 }
 
@@ -37,11 +56,11 @@ where
             } else if !table_buffer.is_empty() {
                 // Table ended, flush it
                 if table_buffer.len() >= 2 && is_separator_line(&table_buffer[1]) {
-                    children.push(render_table(table_buffer.clone(), context));
+                    children.push(render_table(table_buffer.clone(), self.size, context));
                 } else {
                     for l in &table_buffer {
                         children.push(
-                            container(render_rich_text(l.trim(), context))
+                            container(render_rich_text(l.trim(), self.size, context))
                                 .width(Length::Fill)
                                 .into(),
                         );
@@ -85,7 +104,7 @@ where
             if trimmed.starts_with("# ") {
                 children.push(
                     text(trimmed.trim_start_matches("# ").trim().to_string())
-                        .size(32.0)
+                        .size(self.size * 2.0)
                         .font(font::Font {
                             weight: font::Weight::Bold,
                             ..Default::default()
@@ -97,7 +116,7 @@ where
             } else if trimmed.starts_with("## ") {
                 children.push(
                     text(trimmed.trim_start_matches("## ").trim().to_string())
-                        .size(24.0)
+                        .size(self.size * 1.5)
                         .font(font::Font {
                             weight: font::Weight::Bold,
                             ..Default::default()
@@ -109,7 +128,7 @@ where
             } else if trimmed.starts_with("### ") {
                 children.push(
                     text(trimmed.trim_start_matches("### ").trim().to_string())
-                        .size(20.0)
+                        .size(self.size * 1.25)
                         .font(font::Font {
                             weight: font::Weight::Bold,
                             ..Default::default()
@@ -142,7 +161,7 @@ where
                         .width(Length::Fill)
                         .align_y(iced::Alignment::Start)
                         .push(icon_text)
-                        .push(render_rich_text(&content, context))
+                        .push(render_rich_text(&content, self.size, context))
                         .into(),
                 );
             }
@@ -156,10 +175,10 @@ where
                         .align_y(iced::Alignment::Start)
                         .push(
                             text("•")
-                                .size(14)
+                                .size(self.size * 0.875)
                                 .color(context.theme.colors.text_secondary),
                         )
-                        .push(render_rich_text(&content, context))
+                        .push(render_rich_text(&content, self.size, context))
                         .into(),
                 );
             }
@@ -173,18 +192,18 @@ where
                         .align_y(iced::Alignment::Start)
                         .push(
                             text("1.")
-                                .size(14)
+                                .size(self.size * 0.875)
                                 .color(context.theme.colors.text_secondary)
                                 .font(font::Font::MONOSPACE),
                         )
-                        .push(render_rich_text(&content, context))
+                        .push(render_rich_text(&content, self.size, context))
                         .into(),
                 );
             }
             // Paragraph
             else {
                 children.push(
-                    container(render_rich_text(trimmed, context))
+                    container(render_rich_text(trimmed, self.size, context))
                         .width(Length::Fill)
                         .into(),
                 );
@@ -194,11 +213,11 @@ where
         // Final flushes
         if !table_buffer.is_empty() {
             if table_buffer.len() >= 2 && is_separator_line(&table_buffer[1]) {
-                children.push(render_table(table_buffer, context));
+                children.push(render_table(table_buffer, self.size, context));
             } else {
                 for l in table_buffer {
                     children.push(
-                        container(render_rich_text(l.trim(), context))
+                        container(render_rich_text(l.trim(), self.size, context))
                             .width(Length::Fill)
                             .into(),
                     );
@@ -219,12 +238,7 @@ where
         Column::with_children(children)
             .spacing(16)
             .width(Length::Fill)
-            .padding(iced::Padding {
-                top: 0.0,
-                right: 0.0,
-                bottom: 48.0,
-                left: 0.0,
-            }) // Bottom padding only
+            .padding(self.padding)
             .into()
     }
 
@@ -254,6 +268,7 @@ fn parse_numbered_list(line: &str) -> Option<&str> {
 
 fn render_rich_text<'a, Message>(
     content: &str,
+    size: f32,
     context: &Context,
 ) -> Element<'a, Message, Theme, iced::Renderer>
 where
@@ -319,7 +334,7 @@ where
     }
 
     iced::widget::rich_text(spans)
-        .size(16.0) // Fixed size 16.0
+        .size(size)
         .width(Length::Fill)
         .into()
 }
@@ -416,6 +431,7 @@ fn is_separator_line(line: &str) -> bool {
 
 fn render_table<'a, Message>(
     lines: Vec<String>,
+    size: f32,
     context: &Context,
 ) -> Element<'a, Message, Theme, iced::Renderer>
 where
@@ -503,7 +519,7 @@ where
         for (i, cell) in row_data.iter().enumerate() {
             let align = alignments.get(i).cloned().unwrap_or(iced::Alignment::Start);
             row = row.push(
-                container(render_rich_text(cell, context))
+                container(render_rich_text(cell, size, context))
                     .width(Length::FillPortion(1))
                     .align_x(align),
             );

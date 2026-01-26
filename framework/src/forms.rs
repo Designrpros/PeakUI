@@ -45,6 +45,7 @@ impl<Message: 'static, B: Backend> Form<Message, B> {
 
 impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend> {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
+        // ... (existing implementation)
         let mut column = iced::widget::Column::new()
             .spacing(24.0)
             .width(Length::Fill);
@@ -112,6 +113,18 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
         }
 
         column.into()
+    }
+
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let children = self.sections.iter().map(|s| s.describe(context)).collect();
+        crate::core::SemanticNode {
+            role: "form".to_string(),
+            label: Some(format!("{:?}", self.style)),
+            content: None,
+            children,
+            neural_tag: None,
+            documentation: None,
+        }
     }
 }
 

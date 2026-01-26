@@ -6,6 +6,13 @@ target/
 .DS_Store
 Thumbs.db
 
+# IDEs
+.vscode/
+
+# Environment
+.env*
+.peak/
+
 # Environment variables
 .env
 .env.local
