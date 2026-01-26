@@ -1,0 +1,53 @@
+    Blocking waiting for file lock on build directory
+    Checking peak-ui v0.1.0 (/Users/vegarberentsen/Documents/PeakOS/crates/peak-ui)
+error[E0428]: the name `layout` is defined multiple times
+  --> crates/peak-ui/src/lib.rs:17:1
+   |
+16 | pub mod layout;
+   | --------------- previous definition of the module `layout` here
+17 | pub mod layout;
+   | ^^^^^^^^^^^^^^^ `layout` redefined here
+   |
+   = note: `layout` must be defined only once in the type namespace of this module
+
+error[E0252]: the name `GestureDetector` is defined multiple times
+  --> crates/peak-ui/src/lib.rs:36:40
+   |
+35 |     pub use crate::gestures::{Gesture, GestureDetector};
+   |                                        --------------- previous import of the type `GestureDetector` here
+36 |     pub use crate::gestures::{Gesture, GestureDetector};
+   |                                        ^^^^^^^^^^^^^^^ `GestureDetector` reimported here
+   |
+   = note: `GestureDetector` must be defined only once in the type namespace of this module
+
+error[E0252]: the name `Gesture` is defined multiple times
+  --> crates/peak-ui/src/lib.rs:36:31
+   |
+35 |     pub use crate::gestures::{Gesture, GestureDetector};
+   |                               ------- previous import of the type `Gesture` here
+36 |     pub use crate::gestures::{Gesture, GestureDetector};
+   |                               ^^^^^^^--
+   |                               |
+   |                               `Gesture` reimported here
+   |                               help: remove unnecessary import
+   |
+   = note: `Gesture` must be defined only once in the type namespace of this module
+
+warning: unused import: `std::sync::Arc`
+ --> crates/peak-ui/src/atoms.rs:5:5
+  |
+5 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `GestureDetector` and `Gesture`
+  --> crates/peak-ui/src/lib.rs:36:31
+   |
+36 |     pub use crate::gestures::{Gesture, GestureDetector};
+   |                               ^^^^^^^  ^^^^^^^^^^^^^^^
+
+Some errors have detailed explanations: E0252, E0428.
+For more information about an error, try `rustc --explain E0252`.
+warning: `peak-ui` (lib) generated 2 warnings
+error: could not compile `peak-ui` (lib) due to 3 previous errors; 2 warnings emitted

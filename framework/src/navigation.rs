@@ -1,0 +1,375 @@
+use crate::atoms::{Icon, Text};
+use crate::core::{Backend, Context, IcedBackend, SemanticNode, View};
+use crate::layout::{HStack, VStack};
+use crate::modifiers::{Intent, Variant};
+use iced::{Alignment, Length, Padding};
+use std::marker::PhantomData;
+use std::sync::Arc;
+
+/// Represents a page or destination in the navigation system.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+pub enum Page {
+    #[default]
+    Home,
+    Components,
+    Settings,
+    Custom(String),
+}
+
+/// Configuration for search functionality in navigation views.
+#[derive(Clone, Default)]
+pub struct SearchConfig {
+    pub query: String,
+    pub placeholder: String,
+}
+
+/// The result of a page view, including its view and metadata.
+pub struct PageResult<Message: 'static, B: Backend = IcedBackend> {
+    pub view: Box<dyn View<Message, B>>,
+    pub title: String,
+    pub inspector: Option<Box<dyn View<Message, B>>>,
+    pub search_config: Option<SearchConfig>,
+    pub toolbar_items: Vec<Box<dyn View<Message, B>>>,
+    pub sidebar_toggle: Option<Message>,
+}
+
+impl<Message: 'static, B: Backend> PageResult<Message, B> {
+    pub fn new(view: impl View<Message, B> + 'static) -> Self {
+        Self {
+            view: Box::new(view),
+            title: String::new(),
+            inspector: None,
+            search_config: None,
+            toolbar_items: Vec::new(),
+            sidebar_toggle: None,
+        }
+    }
+
+    pub fn searchable(
+        mut self,
+        _title: &str,
+        placeholder: &str,
+        _on_change: impl Fn(String) -> Message + 'static,
+    ) -> Self {
+        self.search_config = Some(SearchConfig {
+            query: String::new(),
+            placeholder: placeholder.to_string(),
+        });
+        self
+    }
+
+    pub fn sidebar_toggle(mut self, message: Message) -> Self {
+        self.sidebar_toggle = Some(message);
+        self
+    }
+
+    pub fn inspector(mut self, view: impl View<Message, B> + 'static) -> Self {
+        self.inspector = Some(Box::new(view));
+        self
+    }
+}
+
+impl<Message: 'static, B: Backend> From<VStack<Message, B>> for PageResult<Message, B> {
+    fn from(stack: VStack<Message, B>) -> Self {
+        Self::new(stack)
+    }
+}
+
+/// Extension trait for adding navigation-specific behavior to views.
+pub trait ViewExt<Message: 'static, B: Backend>: View<Message, B> + Sized {
+    fn searchable(
+        self,
+        title: &str,
+        placeholder: &str,
+        on_change: impl Fn(String) -> Message + 'static,
+    ) -> PageResult<Message, B>
+    where
+        Self: 'static,
+    {
+        PageResult::new(self).searchable(title, placeholder, on_change)
+    }
+
+    fn sidebar_toggle(self, message: Message) -> PageResult<Message, B>
+    where
+        Self: 'static,
+    {
+        PageResult::new(self).sidebar_toggle(message)
+    }
+
+    fn inspector(self, view: impl View<Message, B> + 'static) -> PageResult<Message, B>
+    where
+        Self: 'static,
+    {
+        PageResult::new(self).inspector(view)
+    }
+
+    fn nav_list(self) -> NavigationListView<Message, B>
+    where
+        Self: View<Message, B> + 'static,
+    {
+        NavigationListView::new().push(self)
+    }
+}
+
+impl<V: View<Message, B> + 'static, Message: 'static, B: Backend> ViewExt<Message, B> for V {}
+
+// Explicitly implement for VStack to resolve ambiguity
+impl<Message: 'static, B: Backend> VStack<Message, B> {
+    pub fn searchable(
+        self,
+        title: &str,
+        placeholder: &str,
+        on_change: impl Fn(String) -> Message + 'static,
+    ) -> PageResult<Message, B> {
+        PageResult::new(self).searchable(title, placeholder, on_change)
+    }
+
+    pub fn sidebar_toggle(self, message: Message) -> PageResult<Message, B> {
+        PageResult::new(self).sidebar_toggle(message)
+    }
+}
+
+/// A component that represents a navigation destination in a sidebar or list.
+pub struct NavigationLink<Message: Clone + 'static, B: Backend = IcedBackend> {
+    label: String,
+    icon: String,
+    destination: Message,
+    is_active: bool,
+    _phantom: PhantomData<B>,
+}
+
+impl<Message: Clone + 'static, B: Backend> NavigationLink<Message, B> {
+    pub fn new(label: impl Into<String>, icon: impl Into<String>, destination: Message) -> Self {
+        Self {
+            label: label.into(),
+            icon: icon.into(),
+            destination,
+            is_active: false,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn active(mut self, active: bool) -> Self {
+        self.is_active = active;
+        self
+    }
+}
+
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let active = self.is_active;
+
+        let inner = HStack::<Message, B>::new_generic()
+            .width(Length::Fill)
+            .spacing(12.0)
+            .padding(Padding::from([12, 16]))
+            .align_y(Alignment::Center)
+            .push(Icon::<B>::new(self.icon.clone()).size(16.0).secondary())
+            .push(if active {
+                Text::<B>::new(self.label.clone())
+                    .caption1()
+                    .bold()
+                    .width(Length::Fill)
+            } else {
+                Text::<B>::new(self.label.clone())
+                    .caption1()
+                    .width(Length::Fill)
+            })
+            .view(context);
+
+        B::button(
+            inner,
+            Some(self.destination.clone()),
+            Variant::Ghost,
+            Intent::Neutral,
+            context,
+        )
+    }
+
+    fn describe(&self, _context: &Context) -> SemanticNode {
+        SemanticNode {
+            role: "navigation_link".to_string(),
+            label: Some(self.label.clone()),
+            content: None,
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+        }
+    }
+}
+
+/// A container for detail content in a master-detail split view.
+pub struct DetailView<
+    V: View<Message, B> + 'static,
+    Message: Clone + 'static,
+    B: Backend = IcedBackend,
+> {
+    content: V,
+    _phantom: PhantomData<(Message, B)>,
+}
+
+impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend>
+    DetailView<V, Message, B>
+{
+    pub fn new(content: V) -> Self {
+        Self {
+            content,
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<Message, B>
+    for DetailView<V, Message, B>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let inner = self.content.view(context);
+        B::container(
+            inner,
+            Padding::from([48, 64]),
+            Length::Fill,
+            Length::Fill,
+            context,
+        )
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        SemanticNode {
+            role: "detail_view".to_string(),
+            label: None,
+            content: None,
+            children: vec![self.content.describe(context)],
+            neural_tag: None,
+            documentation: None,
+        }
+    }
+}
+
+/// A structural sidebar component for primary navigation.
+pub struct Sidebar<Message: Clone + 'static, B: Backend = IcedBackend> {
+    title: String,
+    items: Vec<Box<dyn View<Message, B>>>,
+    search: Option<(String, Arc<dyn Fn(String) -> Message + Send + Sync>)>,
+}
+
+impl<Message: Clone + 'static, B: Backend> Sidebar<Message, B> {
+    pub fn new(title: impl Into<String>) -> Self {
+        Self {
+            title: title.into(),
+            items: Vec::new(),
+            search: None,
+        }
+    }
+
+    pub fn with_search(
+        mut self,
+        query: impl Into<String>,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+    ) -> Self {
+        self.search = Some((query.into(), Arc::new(on_change)));
+        self
+    }
+
+    pub fn item(
+        mut self,
+        label: impl Into<String>,
+        icon: impl Into<String>,
+        destination: Message,
+        is_active: bool,
+    ) -> Self {
+        let link = NavigationLink::new(label, icon, destination).active(is_active);
+        self.items.push(Box::new(link));
+        self
+    }
+
+    pub fn push(mut self, item: impl View<Message, B> + 'static) -> Self {
+        self.items.push(Box::new(item));
+        self
+    }
+}
+
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let mut views = Vec::new();
+
+        views.push(
+            Text::<B>::new(self.title.clone())
+                .headline()
+                .bold()
+                .secondary()
+                .view(context),
+        );
+
+        if let Some((query, on_change)) = &self.search {
+            use crate::prelude::TextInput;
+            // Add search bar if configured
+            views.push(
+                TextInput::<Message, B>::new(query.clone(), "Search...", {
+                    let cb = on_change.clone();
+                    move |s| (cb)(s)
+                })
+                .view(context),
+            );
+        }
+
+        for item in &self.items {
+            views.push(item.view(context));
+        }
+
+        let inner = B::vstack(
+            views,
+            12.0,
+            Padding::from([32, 20]),
+            Length::Fill,
+            Length::Shrink,
+            Alignment::Start,
+            context.theme.scaling,
+        );
+
+        B::scroll_view(inner)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        SemanticNode {
+            role: "sidebar".to_string(),
+            label: Some(self.title.clone()),
+            content: None,
+            children: self.items.iter().map(|i| i.describe(context)).collect(),
+            neural_tag: None,
+            documentation: None,
+        }
+    }
+}
+
+pub struct NavigationListView<Message: 'static, B: Backend = IcedBackend> {
+    stack: VStack<Message, B>,
+}
+
+impl<Message: 'static, B: Backend> Default for NavigationListView<Message, B> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<Message: 'static, B: Backend> NavigationListView<Message, B> {
+    pub fn new() -> Self {
+        Self {
+            stack: VStack::new_generic().spacing(4.0).width(Length::Fill),
+        }
+    }
+
+    pub fn push(mut self, link: impl View<Message, B> + 'static) -> Self {
+        self.stack = self.stack.push(link);
+        self
+    }
+}
+
+impl<Message: 'static, B: Backend> View<Message, B> for NavigationListView<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        self.stack.view(context)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        self.stack.describe(context)
+    }
+}

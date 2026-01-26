@@ -1,0 +1,155 @@
+    Checking peak-ui v0.1.0 (/Users/vegarberentsen/Documents/PeakOS/crates/peak-ui)
+error[E0432]: unresolved import `crate::atoms::TextField`
+   --> crates/peak-ui/src/navigation.rs:293:17
+    |
+293 |             use crate::atoms::TextField;
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^ no `TextField` in `atoms`
+    |
+help: consider importing this struct through its public re-export instead
+    |
+293 -             use crate::atoms::TextField;
+293 +             use crate::prelude::TextField;
+    |
+
+warning: unused import: `std::sync::Arc`
+ --> crates/peak-ui/src/atoms.rs:5:5
+  |
+5 | use std::sync::Arc;
+  |     ^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused imports: `button`, `container`, `slider`, `text`, and `toggler`
+ --> crates/peak-ui/src/controls.rs:3:20
+  |
+3 | use iced::widget::{button, container, row, slider, svg, text, toggler};
+  |                    ^^^^^^  ^^^^^^^^^       ^^^^^^       ^^^^  ^^^^^^^
+
+warning: unused imports: `Color`, `Element`, `Renderer`, and `Theme`
+ --> crates/peak-ui/src/controls.rs:4:23
+  |
+4 | use iced::{Alignment, Color, Element, Length, Padding, Renderer, Theme};
+  |                       ^^^^^  ^^^^^^^                   ^^^^^^^^  ^^^^^
+
+error[E0599]: no associated item named `SetRenderMode` found for type parameter `Message` in the current scope
+   --> crates/peak-ui/src/reference/views/component_doc.rs:108:40
+    |
+ 71 | impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Message, IcedBackend> {
+    |      ------- associated item `SetRenderMode` not found for this type parameter
+...
+108 |                     .on_press(Message::SetRenderMode(
+    |                                        ^^^^^^^^^^^^^ associated item not found in `Message`
+
+error[E0599]: no associated item named `SetRenderMode` found for type parameter `Message` in the current scope
+   --> crates/peak-ui/src/reference/views/component_doc.rs:121:40
+    |
+ 71 | impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Message, IcedBackend> {
+    |      ------- associated item `SetRenderMode` not found for this type parameter
+...
+121 |                     .on_press(Message::SetRenderMode(
+    |                                        ^^^^^^^^^^^^^ associated item not found in `Message`
+
+error[E0599]: no associated item named `SetRenderMode` found for type parameter `Message` in the current scope
+   --> crates/peak-ui/src/reference/views/component_doc.rs:134:40
+    |
+ 71 | impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Message, IcedBackend> {
+    |      ------- associated item `SetRenderMode` not found for this type parameter
+...
+134 |                     .on_press(Message::SetRenderMode(
+    |                                        ^^^^^^^^^^^^^ associated item not found in `Message`
+
+error[E0277]: the trait bound `Element<'_, Message, Theme, Renderer>: View<Message>` is not satisfied
+   --> crates/peak-ui/src/reference/views/component_doc.rs:178:23
+    |
+178 |                 .push(preview_content),
+    |                  ---- ^^^^^^^^^^^^^^^ the trait `core::View<Message>` is not implemented for `Element<'_, Message, Theme, Renderer>`
+    |                  |
+    |                  required by a bound introduced by this call
+    |
+    = help: the following other types implement trait `core::View<Message, B>`:
+              `Box<(dyn core::View<Message, B> + 'static)>` implements `core::View<Message, B>`
+              `CanvasView` implements `core::View<Message>`
+              `Card<Message, core::TermBackend>` implements `core::View<Message, core::TermBackend>`
+              `Card<Message>` implements `core::View<Message>`
+              `ComponentDoc<Message>` implements `core::View<Message>`
+              `DetailView<V, Message, B>` implements `core::View<Message, B>`
+              `Form<Message, core::TermBackend>` implements `core::View<Message, core::TermBackend>`
+              `Form<Message>` implements `core::View<Message>`
+            and 43 others
+note: required by a bound in `layout::VStack::<Message, B>::push`
+   --> crates/peak-ui/src/layout.rs:62:38
+    |
+ 62 |     pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    |                                      ^^^^^^^^^^^^^^^^ required by this bound in `VStack::<Message, B>::push`
+    = note: the full name for the type has been written to '/Users/vegarberentsen/Documents/PeakOS/target/debug/deps/peak_ui-88b4caa0b61ed6fb.long-type-14773694396195680521.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0277]: the trait bound `Element<'_, _, _, _>: From<<B as Backend>::AnyView<Message>>` is not satisfied
+   --> crates/peak-ui/src/controls.rs:160:32
+    |
+160 |         content = content.push(self.content.view(context));
+    |                           ---- ^^^^^^^^^^^^^^^^^^^^^^^^^^ unsatisfied trait bound
+    |                           |
+    |                           required by a bound introduced by this call
+    |
+    = help: the trait `From<<B as core::Backend>::AnyView<Message>>` is not implemented for `iced::advanced::iced_graphics::iced_core::Element<'_, _, _, _>`
+    = help: the following other types implement trait `From<T>`:
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Link, Theme, Renderer>` implements `From<Rich<'_, Link, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<&str>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<Canvas<P, Message, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<Checkbox<'_, Message, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<ComboBox<'_, T, Message, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<Container<'_, Message, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<MouseArea<'_, Message, Theme, Renderer>>`
+              `iced::advanced::iced_graphics::iced_core::Element<'_, Message, Theme, Renderer>` implements `From<PaneGrid<'_, Message, Theme, Renderer>>`
+            and 27 others
+    = note: required for `<B as core::Backend>::AnyView<Message>` to implement `Into<iced::advanced::iced_graphics::iced_core::Element<'_, _, _, _>>`
+note: required by a bound in `Row::<'a, Message, Theme, Renderer>::push`
+   --> /Users/vegarberentsen/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/iced_widget-0.13.4/src/row.rs:135:21
+    |
+133 |     pub fn push(
+    |            ---- required by a bound in this associated function
+134 |         mut self,
+135 |         child: impl Into<Element<'a, Message, Theme, Renderer>>,
+    |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `Row::<'a, Message, Theme, Renderer>::push`
+    = note: the full name for the type has been written to '/Users/vegarberentsen/Documents/PeakOS/target/debug/deps/peak_ui-88b4caa0b61ed6fb.long-type-15354877763730297955.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+error[E0599]: no method named `view` found for struct `Row` in the current scope
+    --> crates/peak-ui/src/controls.rs:162:27
+     |
+ 162 |         B::button(content.view(context), self.on_press.clone(), context)
+     |                           ^^^^ method not found in `Row<'_, _, _, _>`
+     |
+     = help: items from traits can only be used if the trait is implemented and in scope
+note: `core::View` defines an item `view`, perhaps you need to implement it
+    --> crates/peak-ui/src/core.rs:1003:1
+     |
+1003 | pub trait View<Message: 'static, B: Backend = IcedBackend> {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0283]: type annotations needed
+  --> crates/peak-ui/src/nav_split_view.rs:94:39
+   |
+94 |                     let back_button = crate::controls::Button::label("Back")
+   |                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ cannot infer type of the type parameter `B` declared on the struct `Button`
+   |
+   = note: cannot satisfy `_: core::Backend`
+   = help: the following types implement trait `core::Backend`:
+             core::AIBackend
+             core::IcedBackend
+             core::TermBackend
+note: required by a bound in `controls::Button`
+  --> crates/peak-ui/src/controls.rs:8:31
+   |
+ 8 | pub struct Button<Message, B: crate::core::Backend = crate::core::IcedBackend> {
+   |                               ^^^^^^^^^^^^^^^^^^^^ required by this bound in `Button`
+help: consider specifying the generic arguments
+   |
+94 |                     let back_button = crate::controls::Button::<Message, B>::label("Back")
+   |                                                              ++++++++++++++
+
+Some errors have detailed explanations: E0277, E0283, E0432, E0599.
+For more information about an error, try `rustc --explain E0277`.
+warning: `peak-ui` (lib) generated 3 warnings
+error: could not compile `peak-ui` (lib) due to 8 previous errors; 3 warnings emitted
