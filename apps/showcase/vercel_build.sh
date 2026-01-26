@@ -22,6 +22,8 @@ fi
 
 # 4. Build the Application
 echo "Building PeakUI Showcase..."
+# Create dist directory to prevent canonical path error in Trunk config
+mkdir -p dist
 # Ensure dependencies are updated just in case
 cargo update -p peak-ui --precise 0.1.0 2>/dev/null || true # Optional specific update logic if needed
 trunk build --release --public-url /
