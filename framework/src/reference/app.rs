@@ -247,6 +247,7 @@ pub enum Message {
     StopResizingInspector,
     UpdateCursorPos(iced::Point),
     FontLoaded(std::result::Result<(), iced::font::Error>),
+    CmdBackspacePressed,
     None,
 }
 
@@ -596,6 +597,12 @@ impl App {
             }
             Message::StopResizingInspector => {
                 self.is_resizing_inspector = false;
+                Task::none()
+            }
+            Message::CmdBackspacePressed => {
+                log::info!("CMD + BACKSPACE: Clearing inputs");
+                self.search_query.clear();
+                self.chat_input.clear();
                 Task::none()
             }
             Message::UpdateCursorPos(pos) => {
@@ -1170,7 +1177,12 @@ impl App {
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
-        let mouse_events = iced::event::listen().map(|event| match event {
+        let events = iced::event::listen().map(|event| {
+            if let iced::Event::Keyboard(_) = event {
+                 // Keep raw logging for now to compare
+                 log::info!("RAW EVENT: {:?}", event);
+            }
+            match event {
             iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
                 Message::UpdateCursorPos(position)
             }
@@ -1181,6 +1193,24 @@ impl App {
                 Message::CloseContextMenu
             }
             _ => Message::None,
+        }});
+        
+        let hotkeys = iced::keyboard::on_key_press(|key, modifiers| {
+             let is_cmd = modifiers.command() || modifiers.logo();
+             let is_ctrl = modifiers.control();
+
+             let is_backspace = matches!(key, iced::keyboard::Key::Named(iced::keyboard::key::Named::Backspace));
+             let is_delete_forward = matches!(key, iced::keyboard::Key::Named(iced::keyboard::key::Named::Delete));
+             let is_d = matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "d");
+             let is_u = matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "u");
+
+             // Cmd+Backspace (Ghost), Cmd+Delete, Cmd+D, Ctrl+U
+             if (is_cmd && (is_backspace || is_delete_forward || is_d)) || (is_ctrl && is_u) {
+                 log::info!("SHORTCUT TRIGGERED: {:?} + {:?}", modifiers, key);
+                 Some(Message::CmdBackspacePressed)
+             } else {
+                 None
+             }
         });
 
         #[cfg(target_arch = "wasm32")]
@@ -1219,7 +1249,7 @@ impl App {
                 receiver
             });
 
-            iced::Subscription::batch(vec![mouse_events, hash_sub])
+            iced::Subscription::batch(vec![events, hash_sub, hotkeys])
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -1241,7 +1271,7 @@ impl App {
                 receiver
             });
 
-            iced::Subscription::batch(vec![mouse_events, command_sub])
+            iced::Subscription::batch(vec![events, command_sub, hotkeys])
         }
     }
 }

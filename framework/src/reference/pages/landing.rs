@@ -67,15 +67,16 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                         Button::label("Quick Start")
                             .on_press(Message::EnterApp)
                             .size(ControlSize::Large)
+                            .variant(Variant::Outline)
                             .intent(Intent::Primary)
-                            .width(Length::Fill) // Full width on mobile
+                            .width(Length::Fixed(280.0)) // Fixed width for scroll gutters
                     )
                     .push(
                         Button::label("Browse Catalog")
                             .variant(Variant::Soft)
                             .on_press(Message::EnterApp)
                             .size(ControlSize::Large)
-                            .width(Length::Fill) // Full width on mobile
+                            .width(Length::Fixed(280.0)) // Fixed width for scroll gutters
                     )) as Box<dyn View<Message, IcedBackend>>
             } else {
                 // Desktop: Horizontal Stack
@@ -87,6 +88,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                         Button::label("Quick Start")
                             .on_press(Message::EnterApp)
                             .size(ControlSize::Large)
+                            .variant(Variant::Outline)
                             .intent(Intent::Primary)
                             .width(Length::Fixed(180.0))
                     )

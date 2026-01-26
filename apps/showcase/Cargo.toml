@@ -21,6 +21,7 @@ web-sys = { version = "0.3.69", features = ["Window", "Document", "HtmlCanvasEle
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1", features = ["full"] }
+env_logger = "0.10"
 
 [features]
 default = ["native"]

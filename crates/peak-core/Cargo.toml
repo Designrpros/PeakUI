@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
@@ -23,9 +22,11 @@ portable-pty = { version = "0.8", optional = true }
 tokio = { version = "1", features = ["full"], optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+iced = { version = "0.13", features = ["canvas", "advanced", "image", "svg", "tokio", "wgpu"] }
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg"] }
 web-sys = { version = "0.3", features = [
     "Request", "RequestInit", "RequestMode",
     "Response", "Window", "Headers"

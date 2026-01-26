@@ -6,26 +6,26 @@ license = "BSL-1.1"
 
 [dependencies]
 percent-encoding = "2.3"
-log = "0.4" # <--- MOVED HERE (Now available for both Native and WASM)
+log = "0.4"
 peak-core = { path = "../crates/peak-core", default-features = false }
 peak-theme = { path = "../crates/peak-theme", default-features = false }
 peak-icons = { path = "../crates/peak-icons" }
-iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans"] }
 iced_widget = { version = "0.13", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "stream"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans", "wgpu", "tokio"] }
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3.69"
 console_error_panic_hook = "0.1"
 console_log = "1.0"
-# log = "0.4" <--- REMOVED FROM HERE
 web-sys = { version = "0.3.69", features = ["Window", "Document", "HtmlCanvasElement", "Element", "Location"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+iced = { version = "0.13", features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans", "wgpu", "tokio"] }
 tokio = { version = "1", features = ["full"] }
 
 [features]
@@ -33,6 +33,7 @@ default = ["native"]
 native = [
     "tokio",
     "iced/wgpu",
+    "iced/tokio",
     "peak-core/native",
     "peak-theme/native"
 ]
