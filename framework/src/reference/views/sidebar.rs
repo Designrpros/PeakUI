@@ -58,6 +58,12 @@ impl SidebarView {
                 Page::ProjectStructure,
                 *active_tab == Page::ProjectStructure,
             ))
+            .push(sidebar_item(
+                "Intelligence",
+                "cpu",
+                Page::Intelligence,
+                *active_tab == Page::Intelligence,
+            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("RESOURCES"))
             .push(sidebar_item(
