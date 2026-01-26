@@ -61,6 +61,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                 Box::new(VStack::new()
                     .spacing(16.0)
                     .width(Length::Fill)
+                    .padding(Padding { left: 24.0, right: 24.0, ..Default::default() }) // Add side padding
                     .align_x(Alignment::Center)
                     .push(
                         Button::label("Quick Start")
