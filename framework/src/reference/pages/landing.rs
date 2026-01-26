@@ -56,24 +56,47 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                 .width(if is_mobile { Length::Fill } else { Length::Fixed(700.0) })
         )
         .push(
-            HStack::new()
-                .spacing(20.0)
-                .width(Length::Shrink) // Shrink to allow centering by parent
-                .align_y(Alignment::Center)
-                .push(
-                    Button::label("Quick Start")
-                        .on_press(Message::EnterApp)
-                        .size(ControlSize::Large)
-                        .intent(Intent::Primary)
-                        .width(Length::Fixed(180.0))
-                )
-                .push(
-                    Button::label("Browse Catalog")
-                        .variant(Variant::Soft)
-                        .on_press(Message::EnterApp)
-                        .size(ControlSize::Large)
-                        .width(Length::Fixed(180.0))
-                )
+            if is_mobile {
+                // Mobile: Vertical Stack
+                Box::new(VStack::new()
+                    .spacing(16.0)
+                    .width(Length::Fill)
+                    .align_x(Alignment::Center)
+                    .push(
+                        Button::label("Quick Start")
+                            .on_press(Message::EnterApp)
+                            .size(ControlSize::Large)
+                            .intent(Intent::Primary)
+                            .width(Length::Fill) // Full width on mobile
+                    )
+                    .push(
+                        Button::label("Browse Catalog")
+                            .variant(Variant::Soft)
+                            .on_press(Message::EnterApp)
+                            .size(ControlSize::Large)
+                            .width(Length::Fill) // Full width on mobile
+                    )) as Box<dyn View<Message, IcedBackend>>
+            } else {
+                // Desktop: Horizontal Stack
+                Box::new(HStack::new()
+                    .spacing(20.0)
+                    .width(Length::Shrink)
+                    .align_y(Alignment::Center)
+                    .push(
+                        Button::label("Quick Start")
+                            .on_press(Message::EnterApp)
+                            .size(ControlSize::Large)
+                            .intent(Intent::Primary)
+                            .width(Length::Fixed(180.0))
+                    )
+                    .push(
+                        Button::label("Browse Catalog")
+                            .variant(Variant::Soft)
+                            .on_press(Message::EnterApp)
+                            .size(ControlSize::Large)
+                            .width(Length::Fixed(180.0))
+                    )) as Box<dyn View<Message, IcedBackend>>
+            }
         );
 
     // --- Core Values (Text Focused) ---
