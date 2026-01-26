@@ -7,9 +7,9 @@ license = "BSL-1.1"
 [dependencies]
 percent-encoding = "2.3"
 log = "0.4" # <--- MOVED HERE (Now available for both Native and WASM)
-peak-core = { path = "../../PeakOS/crates/peak-core", default-features = false }
-peak-theme = { path = "../../PeakOS/crates/peak-theme", default-features = false }
-peak-icons = { path = "../../PeakOS/crates/peak-icons" }
+peak-core = { path = "../crates/peak-core", default-features = false }
+peak-theme = { path = "../crates/peak-theme", default-features = false }
+peak-icons = { path = "../crates/peak-icons" }
 iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans"] }
 iced_widget = { version = "0.13", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive"] }

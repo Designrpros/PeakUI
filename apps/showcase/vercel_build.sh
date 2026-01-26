@@ -23,11 +23,6 @@ fi
 # 4. Build the Application
 echo "Building PeakUI Showcase..."
 
-# Fix: Clone PeakOS dependency to satisfy local path (../../PeakOS)
-# We assume PeakOS is under the same org and public.
-echo "Cloning PeakOS dependency..."
-git clone https://github.com/Designrpros/PeakOS.git ../../PeakOS || echo "Failed to clone PeakOS - build presumably fails next"
-
 # Create dist directory to prevent canonical path error in Trunk config
 mkdir -p dist
 # Ensure dependencies are updated just in case
