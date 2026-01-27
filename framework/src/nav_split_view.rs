@@ -237,18 +237,21 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                 if let Some(inspector) = &self.inspector {
                     // Dimmed Background
                     stack = stack.push(
-                        container(iced::widget::Space::new(Length::Fill, Length::Fill)).style(
-                            |_| container::Style {
-                                background: Some(
-                                    iced::Color {
-                                        a: 0.5,
-                                        ..iced::Color::BLACK
-                                    }
-                                    .into(),
-                                ),
-                                ..Default::default()
-                            },
-                        ),
+                        container(
+                            iced::widget::Space::new()
+                                .width(Length::Fill)
+                                .height(Length::Fill),
+                        )
+                        .style(|_| container::Style {
+                            background: Some(
+                                iced::Color {
+                                    a: 0.5,
+                                    ..iced::Color::BLACK
+                                }
+                                .into(),
+                            ),
+                            ..Default::default()
+                        }),
                     );
 
                     let radius = context.radius(16.0);
@@ -274,7 +277,9 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                     stack = stack.push(
                         container(column![
                             // Push content down
-                            iced::widget::Space::new(Length::Fill, Length::FillPortion(1)),
+                            iced::widget::Space::new()
+                                .width(Length::Fill)
+                                .height(Length::FillPortion(1)),
                             // The Sheet
                             sheet.height(Length::FillPortion(1))
                         ])
@@ -318,19 +323,23 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
             // Right border divider handle
             if !self.sidebar_locked {
                 main_row = main_row.push(IcedBackend::mouse_area(
-                    container(iced::widget::Space::new(Length::Fixed(6.0), Length::Fill))
-                        .style({
-                            let div_color = if self.is_resizing_sidebar {
-                                theme.colors.primary
-                            } else {
-                                theme.colors.divider
-                            };
-                            move |_| container::Style {
-                                background: Some(div_color.into()),
-                                ..Default::default()
-                            }
-                        })
-                        .into(),
+                    container(
+                        iced::widget::Space::new()
+                            .width(Length::Fixed(6.0))
+                            .height(Length::Fill),
+                    )
+                    .style({
+                        let div_color = if self.is_resizing_sidebar {
+                            theme.colors.primary
+                        } else {
+                            theme.colors.divider
+                        };
+                        move |_| container::Style {
+                            background: Some(div_color.into()),
+                            ..Default::default()
+                        }
+                    })
+                    .into(),
                     None, // We don't use move here, we use global move below
                     self.on_start_resize_sidebar.clone(),
                     self.on_stop_resize_sidebar.clone(),
@@ -338,7 +347,12 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
             } else {
                 // Fixed divider if locked
                 main_row = main_row.push(
-                    container(iced::widget::Space::new(Length::Fixed(1.0), Length::Fill)).style({
+                    container(
+                        iced::widget::Space::new()
+                            .width(Length::Fixed(1.0))
+                            .height(Length::Fill),
+                    )
+                    .style({
                         let div_color = theme.colors.divider;
                         move |_| container::Style {
                             background: Some(div_color.into()),
@@ -367,33 +381,41 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
             if let Some(inspector) = &self.inspector {
                 if !self.inspector_locked {
                     main_row = main_row.push(IcedBackend::mouse_area(
-                        container(iced::widget::Space::new(Length::Fixed(6.0), Length::Fill))
-                            .style({
-                                let div_color = if self.is_resizing_inspector {
-                                    theme.colors.primary
-                                } else {
-                                    theme.colors.divider
-                                };
-                                move |_| container::Style {
-                                    background: Some(div_color.into()),
-                                    ..Default::default()
-                                }
-                            })
-                            .into(),
+                        container(
+                            iced::widget::Space::new()
+                                .width(Length::Fixed(6.0))
+                                .height(Length::Fill),
+                        )
+                        .style({
+                            let div_color = if self.is_resizing_inspector {
+                                theme.colors.primary
+                            } else {
+                                theme.colors.divider
+                            };
+                            move |_| container::Style {
+                                background: Some(div_color.into()),
+                                ..Default::default()
+                            }
+                        })
+                        .into(),
                         None,
                         self.on_start_resize_inspector.clone(),
                         self.on_stop_resize_inspector.clone(),
                     ));
                 } else {
                     main_row = main_row.push(
-                        container(iced::widget::Space::new(Length::Fixed(1.0), Length::Fill))
-                            .style({
-                                let div_color = theme.colors.divider;
-                                move |_| container::Style {
-                                    background: Some(div_color.into()),
-                                    ..Default::default()
-                                }
-                            }),
+                        container(
+                            iced::widget::Space::new()
+                                .width(Length::Fixed(1.0))
+                                .height(Length::Fill),
+                        )
+                        .style({
+                            let div_color = theme.colors.divider;
+                            move |_| container::Style {
+                                background: Some(div_color.into()),
+                                ..Default::default()
+                            }
+                        }),
                     );
                 }
 

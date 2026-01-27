@@ -67,8 +67,16 @@ impl ImageLoader {
         }
 
         println!("⬇️ Downloading cover: {}", url);
-        if let Ok(response) = peak_intelligence::http::HttpClient::get(&url).await {
+        #[cfg(not(target_arch = "wasm32"))]
+        let response_result = peak_intelligence::http::HttpClient::get(&url).await;
+        #[cfg(target_arch = "wasm32")]
+        let response_result = reqwest::get(&url).await;
+
+        if let Ok(response) = response_result {
+            #[cfg(not(target_arch = "wasm32"))]
             let bytes_vec = response.bytes().to_vec();
+            #[cfg(target_arch = "wasm32")]
+            let bytes_vec = response.bytes().await.ok()?.to_vec();
 
             #[cfg(not(target_arch = "wasm32"))]
             {

@@ -54,7 +54,7 @@ pub fn style_soft_input(
         selection: iced::Color::from_rgba(0.0, 0.48, 1.0, 0.3),
     };
 
-    if status == iced::widget::text_input::Status::Focused {
+    if matches!(status, iced::widget::text_input::Status::Focused { .. }) {
         iced::widget::text_input::Style {
             background: if is_light {
                 iced::Color::WHITE.into()
@@ -118,6 +118,7 @@ pub fn style_pill_button(
             offset: iced::Vector::new(0.0, 4.0),
             blur_radius: 10.0,
         },
+        ..Default::default()
     }
 }
 

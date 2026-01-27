@@ -120,7 +120,7 @@ impl PeakTheme {
                 overlay: Color::from_rgba8(60, 55, 50, 0.1),
 
                 text_primary: Color::from_rgb8(60, 55, 50),
-                text_secondary: Color::from_rgba8(60, 55, 50, 0.7),
+                text_secondary: Color::from_rgb8(100, 95, 90), // Opaque warm gray
                 text_tertiary: Color::from_rgba8(60, 55, 50, 0.5),
                 text_disabled: Color::from_rgba8(60, 55, 50, 0.3),
             },

@@ -4,7 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="/">
     <title>PeakUI Showcase</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "env": "./assets/env.js"
+            }
+        }
+    </script>
     <style>
         html,
         body {
@@ -13,7 +21,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            /* Changed from Red to Black to avoid "Alarm" mode */
+            /* Restored to Black */
             background-color: #000000;
         }
 
@@ -22,6 +30,8 @@
             display: block;
             width: 100%;
             height: 100%;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
     </style>
 
@@ -34,22 +44,34 @@
 <body>
 
     <div id="loading"
-        style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 16px;">
-        <img src="assets/peak_logo_dark.png" alt="PeakUI Logo" style="height: 48px; width: auto; opacity: 0.8;">
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background-color: #000000; z-index: 100;">
+        <img src="/assets/peak_logo_dark.png" alt="PeakUI Logo" style="height: 48px; width: auto; opacity: 0.8;">
         <div
             style="color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; letter-spacing: 0.5px; opacity: 0.6;">
             PEAKUI
         </div>
     </div>
 
+    <!-- Explicit canvas for Iced to target -->
+    <canvas id="iced-canvas" style="width: 100%; height: 100%;"></canvas>
+
     <script>
-        // Hide loading text once canvas appears
+        // Hide loading screen once the canvas is ready
         const observer = new MutationObserver((mutations) => {
-            if (document.querySelector('canvas')) {
-                document.getElementById('loading').style.display = 'none';
+            const canvas = document.querySelector('canvas');
+            if (canvas) {
+                // We add a small delay to ensure the first frame is painted
+                setTimeout(() => {
+                    document.getElementById('loading').style.transition = 'opacity 0.5s ease-out';
+                    document.getElementById('loading').style.opacity = '0';
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                    }, 500);
+                }, 200); // Increased delay slightly
+                observer.disconnect();
             }
         });
-        observer.observe(document.body, { childList: true });
+        observer.observe(document.body, { childList: true, subtree: true });
     </script>
 </body>
 

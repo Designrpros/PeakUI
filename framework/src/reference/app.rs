@@ -252,6 +252,7 @@ pub enum Message {
     FontLoaded(std::result::Result<(), iced::font::Error>),
     CmdBackspacePressed,
     LoadMoreIcons,
+    Heartbeat,
     None,
 }
 
@@ -655,6 +656,8 @@ impl App {
                 Task::none()
             }
             Message::FontLoaded(_) => Task::none(),
+            Message::Heartbeat => Task::none(),
+            Message::None => Task::none(),
 
             Message::Chat(msg) => match msg {
                 ChatViewMessage::InputChanged(val) => {
@@ -1268,14 +1271,6 @@ impl App {
                 .width(Length::Fill)
                 .height(Length::Fill);
 
-            // Wrap in Window Chrome if Desktop (Mocking a windowed environment within the app for demo)
-            // In a real app, the shell handles this. For this demo, we apply it here or assume OS frame.
-            // BUT user wants notch interaction. So we render our own Chrome.
-
-            // To properly mock the interaction, we should use the chrome.
-            // However, verify if 'responsive' already creates a full window.
-            // Let's assume we can overlay the "Control Center" / "Notch" on top.
-
             // Overlay Context Menu
             if let Some(pos) = context_menu_pos {
                 let menu = crate::views::ContextMenu::new()
@@ -1331,30 +1326,43 @@ impl App {
             }
         });
 
-        let hotkeys = iced::keyboard::on_key_press(|key, modifiers| {
-            let is_cmd = modifiers.command() || modifiers.logo();
-            let is_ctrl = modifiers.control();
+        let hotkeys = iced::event::listen().map(|event| {
+            if let iced::Event::Keyboard(iced::keyboard::Event::KeyPressed {
+                key, modifiers, ..
+            }) = event
+            {
+                let is_cmd = modifiers.command() || modifiers.logo();
+                let is_ctrl = modifiers.control();
 
-            let is_backspace = matches!(
-                key,
-                iced::keyboard::Key::Named(iced::keyboard::key::Named::Backspace)
-            );
-            let is_delete_forward = matches!(
-                key,
-                iced::keyboard::Key::Named(iced::keyboard::key::Named::Delete)
-            );
-            let is_d = matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "d");
-            let is_u = matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "u");
+                let is_backspace = matches!(
+                    key,
+                    iced::keyboard::Key::Named(iced::keyboard::key::Named::Backspace)
+                );
+                let is_delete_forward = matches!(
+                    key,
+                    iced::keyboard::Key::Named(iced::keyboard::key::Named::Delete)
+                );
+                let is_d =
+                    matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "d");
+                let is_u =
+                    matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "u");
 
-            // Cmd+Backspace (Ghost), Cmd+Delete, Cmd+D, Ctrl+U
-            if (is_cmd && (is_backspace || is_delete_forward || is_d)) || (is_ctrl && is_u) {
-                log::info!("SHORTCUT TRIGGERED: {:?} + {:?}", modifiers, key);
-                Some(Message::CmdBackspacePressed)
-            } else {
-                None
+                // if is_backspace && is_cmd {
+                //    return Message::Back;
+                // }
+
+                // Cmd+D -> Toggle Dark Mode
+                // if is_d && is_cmd {
+                //    return Message::ToggleTheme;
+                // }
+
+                // Ctrl+U -> Close Context Menu
+                if is_u && is_ctrl {
+                    return Message::CloseContextMenu;
+                }
             }
+            Message::None
         });
-
         let window_events = iced::event::listen_with(|event, _status, _window| match event {
             iced::Event::Window(iced::window::Event::Resized(size)) => {
                 Some(Message::WindowResized(size))
@@ -1398,7 +1406,14 @@ impl App {
                 receiver
             });
 
-            iced::Subscription::batch(vec![events, hash_sub, hotkeys, window_events])
+            iced::Subscription::batch(vec![
+                events,
+                hash_sub,
+                hotkeys,
+                window_events,
+                iced::time::every(std::time::Duration::from_millis(100))
+                    .map(|_| Message::Heartbeat),
+            ])
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -1420,7 +1435,14 @@ impl App {
                 receiver
             });
 
-            iced::Subscription::batch(vec![events, command_sub, hotkeys, window_events])
+            iced::Subscription::batch(vec![
+                events,
+                command_sub,
+                hotkeys,
+                window_events,
+                iced::time::every(std::time::Duration::from_millis(100))
+                    .map(|_| Message::Heartbeat),
+            ])
         }
     }
 }

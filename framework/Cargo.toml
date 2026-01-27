@@ -10,26 +10,30 @@ log = "0.4"
 peak-core = { path = "../crates/peak-core", default-features = false }
 peak-theme = { path = "../crates/peak-theme", default-features = false }
 peak-icons = { path = "../crates/peak-icons" }
-iced_widget = { version = "0.13", default-features = false, features = ["lazy"] }
+iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "stream"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-iced = { version = "0.13", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans", "wgpu", "tokio"] }
+iced = { version = "0.14", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans"] }
 wasm-bindgen = "0.2.92"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3.69"
 console_error_panic_hook = "0.1"
 console_log = "1.0"
 web-sys = { version = "0.3.69", features = ["Window", "Document", "HtmlCanvasElement", "Element", "Location"] }
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+iced_winit = { version = "0.14", default-features = false }
+iced_graphics = { version = "0.14", default-features = false }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-iced = { version = "0.13", features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans", "wgpu", "tokio"] }
+iced = { version = "0.14", features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans", "wgpu", "tokio"] }
 tokio = { version = "1", features = ["full"] }
 
 [features]
-default = ["native"]
+default = []
 native = [
     "tokio",
     "iced/wgpu",
@@ -38,4 +42,4 @@ native = [
     "peak-theme/native"
 ]
 tokio = ["iced/tokio"]
-wasm = ["iced/webgl", "iced/canvas", "iced/wgpu", "peak-core/wasm", "peak-theme/wasm"]
+wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]

@@ -10,7 +10,9 @@ use sipper::{FutureExt, StreamExt};
 use std::process::Stdio;
 #[cfg(feature = "llm")]
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+#[cfg(feature = "native")]
+use std::time::Instant;
 
 use serde::Deserialize;
 use serde_json::json;
@@ -232,7 +234,10 @@ impl Assistant {
     ) -> impl Straw<Reply, (Reply, Token), Error> + 'static {
         sipper(move |mut progress| async move {
             let mut reasoning = None;
+            #[cfg(feature = "native")]
             let mut reasoning_started_at: Option<Instant> = None;
+            #[cfg(not(feature = "native"))]
+            let mut _reasoning_started_at: Option<()> = None;
             let mut content = String::new();
             let mut reasoning_content = String::new();
 
@@ -247,8 +252,9 @@ impl Assistant {
                                 duration: Duration::ZERO,
                             });
 
-                            if let Some(reasoning_started_at) = reasoning_started_at {
-                                reasoning.duration = reasoning_started_at.elapsed();
+                            #[cfg(feature = "native")]
+                            if let Some(started_at) = reasoning_started_at {
+                                reasoning.duration = started_at.elapsed();
                             } else {
                                 reasoning_started_at = Some(Instant::now());
                             }

@@ -1,6 +1,10 @@
+#[cfg(feature = "native")]
 mod mcp;
+#[cfg(feature = "native")]
 mod terminal;
+#[cfg(feature = "native")]
 mod tools;
+#[cfg(feature = "native")]
 mod voice;
 
 #[cfg(feature = "voice")]
@@ -8,21 +12,36 @@ use crate::voice::VoiceManager;
 #[cfg(feature = "voice")]
 use voice::VOICE;
 
+#[cfg(feature = "native")]
 use crate::mcp::{
     CallToolParams, CallToolResult, JsonRpcRequest, JsonRpcResponse, ListToolsResult, Tool,
     ToolContent,
 };
+#[cfg(feature = "native")]
 use crate::terminal::TerminalManager;
+#[cfg(feature = "native")]
 use once_cell::sync::Lazy;
+#[cfg(feature = "native")]
 use peak_intelligence::kernel;
+#[cfg(feature = "native")]
 use serde_json::json;
+#[cfg(feature = "native")]
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
+#[cfg(feature = "native")]
 use tokio::sync::mpsc;
+#[cfg(feature = "native")]
 use tokio::time::{sleep, Duration};
 
+#[cfg(feature = "native")]
 static TERMINAL: Lazy<TerminalManager> = Lazy::new(TerminalManager::new);
 // No longer here
 
+#[cfg(not(feature = "native"))]
+fn main() {
+    println!("Native features disabled. Use --features native to run.");
+}
+
+#[cfg(feature = "native")]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Verify Icebreaker Core Linkage

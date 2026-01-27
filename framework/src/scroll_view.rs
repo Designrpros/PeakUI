@@ -105,7 +105,7 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
                     background: None,
                     border: iced::Border::default(),
                     scroller: iced::widget::scrollable::Scroller {
-                        color: iced::Color::TRANSPARENT,
+                        background: iced::Color::TRANSPARENT.into(),
                         border: iced::Border::default(),
                     },
                 },
@@ -113,11 +113,17 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
                     background: None,
                     border: iced::Border::default(),
                     scroller: iced::widget::scrollable::Scroller {
-                        color: iced::Color::TRANSPARENT,
+                        background: iced::Color::TRANSPARENT.into(),
                         border: iced::Border::default(),
                     },
                 },
                 gap: None,
+                auto_scroll: iced::widget::scrollable::AutoScroll {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    icon: iced::Color::TRANSPARENT,
+                },
             });
         }
 
@@ -140,10 +146,11 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
                     background: None,
                     border: iced::Border::default(),
                     scroller: iced::widget::scrollable::Scroller {
-                        color: iced::Color {
+                        background: iced::Color {
                             a: scroller_alpha,
                             ..text_color
-                        },
+                        }
+                        .into(),
                         border: iced::Border {
                             radius: if cfg!(target_arch = "wasm32") {
                                 0.0
@@ -160,10 +167,11 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
                     background: None,
                     border: iced::Border::default(),
                     scroller: iced::widget::scrollable::Scroller {
-                        color: iced::Color {
+                        background: iced::Color {
                             a: scroller_alpha,
                             ..text_color
-                        },
+                        }
+                        .into(),
                         border: iced::Border {
                             radius: if cfg!(target_arch = "wasm32") {
                                 0.0
@@ -177,6 +185,12 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
                     },
                 },
                 gap: None,
+                auto_scroll: iced::widget::scrollable::AutoScroll {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    icon: iced::Color::TRANSPARENT,
+                },
             }
         })
     }

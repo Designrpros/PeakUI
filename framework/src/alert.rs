@@ -97,6 +97,7 @@ impl SystemAlert {
                     }
                 };
                 move |_| container::Style {
+                    snap: false,
                     background: Some(iced::Background::Color(bg)),
                     border: iced::Border {
                         color: border_col,

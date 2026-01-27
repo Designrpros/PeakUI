@@ -58,7 +58,7 @@ where
                     .size(10)
                     .font(iced::Font::MONOSPACE)
                     .color(Color::from_rgb8(150, 150, 150)),
-                iced::widget::Space::with_width(Length::Fill),
+                iced::widget::Space::new().width(Length::Fill),
                 // Copy Button
                 if let Some(on_copy) = &self.on_copy {
                     let msg = on_copy(self.code.clone());
@@ -83,7 +83,7 @@ where
                         .into();
                     btn
                 } else {
-                    iced::widget::Space::with_width(0).into()
+                    iced::widget::Space::new().width(0).into()
                 },
             ]
             .width(Length::Fill)
@@ -132,7 +132,7 @@ fn highlight_rust<'a, Message>(content: &str) -> Element<'a, Message, Theme, ice
 where
     Message: 'static + Clone,
 {
-    let mut spans = Vec::new();
+    let mut spans: Vec<iced::advanced::text::Span<'_, ()>> = Vec::new();
 
     // VS Code Dark Theme Palette
     let c_keyword = Color::from_rgb8(197, 134, 192); // Purple

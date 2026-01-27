@@ -49,7 +49,7 @@ where
                 left: 4.0,
                 ..Padding::ZERO
             }),
-            iced::widget::horizontal_space(),
+            iced::widget::Space::new().width(Length::Fill),
             // Notch / Title
             button(
                 container(
@@ -87,7 +87,7 @@ where
             .on_press_maybe(on_notch)
             .padding(0)
             .style(|_, _| button::Style::default()),
-            iced::widget::horizontal_space(),
+            iced::widget::Space::new().width(Length::Fill),
         ]
         .width(Length::Fill)
         .height(Length::Fixed(40.0))

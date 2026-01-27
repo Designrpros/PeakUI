@@ -191,7 +191,7 @@ use iced::Renderer;
 impl<Message, Theme> View<Message> for SegmentedPicker<Message, Theme>
 where
     Message: Clone + 'static,
-    Theme: Default + Clone + 'static,
+    Theme: Clone + 'static,
 {
     fn view(&self, _context: &Context) -> Element<'static, Message, iced::Theme, Renderer> {
         let mut clone = self.clone();

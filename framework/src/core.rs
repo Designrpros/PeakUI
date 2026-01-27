@@ -6,7 +6,7 @@ pub use peak_core::registry::ShellMode;
 
 pub trait App: Sized {
     type Message: Send + Clone + std::fmt::Debug + 'static;
-    type Flags;
+    type Flags: Clone + Send + 'static;
 
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>);
     fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
@@ -29,11 +29,12 @@ pub trait App: Sized {
         Self: 'static,
     {
         let settings = Self::window_settings(&flags);
-        iced::application(Self::title, Self::update, Self::view)
+        iced::application(move || Self::new(flags.clone()), Self::update, Self::view)
+            .title(Self::title)
             .subscription(Self::subscription)
             .theme(Self::theme)
             .window(settings)
-            .run_with(|| Self::new(flags))
+            .run()
     }
 }
 
@@ -817,7 +818,10 @@ impl Backend for IcedBackend {
             }
         });
 
-        let mut base_font = font.unwrap_or_default();
+        let mut base_font = font.unwrap_or(iced::Font {
+            family: iced::font::Family::Name("Fira Sans".into()),
+            ..Default::default()
+        });
         if is_bold {
             base_font.weight = iced::font::Weight::Bold;
         }
@@ -825,7 +829,7 @@ impl Backend for IcedBackend {
         let scaled_size = size * context.theme.scaling;
 
         // --- Simplified Markdown Parsing ---
-        let mut spans = Vec::new();
+        let mut spans: Vec<iced::advanced::text::Span<'_, ()>> = Vec::new();
         let mut remaining = content.as_str();
         let mut has_parsed = false;
 
@@ -968,9 +972,7 @@ impl Backend for IcedBackend {
 
         // 1. Try embedded icons first
         if let Some(svg_data) = peak_icons::get_icon(&name) {
-            #[cfg(target_arch = "wasm32")]
-            log::debug!("Icon '{}' found in EMBEDDED storage.", name);
-
+            // log::debug!("Icon '{}' found in EMBEDDED storage.", name);
             let colored_svg = svg_data
                 .replace("currentColor", &hex_color)
                 .replace("fill=\"#000000\"", &format!("fill=\"{}\"", hex_color))
@@ -1016,24 +1018,28 @@ impl Backend for IcedBackend {
     fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message> {
         use iced::widget::{container, Rule};
         let divider_color = context.theme.colors.divider;
-        container(Rule::horizontal(1))
+        container(iced::widget::Space::new().height(1).width(Length::Fill))
             .style(move |_| container::Style {
-                text_color: Some(divider_color),
+                background: Some(divider_color.into()),
                 ..Default::default()
             })
             .into()
     }
 
     fn space<Message: 'static>(width: Length, height: Length) -> Self::AnyView<Message> {
-        iced::widget::Space::new(width, height).into()
+        iced::widget::Space::new()
+            .width(width)
+            .height(height)
+            .into()
     }
 
     fn circle<Message: 'static>(radius: f32, color: Option<Color>) -> Self::AnyView<Message> {
         use iced::widget::container;
-        container(iced::widget::Space::new(
-            Length::Fixed(radius * 2.0),
-            Length::Fixed(radius * 2.0),
-        ))
+        container(
+            iced::widget::Space::new()
+                .width(Length::Fixed(radius * 2.0))
+                .height(Length::Fixed(radius * 2.0)),
+        )
         .width(radius * 2.0)
         .height(radius * 2.0)
         .style(move |_| container::Style {
@@ -1053,7 +1059,7 @@ impl Backend for IcedBackend {
         color: Option<Color>,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
-        container(iced::widget::Space::new(width, height))
+        container(iced::widget::Space::new().width(width).height(height))
             .width(width)
             .height(height)
             .style(move |_| container::Style {
@@ -1077,27 +1083,31 @@ impl Backend for IcedBackend {
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
 
-        container(iced::widget::Space::new(Length::Fill, Length::Fill))
-            .width(width)
-            .height(height)
-            .style({
-                let b_color = border_color.unwrap_or(Color::TRANSPARENT);
-                move |_| container::Style {
-                    background: color.map(iced::Background::Color),
-                    border: iced::Border {
-                        color: b_color,
-                        width: border_width,
-                        radius: if cfg!(target_arch = "wasm32") {
-                            0.0
-                        } else {
-                            radius
-                        }
-                        .into(),
-                    },
-                    ..Default::default()
-                }
-            })
-            .into()
+        container(
+            iced::widget::Space::new()
+                .width(Length::Fill)
+                .height(Length::Fill),
+        )
+        .width(width)
+        .height(height)
+        .style({
+            let b_color = border_color.unwrap_or(Color::TRANSPARENT);
+            move |_| container::Style {
+                background: color.map(iced::Background::Color),
+                border: iced::Border {
+                    color: b_color,
+                    width: border_width,
+                    radius: if cfg!(target_arch = "wasm32") {
+                        0.0
+                    } else {
+                        radius
+                    }
+                    .into(),
+                },
+                ..Default::default()
+            }
+        })
+        .into()
     }
 
     fn button<Message: Clone + 'static>(

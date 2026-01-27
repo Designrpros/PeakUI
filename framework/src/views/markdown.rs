@@ -293,7 +293,7 @@ fn render_rich_text<'a, Message>(
 where
     Message: 'static + Clone,
 {
-    let mut spans = Vec::new();
+    let mut spans: Vec<iced::advanced::text::Span<'_, ()>> = Vec::new();
     let theme = context.theme;
 
     // Split strictly by ** for bold and ` for code
@@ -487,12 +487,12 @@ where
         // Divider
         if r_idx < data_rows.len() - 1 {
             table_col = table_col.push(
-                container(iced::widget::Space::new(Length::Fill, 1.0)).style(move |_| {
-                    container::Style {
+                container(iced::widget::Space::new().width(Length::Fill).height(1.0)).style(
+                    move |_| container::Style {
                         background: Some(tokens.colors.divider.scale_alpha(0.5).into()),
                         ..Default::default()
-                    }
-                }),
+                    },
+                ),
             );
         }
     }

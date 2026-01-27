@@ -13,7 +13,7 @@ pub struct Text<B: Backend = IcedBackend> {
     is_bold: bool,
     is_dim: bool,
     alignment: Alignment,
-    font: iced::Font,
+    font: Option<iced::Font>,
     width: Length,
     _phantom: PhantomData<B>,
 }
@@ -28,7 +28,7 @@ impl<B: Backend> Text<B> {
             is_bold: false,
             is_dim: false,
             alignment: Alignment::Start,
-            font: iced::Font::default(),
+            font: None,
             width: Length::Shrink,
             _phantom: PhantomData,
         }
@@ -45,7 +45,7 @@ impl<B: Backend> Text<B> {
     }
 
     pub fn font(mut self, font: iced::Font) -> Self {
-        self.font = font;
+        self.font = Some(font);
         self
     }
 
@@ -159,7 +159,7 @@ impl<B: Backend> Text<B> {
     }
 
     pub fn italic(mut self) -> Self {
-        self.font.style = iced::font::Style::Italic;
+        self.font.get_or_insert(iced::Font::default()).style = iced::font::Style::Italic;
         self
     }
 
@@ -183,7 +183,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
             self.is_bold,
             self.is_dim,
             self.intent,
-            Some(self.font),
+            self.font,
             self.width,
             self.alignment,
             context,

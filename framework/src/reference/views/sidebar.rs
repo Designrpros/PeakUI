@@ -39,9 +39,9 @@ impl SidebarView {
     fn branding_section(&self, context: &Context) -> HStack<Message, IcedBackend> {
         let is_dark = context.theme.tone == ThemeTone::Dark;
         let logo_path = if is_dark {
-            "assets/peak_logo_dark.png"
+            "/assets/peak_logo_dark.png"
         } else {
-            "assets/peak_logo.png"
+            "/assets/peak_logo.png"
         };
 
         HStack::<Message, IcedBackend>::new_generic()

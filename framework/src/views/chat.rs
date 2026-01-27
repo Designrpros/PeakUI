@@ -179,7 +179,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
                 ..Default::default()
             });
 
-            iced::widget::row![iced::widget::horizontal_space(), bubble]
+            iced::widget::row![iced::widget::Space::new().width(Length::Fill), bubble]
                 .padding(Padding {
                     top: 0.0,
                     right: 20.0,

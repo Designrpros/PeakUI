@@ -37,14 +37,14 @@ impl Asset {
             Asset::Icon(icon) => icon.path(),
             Asset::Background => {
                 if cfg!(target_arch = "wasm32") {
-                    "assets/background.png".to_string()
+                    "/assets/background.png".to_string()
                 } else {
                     "crates/peak-ui/assets/background.png".to_string()
                 }
             }
             Asset::MeshBackground => {
                 if cfg!(target_arch = "wasm32") {
-                    "assets/mesh_bg.png".to_string()
+                    "/assets/mesh_bg.png".to_string()
                 } else {
                     "crates/peak-ui/assets/mesh_bg.png".to_string()
                 }

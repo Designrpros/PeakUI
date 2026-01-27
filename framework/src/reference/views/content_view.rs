@@ -178,7 +178,7 @@ impl ContentView {
             }
 
             // 3. Spacer (Push everything else right)
-            header_row = header_row.push(iced::widget::horizontal_space().width(Length::Fill));
+            header_row = header_row.push(iced::widget::Space::new().width(Length::Fill));
 
             // 4. Page Toolbar Items
             for item in toolbar_items.iter() {
@@ -310,23 +310,18 @@ impl ContentView {
             split_view.view(&content_context),
             // Always show Bottom Dock (Tabbar)
             Element::from(
-                container(
-                    HStack::<Message, IcedBackend>::new_generic()
-                        .width(Length::Fill)
-                        .push(Space::<IcedBackend>::new(Length::Fill, 0.0.into()))
-                        .push(tabbar)
-                        .push(Space::<IcedBackend>::new(Length::Fill, 0.0.into()))
-                        .view(context),
-                )
-                .padding(Padding {
-                    top: 0.0,
-                    right: 20.0,
-                    bottom: 32.0,
-                    left: 20.0,
-                })
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .align_y(Alignment::End),
+                container(tabbar.view(context))
+                    .width(Length::Fill)
+                    .align_x(Alignment::Center)
+                    .padding(Padding {
+                        top: 0.0,
+                        right: 20.0,
+                        bottom: 32.0,
+                        left: 20.0,
+                    })
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .align_y(Alignment::End),
             )
         ];
 
@@ -350,7 +345,9 @@ impl ContentView {
             layers = layers.push(
                 container(iced::widget::column![
                     // Push content down
-                    iced::widget::Space::new(Length::Fill, Length::FillPortion(1)),
+                    iced::widget::Space::new()
+                        .width(Length::Fill)
+                        .height(Length::FillPortion(1)),
                     // The Inspector Sheet
                     sheet.height(Length::FillPortion(1))
                 ])
