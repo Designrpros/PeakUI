@@ -169,11 +169,7 @@ impl Context {
     }
 
     pub fn radius(&self, radius: f32) -> iced::border::Radius {
-        if cfg!(target_arch = "wasm32") {
-            0.0.into()
-        } else {
-            radius.into()
-        }
+        radius.into()
     }
 
     pub fn with_safe_area(mut self, padding: Padding) -> Self {
@@ -931,19 +927,25 @@ impl Backend for IcedBackend {
             }
         }
 
+        let horizontal_alignment = match alignment {
+            Alignment::Start => iced::alignment::Horizontal::Left,
+            Alignment::Center => iced::alignment::Horizontal::Center,
+            Alignment::End => iced::alignment::Horizontal::Right,
+        };
+
         if !has_parsed {
             text(content)
                 .size(scaled_size)
                 .color(base_color)
                 .font(base_font)
                 .width(width)
-                .align_x(alignment)
+                .align_x(horizontal_alignment)
                 .into()
         } else {
             rich_text(spans)
                 .size(scaled_size)
                 .width(width)
-                .align_x(alignment)
+                .align_x(horizontal_alignment)
                 .into()
         }
     }
@@ -1246,7 +1248,7 @@ impl Backend for IcedBackend {
         font: Option<iced::Font>,
         is_secure: bool,
         variant: Variant,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
             .on_input(on_change)
@@ -1263,16 +1265,14 @@ impl Backend for IcedBackend {
         // Apply variant style
         input = match variant {
             Variant::Ghost => {
-                input.style(move |theme: &iced::Theme, _status| {
-                    let palette = theme.extended_palette();
-                    iced::widget::text_input::Style {
-                        background: iced::Background::Color(iced::Color::TRANSPARENT),
-                        border: iced::Border::default(), // No individual border for ghost
-                        icon: palette.background.strong.text,
-                        placeholder: palette.background.strong.text.scale_alpha(0.5),
-                        value: palette.background.strong.text,
-                        selection: palette.primary.strong.color,
-                    }
+                let colors = context.theme.colors;
+                input.style(move |_theme, _status| iced::widget::text_input::Style {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    icon: colors.text_secondary,
+                    placeholder: colors.text_secondary,
+                    value: colors.text_primary,
+                    selection: colors.primary,
                 })
             }
             _ => input,
@@ -1317,6 +1317,9 @@ impl Backend for IcedBackend {
         columns: usize,
         spacing: f32,
     ) -> Self::AnyView<Message> {
+        if columns == 0 {
+            return iced::widget::column(children).spacing(spacing).into();
+        }
         let mut rows = Vec::new();
         while !children.is_empty() {
             let chunk: Vec<_> = children

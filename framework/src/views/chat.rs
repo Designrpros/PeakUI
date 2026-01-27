@@ -18,6 +18,7 @@ pub enum ChatRole {
 pub enum ChatViewMessage {
     InputChanged(String),
     SendPressed,
+    CopyCode(String),
 }
 
 pub struct AIChatView<Message: Clone + 'static> {
@@ -55,6 +56,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for AICha
             .map(|msg| {
                 Box::new(ChatBubble {
                     message: msg.clone(),
+                    on_action: self.on_action.clone(),
                 }) as Box<dyn View<Message, crate::core::IcedBackend>>
             })
             .collect();
@@ -146,11 +148,12 @@ impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for AICha
 }
 
 // ChatBubble View
-struct ChatBubble {
+struct ChatBubble<Message> {
     message: ChatMessage,
+    on_action: Arc<dyn Fn(ChatViewMessage) -> Message + Send + Sync>,
 }
 
-impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatBubble {
+impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatBubble<Message> {
     fn view(
         &self,
         context: &Context,
@@ -161,7 +164,10 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
         if is_user {
             // User Bubble: Keep it clean but scoped
             let bubble = iced::widget::container(
-                iced::widget::text(self.message.content.clone()).color(t.colors.on_primary),
+                Text::<crate::core::IcedBackend>::new(self.message.content.clone())
+                    .caption1()
+                    .color(t.colors.on_primary)
+                    .view(context),
             )
             .padding(12.0)
             .style(move |_| iced::widget::container::Style {
@@ -184,9 +190,11 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
                 .into()
         } else {
             // AI Message: No bubble, Caption size, Secondary text, Markdown supported
+            let on_act = self.on_action.clone();
             let content = MarkdownView::new(self.message.content.clone())
                 .size(12.0)
                 .padding(Padding::ZERO) // Minimal internal padding
+                .on_copy(move |code| (on_act)(ChatViewMessage::CopyCode(code)))
                 .view(context);
 
             iced::widget::container(content)
@@ -213,7 +221,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
     }
 }
 
-impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for ChatBubble {
+impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for ChatBubble<Message> {
     fn view(&self, _context: &Context) -> String {
         format!(
             "{}: {}",

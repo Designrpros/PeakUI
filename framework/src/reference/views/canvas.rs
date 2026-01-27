@@ -12,6 +12,8 @@ pub struct CanvasView {
     pub sizing_lab: super::super::app::SizingLabState,
     pub render_mode: super::super::app::RenderMode,
     pub api_key: String,
+    pub search_query: String,
+    pub icon_limit: usize,
 }
 
 use super::super::page::PageResult;
@@ -26,6 +28,8 @@ impl CanvasView {
         sizing_lab: super::super::app::SizingLabState,
         render_mode: super::super::app::RenderMode,
         api_key: String,
+        search_query: String,
+        icon_limit: usize,
     ) -> Self {
         Self {
             active_tab,
@@ -36,6 +40,8 @@ impl CanvasView {
             sizing_lab,
             render_mode,
             api_key,
+            search_query,
+            icon_limit,
         }
     }
 
@@ -71,6 +77,7 @@ impl CanvasView {
             Page::BasicSizing => {
                 pages::sizing::view(context, is_mobile, &self.sizing_lab, self.render_mode)
             }
+            Page::Colors => pages::colors::view(context, self.render_mode),
             Page::Typography => {
                 pages::typography::view(context, &self.typography_lab, self.render_mode)
             }
@@ -80,9 +87,10 @@ impl CanvasView {
 
             // Atoms (Phase 3/4)
             Page::Text => pages::text::view(context),
-            Page::Icon => pages::icon::view(context),
+            Page::Icon => pages::icon::view(context, self.search_query.clone(), self.icon_limit),
             Page::Button => pages::button::view(context, &self.button_lab, self.render_mode),
             Page::Shapes => pages::shapes::view(context, is_mobile),
+            Page::Image => pages::image::view(context),
             Page::Divider => pages::divider::view(context),
 
             // Containers (Phase 4)

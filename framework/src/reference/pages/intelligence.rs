@@ -1,4 +1,5 @@
 use super::super::app::Message;
+use super::super::model::Page;
 use crate::prelude::*;
 use crate::reference::views::ComponentDoc;
 
@@ -63,6 +64,11 @@ pub fn view(_context: &Context, _is_mobile: bool, api_key: String) -> PageResult
                                         .caption2()
                                         .secondary()
                                     )
+                            )
+                            .push(
+                                Button::new(Text::new("Open Full AI Settings").caption1())
+                                    .on_press(Message::SetTab(Page::SettingsAI))
+                                    .variant(Variant::Soft)
                             )
                     )
                 )

@@ -52,11 +52,6 @@ impl ThemeTokens {
         // Theme-specific visual properties
         let (glass_opacity, blur_radius, radius, shadow_blur, spacing_unit) = match theme {
             PeakTheme::Cupertino => (0.7, 40.0, 12.0, 16.0, 8.0),
-            PeakTheme::Gaming => (0.6, 15.0, 8.0, 16.0, 12.0),
-            PeakTheme::MediaCenter => (0.8, 30.0, 16.0, 40.0, 16.0),
-            PeakTheme::Ambient => (0.4, 25.0, 30.0, 20.0, 16.0),
-            PeakTheme::Terminal => (0.9, 0.0, 0.0, 0.0, 8.0),
-            PeakTheme::Automotive => (1.0, 0.0, 40.0, 10.0, 16.0),
             PeakTheme::Smart => (0.9, 20.0, 24.0, 15.0, 12.0),
             PeakTheme::Material => (1.0, 0.0, 4.0, 8.0, 8.0),
             PeakTheme::Fluent => (0.9, 30.0, 4.0, 8.0, 8.0),
@@ -66,9 +61,7 @@ impl ThemeTokens {
         };
 
         let shadow_offset = match theme {
-            PeakTheme::MediaCenter => [0.0, 20.0],
-            PeakTheme::Ambient => [0.0, 10.0],
-            PeakTheme::Terminal | PeakTheme::HighContrast | PeakTheme::Automotive => [0.0, 0.0],
+            PeakTheme::HighContrast => [0.0, 0.0],
             _ => [0.0, 4.0],
         };
 

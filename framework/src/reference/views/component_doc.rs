@@ -21,6 +21,7 @@ pub struct ComponentDoc<Message: 'static, B: Backend = IcedBackend> {
     on_render_mode_change:
         Option<Arc<dyn Fn(crate::reference::app::RenderMode) -> Message + Send + Sync>>,
     props_table: Option<String>,
+    extra_content: Option<Arc<dyn View<Message, B>>>,
     _phantom: PhantomData<B>,
 }
 
@@ -43,6 +44,7 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
             render_mode: crate::reference::app::RenderMode::Canvas,
             on_render_mode_change: None,
             props_table: None,
+            extra_content: None,
             _phantom: PhantomData,
         }
     }
@@ -85,6 +87,11 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
 
     pub fn props_table(mut self, props_table: impl Into<String>) -> Self {
         self.props_table = Some(props_table.into());
+        self
+    }
+
+    pub fn extra_content(mut self, view: impl View<Message, B> + 'static) -> Self {
+        self.extra_content = Some(Arc::new(view));
         self
     }
 }
@@ -311,6 +318,12 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                 )
                 .width(Length::Fill),
             );
+        }
+
+        // Add Extra Content if present (below Usage/Theory/Props)
+        if let Some(extra) = &self.extra_content {
+            let extra = extra.clone();
+            doc_content = doc_content.push(crate::core::ProxyView::new(move |ctx| extra.view(ctx)));
         }
 
         doc_content.view(context)

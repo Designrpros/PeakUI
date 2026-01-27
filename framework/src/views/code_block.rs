@@ -32,6 +32,11 @@ impl<Message> CodeBlock<Message> {
         self.on_copy = Some(Box::new(f));
         self
     }
+
+    pub fn language(mut self, language: impl Into<String>) -> Self {
+        self.language = language.into();
+        self
+    }
 }
 
 impl<Message> View<Message, IcedBackend> for CodeBlock<Message>
@@ -59,24 +64,22 @@ where
                     let msg = on_copy(self.code.clone());
                     let btn: Element<'static, Message, Theme, iced::Renderer> =
                         iced::widget::button(
-                            iced::widget::container(
+                            row![
+                                crate::atoms::Icon::<IcedBackend>::new("copy")
+                                    .size(10.0)
+                                    .color(Color::from_rgb8(150, 150, 150))
+                                    .view(context),
                                 text("Copy")
                                     .size(10)
                                     .font(iced::Font::MONOSPACE)
                                     .color(Color::from_rgb8(150, 150, 150)),
-                            )
-                            .padding([4, 8])
-                            .style(move |_| container::Style {
-                                background: Some(Color::from_rgba(1.0, 1.0, 1.0, 0.05).into()),
-                                border: Border {
-                                    radius: 4.0.into(),
-                                    ..Default::default()
-                                },
-                                ..Default::default()
-                            }),
+                            ]
+                            .spacing(6)
+                            .align_y(iced::Alignment::Center),
                         )
                         .on_press(msg)
                         .style(iced::widget::button::secondary)
+                        .padding([4, 8])
                         .into();
                     btn
                 } else {

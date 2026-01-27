@@ -16,6 +16,7 @@ pub enum Page {
     ProjectStructure,
     Customizations,
     BasicSizing,
+    Colors,
     Typography,
     Layout,
 
@@ -25,6 +26,7 @@ pub enum Page {
     Divider,
     Button,
     Shapes,
+    Image,
 
     // Components -> Containers
     VStack,
@@ -91,6 +93,7 @@ impl ToString for Page {
             Page::ProjectStructure => "Project Structure".to_string(),
             Page::Customizations => "Customizations".to_string(),
             Page::BasicSizing => "Basic Sizing".to_string(),
+            Page::Colors => "Colors".to_string(),
             Page::Typography => "Typography".to_string(),
             Page::Layout => "Layout".to_string(),
 
@@ -99,6 +102,7 @@ impl ToString for Page {
             Page::Divider => "Divider".to_string(),
             Page::Button => "Button".to_string(),
             Page::Shapes => "Shapes".to_string(),
+            Page::Image => "Image".to_string(),
             Page::VStack => "VStack".to_string(),
             Page::HStack => "HStack".to_string(),
             Page::ZStack => "ZStack".to_string(),
@@ -154,6 +158,7 @@ impl From<String> for Page {
             "Project Structure" => Page::ProjectStructure,
             "Customizations" => Page::Customizations,
             "Basic Sizing" => Page::BasicSizing,
+            "Colors" => Page::Colors,
             "Typography" => Page::Typography,
             "Layout" => Page::Layout,
 
@@ -162,6 +167,7 @@ impl From<String> for Page {
             "Divider" => Page::Divider,
             "Button" => Page::Button,
             "Shapes" => Page::Shapes,
+            "Image" => Page::Image,
 
             "VStack" => Page::VStack,
             "HStack" => Page::HStack,
@@ -223,6 +229,7 @@ impl Page {
             Page::ProjectStructure => "/docs/project-structure".to_string(),
             Page::Customizations => "/docs/customizations".to_string(),
             Page::BasicSizing => "/docs/basic-sizing".to_string(),
+            Page::Colors => "/docs/colors".to_string(),
             Page::Typography => "/docs/typography".to_string(),
             Page::Layout => "/docs/layout".to_string(),
 
@@ -232,6 +239,7 @@ impl Page {
             Page::Divider => "/components/divider".to_string(),
             Page::Button => "/components/button".to_string(),
             Page::Shapes => "/components/shapes".to_string(),
+            Page::Image => "/components/image".to_string(),
 
             // Components (Containers)
             Page::VStack => "/components/vstack".to_string(),
@@ -302,12 +310,14 @@ impl Page {
 
             "/guide/roadmap" => Page::Roadmap,
             "/guide/community" => Page::Community,
+            "/intelligence" => Page::Intelligence,
 
             "/docs/overview" => Page::Overview,
             "/docs/architecture" => Page::Architecture,
             "/docs/project-structure" => Page::ProjectStructure,
             "/docs/customizations" => Page::Customizations,
             "/docs/basic-sizing" => Page::BasicSizing,
+            "/docs/colors" => Page::Colors,
             "/docs/typography" => Page::Typography,
             "/docs/layout" => Page::Layout,
 
@@ -316,6 +326,7 @@ impl Page {
             "/components/divider" => Page::Divider,
             "/components/button" => Page::Button,
             "/components/shapes" => Page::Shapes,
+            "/components/image" => Page::Image,
 
             "/components/vstack" => Page::VStack,
             "/components/hstack" => Page::HStack,
@@ -378,14 +389,17 @@ impl Page {
             | Page::Typography
             | Page::Customizations
             | Page::BasicSizing
-            | Page::Layout => "Start".to_string(),
-            Page::Intelligence | Page::SettingsAI => "Intelligence".to_string(),
+            | Page::Colors
+            | Page::Layout
+            | Page::Intelligence => "Start".to_string(),
+            Page::SettingsAI => "Settings".to_string(),
 
             Page::Text
             | Page::Icon
             | Page::Divider
             | Page::Button
             | Page::Shapes
+            | Page::Image
             | Page::VStack
             | Page::HStack
             | Page::ZStack

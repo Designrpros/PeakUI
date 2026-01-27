@@ -316,10 +316,17 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             views.push(item.view(context));
         }
 
+        let bottom_padding = if context.is_slim() { 120.0 } else { 32.0 };
+
         let inner = B::vstack(
             views,
             12.0,
-            Padding::from([32, 20]),
+            Padding {
+                top: 32.0,
+                right: 20.0,
+                bottom: bottom_padding,
+                left: 20.0,
+            },
             Length::Fill,
             Length::Shrink,
             Alignment::Start,

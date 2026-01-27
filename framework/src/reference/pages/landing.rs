@@ -12,14 +12,14 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
             .title2()
             .bold()
             .color(t.colors.text_primary)
-            .center()
+            .align_center()
     };
 
     let section_desc = |text: &'static str| {
         Text::new(text)
             .body()
             .color(t.colors.text_secondary)
-            .center()
+            .align_center()
             .width(if is_mobile {
                 Length::Fill
             } else {
@@ -40,11 +40,12 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                         .size(if is_mobile { 48.0 } else { 96.0 })
                         .bold()
                         .color(t.colors.text_primary)
+                        .align_center()
                 )
                 .push(
                     Text::new("The Operating System for your User Interface")
                         .size(if is_mobile { 24.0 } else { 32.0 })
-                        .center()
+                        .align_center()
                         .color(t.colors.text_secondary)
                 )
         )
@@ -52,7 +53,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
             Text::new("PeakUI is a cross-platform design system engine built for performance, type-safety, and absolute developer control across GUI, Terminal, and Neural interfaces.")
                 .body()
                 .secondary()
-                .center()
+                .align_center()
                 .width(if is_mobile { Length::Fill } else { Length::Fixed(700.0) })
         )
         .push(
@@ -73,7 +74,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     )
                     .push(
                         Button::label("Browse Catalog")
-                            .variant(Variant::Soft)
+                            .variant(Variant::Outline)
                             .on_press(Message::EnterApp)
                             .size(ControlSize::Large)
                             .width(Length::Fixed(280.0)) // Fixed width for scroll gutters
@@ -94,7 +95,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     )
                     .push(
                         Button::label("Browse Catalog")
-                            .variant(Variant::Soft)
+                            .variant(Variant::Outline)
                             .on_press(Message::EnterApp)
                             .size(ControlSize::Large)
                             .width(Length::Fixed(180.0))
@@ -114,13 +115,19 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     .title3()
                     .bold()
                     .color(t.colors.text_primary)
-                    .center(),
+                    .align_center(),
             )
             .push(
                 VStack::new()
-                    .height(Length::Fixed(80.0))
+                    // Remove fixed height to allow wrapping on mobile without clipping
+                    // .height(Length::Fixed(80.0))
                     .align_x(Alignment::Center) // Fix centering of description
-                    .push(Text::new(desc).body().color(t.colors.text_secondary).center())
+                    .push(
+                        Text::new(desc)
+                            .body()
+                            .color(t.colors.text_secondary)
+                            .align_center(),
+                    ),
             )
     };
 
@@ -134,7 +141,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     .spacing(48.0)
                     .width(Length::Fill)
                     .push(feature_item(
-                        "layers",
+                        "boxes",
                         "Modular Architecture",
                         "Composed of independent atoms and molecules for maximum reusability.",
                     ))
@@ -144,7 +151,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                         "Built on Iced and WGPU for fluid, hardware-accelerated 120fps rendering.",
                     ))
                     .push(feature_item(
-                        "shield",
+                        "shield-check",
                         "Type Safe",
                         "Leveraging Rust's ownership and type system for guaranteed reliability.",
                     ))) as Box<dyn View<Message, IcedBackend>>
@@ -154,7 +161,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     .spacing(48.0)
                     .width(Length::Fill)
                     .push(feature_item(
-                        "layers",
+                        "boxes",
                         "Modular Architecture",
                         "Composed of independent atoms and molecules for maximum reusability.",
                     ))
@@ -164,7 +171,7 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                         "Built on Iced and WGPU for fluid, hardware-accelerated 120fps rendering.",
                     ))
                     .push(feature_item(
-                        "shield",
+                        "shield-check",
                         "Type Safe",
                         "Leveraging Rust's ownership and type system for guaranteed reliability.",
                     ))) as Box<dyn View<Message, IcedBackend>>
@@ -175,33 +182,33 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
         .spacing(40.0)
         .align_x(Alignment::Center)
         .push(section_title("Turning Heavy AI into Green AI"))
-        .push(section_desc("Traditional Computer Vision processes millions of pixels per frame. This approach is computationally expensive, energy-intensive, and prone to latency.")) 
+        .push(section_desc("Traditional Computer Vision processes millions of pixels per frame. This approach is computationally expensive, energy-intensive, and prone to latency."))
         .push(section_desc("PeakUI exposes the Semantic Tree directly to AI agents. This means your AI doesn't need to 'see' the screen—it understands the structure immediately. This reduces energy consumption by 99% and enables instant, error-free agent interaction."))
         .push(
             HStack::new()
                 .spacing(12.0)
                 .width(Length::Shrink) // Shrink to allow centering
                 .align_y(Alignment::Center)
-                .push(Icon::new("zap").size(24.0).color(t.colors.success))
-                .push(Text::new("99% Energy Reduction").body().bold().color(t.colors.success))
+                .push(Icon::new("fuel").size(24.0).color(t.colors.success))
+                .push(Text::new("99% Energy Reduction").body().bold().color(t.colors.success).align_start()) // Align start next to icon
         );
 
     // --- Section: Robot OS ---
     let robot_os = VStack::<Message>::new()
         .spacing(40.0)
         .align_x(Alignment::Center) // Centered!
-        .push(Text::new("Every UI is an API").title2().bold().color(t.colors.text_primary).center())
+        .push(Text::new("Every UI is an API").title2().bold().color(t.colors.text_primary).align_center())
         .push(
             Text::new("An industrial robot checking a 'Pressure Gauge' doesn't need a camera to 'see' the screen. With PeakUI's semantic state, the UI itself becomes a structured API that machines can query reliably.")
                 .body()
                 .color(t.colors.text_secondary)
-                .width(Length::Fixed(700.0)) // Limit width for readability when centered
-                .center()
+                .width(if is_mobile { Length::Fill } else { Length::Fixed(700.0) }) // Responsive Width
+                .align_center()
         )
         .push(
             // Constrain width to nicely align with text and provide "outer padding" visually
             VStack::new()
-                .width(Length::Fixed(700.0)) 
+                .width(if is_mobile { Length::Fill } else { Length::Fixed(700.0) }) // Responsive Width
                 .push(CodeBlock::rust("let pressure = framework.get_state(\"pressure_gauge\");"))
         );
 
@@ -223,28 +230,33 @@ pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
                     VStack::new()
                         .spacing(8.0)
                         .align_x(Alignment::Center)
-                        .push(Text::new("PeakUI Framework").bold())
-                        .push(Text::new("v2.4.0 (Alpha)").caption1().secondary()),
+                        .push(Text::new("PeakUI Framework").bold().align_center())
+                        .push(
+                            Text::new("v2.4.0 (Alpha)")
+                                .caption1()
+                                .secondary()
+                                .align_center(),
+                        ),
                 )
                 .push(
                     HStack::new()
                         .spacing(32.0) // Wider spacing for centered links
                         .width(Length::Shrink) // Shrink to allow centering by parent
-                        .push(Text::new("Docs").body().secondary())
-                        .push(Text::new("GitHub").body().secondary())
-                        .push(Text::new("Twitter").body().secondary()),
+                        .push(Text::new("Docs").body().secondary().align_center())
+                        .push(Text::new("GitHub").body().secondary().align_center())
+                        .push(Text::new("Twitter").body().secondary().align_center()),
                 ),
         );
 
     // --- Assembly ---
     let main_content = VStack::<Message>::new()
         .width(Length::Fill)
-        .spacing(160.0) // Significantly increased spacing between major sections
+        .spacing(if is_mobile { 100.0 } else { 160.0 }) // Reduce spacing on mobile
         .padding(Padding {
             top: 140.0,
-            right: 0.0,
+            right: if is_mobile { 24.0 } else { 0.0 }, // Add horizontal padding on mobile
             bottom: 140.0,
-            left: 0.0,
+            left: if is_mobile { 24.0 } else { 0.0 }, // Add horizontal padding on mobile
         })
         .push(hero)
         .push(features_grid)

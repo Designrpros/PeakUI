@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-# No dependencies needed for now, just raw strings
+include_dir = "0.7"

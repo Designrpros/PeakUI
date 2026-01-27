@@ -2,6 +2,7 @@ pub mod api_schema;
 pub mod architecture;
 pub mod button;
 pub mod card;
+pub mod colors;
 pub mod community;
 pub mod component_detail;
 
@@ -11,6 +12,7 @@ pub mod docks;
 pub mod hooks;
 pub mod hstack;
 pub mod icon;
+pub mod image;
 pub mod intelligence;
 pub mod introduction;
 pub mod landing;

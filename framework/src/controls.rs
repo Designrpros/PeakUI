@@ -121,10 +121,10 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
         children.push(self.content.view(context));
 
         let padding = match size {
-            ControlSize::Small => iced::Padding::from([4, 8]),
-            ControlSize::Medium => iced::Padding::from([8, 16]),
-            ControlSize::Large => iced::Padding::from([12, 24]),
-            ControlSize::XLarge => iced::Padding::from([16, 32]),
+            ControlSize::Small => iced::Padding::from([2, 6]),
+            ControlSize::Medium => iced::Padding::from([6, 12]),
+            ControlSize::Large => iced::Padding::from([10, 20]),
+            ControlSize::XLarge => iced::Padding::from([14, 28]),
         };
 
         let inner = B::hstack(

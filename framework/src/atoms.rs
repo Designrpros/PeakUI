@@ -69,6 +69,21 @@ impl<B: Backend> Text<B> {
         self
     }
 
+    pub fn align_center(mut self) -> Self {
+        self.alignment = Alignment::Center;
+        self
+    }
+
+    pub fn align_start(mut self) -> Self {
+        self.alignment = Alignment::Start;
+        self
+    }
+
+    pub fn align_end(mut self) -> Self {
+        self.alignment = Alignment::End;
+        self
+    }
+
     pub fn large_title(mut self) -> Self {
         self.size = 32.0;
         self.is_bold = true;

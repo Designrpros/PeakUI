@@ -1,14 +1,17 @@
 use crate::prelude::*;
-use iced::widget::{text, Column, Container, Row};
+use crate::views::CodeBlock;
+use iced::widget::{text, Column, Row};
 use iced::{font, Element, Length, Theme};
+use std::sync::Arc;
 
-pub struct MarkdownView {
+pub struct MarkdownView<Message> {
     content: String,
     size: f32,
     padding: iced::Padding,
+    on_copy: Option<Arc<dyn Fn(String) -> Message + Send + Sync>>,
 }
 
-impl MarkdownView {
+impl<Message> MarkdownView<Message> {
     pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
@@ -19,6 +22,7 @@ impl MarkdownView {
                 bottom: 48.0,
                 left: 0.0,
             },
+            on_copy: None,
         }
     }
 
@@ -31,9 +35,17 @@ impl MarkdownView {
         self.padding = padding.into();
         self
     }
+
+    pub fn on_copy<F>(mut self, f: F) -> Self
+    where
+        F: Fn(String) -> Message + Send + Sync + 'static,
+    {
+        self.on_copy = Some(Arc::new(f));
+        self
+    }
 }
 
-impl<Message> View<Message, IcedBackend> for MarkdownView
+impl<Message> View<Message, IcedBackend> for MarkdownView<Message>
 where
     Message: 'static + Clone,
 {
@@ -72,11 +84,18 @@ where
             if trimmed.starts_with("```") {
                 if in_code_block {
                     // Render code block
-                    children.push(render_code_block(
-                        &code_buffer,
-                        current_language.as_deref(),
-                        context,
-                    ));
+                    let mut block = CodeBlock::new(&code_buffer);
+                    if let Some(lang) = &current_language {
+                        block = block.language(lang);
+                    }
+
+                    if let Some(on_copy) = &self.on_copy {
+                        let f = on_copy.clone();
+                        block = block.on_copy(move |s| f(s));
+                    }
+
+                    children.push(block.view(context));
+
                     code_buffer.clear();
                     in_code_block = false;
                     current_language = None;
@@ -84,7 +103,7 @@ where
                     in_code_block = true;
                     let lang = trimmed.trim_start_matches("```").trim();
                     if !lang.is_empty() {
-                        current_language = Some(lang.to_string());
+                        Some(lang.to_string());
                     }
                 }
                 continue;
@@ -226,12 +245,12 @@ where
         }
 
         if !code_buffer.is_empty() {
-            // Clone buffer for static ownership
-            children.push(render_code_block(
-                &code_buffer,
-                current_language.as_deref(),
-                context,
-            ));
+            let mut block = CodeBlock::new(&code_buffer);
+            if let Some(on_copy) = &self.on_copy {
+                let f = on_copy.clone();
+                block = block.on_copy(move |s| f(s));
+            }
+            children.push(block.view(context));
         }
 
         // Use standard Column from iced
@@ -336,78 +355,6 @@ where
     iced::widget::rich_text(spans)
         .size(size)
         .width(Length::Fill)
-        .into()
-}
-
-fn render_code_block<Message>(
-    content: &str,
-    language: Option<&str>,
-    context: &Context,
-) -> Element<'static, Message, Theme, iced::Renderer>
-where
-    Message: 'static + Clone,
-{
-    let theme = context.theme;
-
-    // Explicit fixed sizing, bypassing scaling factor
-    let code_text = text(content.to_string())
-        .font(iced::Font::MONOSPACE)
-        .size(14.0)
-        .color(theme.colors.text_primary)
-        .width(Length::Shrink);
-
-    let scrollable_code = iced::widget::scrollable(code_text)
-        .direction(iced::widget::scrollable::Direction::Horizontal(
-            iced::widget::scrollable::Scrollbar::new()
-                .width(4)
-                .scroller_width(4)
-                .margin(2),
-        ))
-        .width(Length::Fill)
-        .id(iced::widget::scrollable::Id::new("code_block"));
-
-    let inner: Element<_, _, _> = if let Some(lang) = language {
-        Column::new()
-            .spacing(8)
-            .width(Length::Fill)
-            .push(
-                Container::new(
-                    text(lang.to_uppercase())
-                        .size(12)
-                        .font(font::Font {
-                            weight: font::Weight::Bold,
-                            ..Default::default()
-                        })
-                        .color(theme.colors.text_secondary),
-                )
-                .padding([4, 8])
-                .style(move |_| container::Style {
-                    background: Some(theme.colors.surface_variant.scale_alpha(0.3).into()),
-                    border: iced::Border {
-                        radius: 4.0.into(),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                }),
-            )
-            .push(scrollable_code)
-            .into()
-    } else {
-        scrollable_code.into()
-    };
-
-    Container::new(inner)
-        .padding(16)
-        .width(Length::Fill)
-        .style(move |_| container::Style {
-            background: Some(theme.colors.surface_variant.scale_alpha(0.15).into()),
-            border: iced::Border {
-                radius: 12.0.into(),
-                width: 1.0,                                  // Keeping 1.0 width
-                color: theme.colors.border.scale_alpha(0.5), // Back to normal border color
-            },
-            ..Default::default()
-        })
         .into()
 }
 

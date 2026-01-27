@@ -36,31 +36,57 @@ impl SidebarView {
             })
     }
 
+    fn branding_section(&self, context: &Context) -> HStack<Message, IcedBackend> {
+        let is_dark = context.theme.tone == ThemeTone::Dark;
+        let logo_path = if is_dark {
+            "assets/peak_logo_dark.png"
+        } else {
+            "assets/peak_logo.png"
+        };
+
+        HStack::<Message, IcedBackend>::new_generic()
+            .spacing(12.0)
+            .align_y(iced::Alignment::Center)
+            .push(
+                Image::<IcedBackend>::new(logo_path)
+                    .width(Length::Fixed(24.0))
+                    .height(Length::Fixed(24.0)),
+            )
+            .push(
+                Text::<IcedBackend>::new(self.active_tab.to_string())
+                    .headline()
+                    .bold()
+                    .color(context.theme.colors.text_primary),
+            )
+    }
+
     fn view_guide_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
         self.base_sidebar(context)
+            .push(self.branding_section(context))
+            .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("GETTING STARTED"))
             .push(sidebar_item(
                 "Introduction",
-                "book-open",
+                "map",
                 Page::Introduction,
                 *active_tab == Page::Introduction,
             ))
             .push(sidebar_item(
                 "Architecture",
-                "cpu",
+                "boxes",
                 Page::Architecture,
                 *active_tab == Page::Architecture,
             ))
             .push(sidebar_item(
                 "Project Structure",
-                "folder",
+                "folder-tree",
                 Page::ProjectStructure,
                 *active_tab == Page::ProjectStructure,
             ))
             .push(sidebar_item(
                 "Intelligence",
-                "cpu",
+                "brain-circuit",
                 Page::Intelligence,
                 *active_tab == Page::Intelligence,
             ))
@@ -68,7 +94,7 @@ impl SidebarView {
             .push(sidebar_section_header("RESOURCES"))
             .push(sidebar_item(
                 "Roadmap",
-                "map",
+                "milestone",
                 Page::Roadmap,
                 *active_tab == Page::Roadmap,
             ))
@@ -87,6 +113,12 @@ impl SidebarView {
                 *active_tab == Page::Typography,
             ))
             .push(sidebar_item(
+                "Colors",
+                "palette",
+                Page::Colors,
+                *active_tab == Page::Colors,
+            ))
+            .push(sidebar_item(
                 "Theming",
                 "palette",
                 Page::Customizations,
@@ -94,13 +126,13 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "Sizing",
-                "maximize",
+                "maximize-2",
                 Page::BasicSizing,
                 *active_tab == Page::BasicSizing,
             ))
             .push(sidebar_item(
                 "Layout",
-                "grid",
+                "layout-grid",
                 Page::Layout,
                 *active_tab == Page::Layout,
             ))
@@ -109,6 +141,8 @@ impl SidebarView {
     fn view_components_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
         self.base_sidebar(context)
+            .push(self.branding_section(context))
+            .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("ATOMS"))
             .push(sidebar_item(
                 "Text",
@@ -118,7 +152,7 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "Icon",
-                "image",
+                "sparkles",
                 Page::Icon,
                 *active_tab == Page::Icon,
             ))
@@ -136,21 +170,27 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "Shapes",
-                "circle",
+                "shapes",
                 Page::Shapes,
                 *active_tab == Page::Shapes,
+            ))
+            .push(sidebar_item(
+                "Image",
+                "image",
+                Page::Image,
+                *active_tab == Page::Image,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("CONTAINERS"))
             .push(sidebar_item(
                 "VStack",
-                "align-justify",
+                "rows-3",
                 Page::VStack,
                 *active_tab == Page::VStack,
             ))
             .push(sidebar_item(
                 "HStack",
-                "columns",
+                "columns-2",
                 Page::HStack,
                 *active_tab == Page::HStack,
             ))
@@ -168,7 +208,7 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "ScrollView",
-                "move",
+                "move-3d",
                 Page::ScrollView,
                 *active_tab == Page::ScrollView,
             ))
@@ -180,7 +220,7 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "Section",
-                "box",
+                "package",
                 Page::Section,
                 *active_tab == Page::Section,
             ))
@@ -188,19 +228,19 @@ impl SidebarView {
             .push(sidebar_section_header("FEEDBACK"))
             .push(sidebar_item(
                 "Sidebar",
-                "sidebar",
+                "panel-left",
                 Page::Sidebar,
                 *active_tab == Page::Sidebar,
             ))
             .push(sidebar_item(
                 "Tabbar",
-                "layout",
+                "layout-panel-top",
                 Page::Tabbar,
                 *active_tab == Page::Tabbar,
             ))
             .push(sidebar_item(
                 "Nav Split",
-                "columns",
+                "columns-3",
                 Page::NavigationSplit,
                 *active_tab == Page::NavigationSplit,
             ))
@@ -220,7 +260,7 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "Memo",
-                "fast-forward",
+                "zap",
                 Page::UseMemo,
                 *active_tab == Page::UseMemo,
             ))
@@ -232,7 +272,7 @@ impl SidebarView {
             .push(sidebar_section_header("PEAKDB"))
             .push(sidebar_item(
                 "PeakDB",
-                "database",
+                "database-backup",
                 Page::PeakDB,
                 *active_tab == Page::PeakDB,
             ))
@@ -240,7 +280,7 @@ impl SidebarView {
             .push(sidebar_section_header("PEAKCLOUD"))
             .push(sidebar_item(
                 "PeakCloud",
-                "wifi_full",
+                "cloud-cog",
                 Page::PeakCloud,
                 *active_tab == Page::PeakCloud,
             ))
@@ -252,13 +292,13 @@ impl SidebarView {
             .push(sidebar_section_header("USER PREFERENCES"))
             .push(sidebar_item(
                 "Appearance",
-                "sun",
+                "sun-medium",
                 Page::Appearance,
                 *active_tab == Page::Appearance,
             ))
             .push(sidebar_item(
                 "Scaling",
-                "maximize",
+                "maximize-2",
                 Page::Scaling,
                 *active_tab == Page::Scaling,
             ))
@@ -270,7 +310,7 @@ impl SidebarView {
             ))
             .push(sidebar_item(
                 "AI Assistant",
-                "zap",
+                "brain-circuit",
                 Page::SettingsAI,
                 *active_tab == Page::SettingsAI,
             ))
@@ -281,24 +321,6 @@ impl SidebarView {
                 "info",
                 Page::About,
                 *active_tab == Page::About,
-            ))
-    }
-
-    fn view_intelligence_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
-        let active_tab = &self.active_tab;
-        self.base_sidebar(context)
-            .push(sidebar_section_header("PEAK INTELLIGENCE"))
-            .push(sidebar_item(
-                "Intelligence",
-                "cpu",
-                Page::Intelligence,
-                *active_tab == Page::Intelligence,
-            ))
-            .push(sidebar_item(
-                "AI Assistant",
-                "zap",
-                Page::SettingsAI,
-                *active_tab == Page::SettingsAI,
             ))
     }
 }
@@ -312,7 +334,6 @@ impl View<Message, IcedBackend> for SidebarView {
             "Catalog" => self.view_components_sidebar(context),
             "Data" | "Ecosystem" => self.view_ecosystem_sidebar(context),
             "Settings" => self.view_settings_sidebar(context),
-            "Intelligence" => self.view_intelligence_sidebar(context),
             _ => self
                 .base_sidebar(context)
                 .push(Text::<IcedBackend>::new("Unknown Mode").secondary()),
@@ -343,7 +364,6 @@ impl View<Message, IcedBackend> for SidebarView {
             "Catalog" => self.view_components_sidebar(context),
             "Data" | "Ecosystem" => self.view_ecosystem_sidebar(context),
             "Settings" => self.view_settings_sidebar(context),
-            "Intelligence" => self.view_intelligence_sidebar(context),
             _ => self.base_sidebar(context),
         };
 
@@ -426,10 +446,12 @@ impl View<Message, IcedBackend> for SidebarItem {
                         .caption1()
                         .bold()
                         .width(Length::Fill)
+                        .align_start()
                 } else {
                     Text::<IcedBackend>::new(self.label.clone())
                         .caption1()
                         .width(Length::Fill)
+                        .align_start()
                 }),
         )
         .variant(if active {

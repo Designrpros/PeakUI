@@ -25,17 +25,10 @@ impl View<Message, IcedBackend> for TabBarView {
                     .active(nav_mode == "Start")
                     .on_press(Message::SetNavigationMode("Start".into())),
             )
-            // 2. Intelligence: AI Brain & Config
+            // 2. Catalog: Visual Gallery & Components
             .push(
                 ToolbarItem::new()
-                    .icon("cpu")
-                    .active(nav_mode == "Intelligence")
-                    .on_press(Message::SetNavigationMode("Intelligence".into())),
-            )
-            // 3. Catalog: Visual Gallery & Components
-            .push(
-                ToolbarItem::new()
-                    .icon("grid")
+                    .icon("layout-grid")
                     .active(nav_mode == "Catalog")
                     .on_press(Message::SetNavigationMode("Catalog".into())),
             )
@@ -49,7 +42,7 @@ impl View<Message, IcedBackend> for TabBarView {
             // 5. Settings: Preferences
             .push(
                 ToolbarItem::new()
-                    .icon("settings")
+                    .icon("settings-2")
                     .active(nav_mode == "Settings")
                     .on_press(Message::SetNavigationMode("Settings".into())),
             )
