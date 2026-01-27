@@ -1,4 +1,8 @@
+#[macro_use]
+extern crate lazy_static;
+
 pub mod app_registry;
+
 pub mod app_traits;
 pub mod apps;
 pub mod icons;

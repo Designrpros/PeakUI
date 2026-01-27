@@ -1,4 +1,7 @@
 use crate::app_traits::{PeakApp, ShellContext};
+// use crate::models::MediaItem;
+// #[cfg(feature = "native")]
+// use crate::models::{MediaKind, MediaStatus};
 use crate::theme::Theme;
 use iced::{Element, Task};
 #[cfg(feature = "native")]
@@ -6,6 +9,8 @@ use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 
 #[cfg(feature = "native")]
 use std::io::{Read, Write};
+// #[cfg(feature = "native")]
+// use std::path::Path;
 
 #[cfg(feature = "native")]
 use std::sync::{Arc, Mutex};
@@ -91,9 +96,9 @@ impl TerminalApp {
             }
         }
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(not(feature = "native"))]
         Self {
-            content: String::from("Terminal is not supported on WASM"),
+            content: String::from("Terminal is not supported on this platform"),
             input_buffer: String::new(),
             is_open: false,
         }
@@ -143,7 +148,11 @@ impl PeakApp for TerminalApp {
                         let _ = writeln!(writer, "{}", cmd);
                     }
                 }
-                #[cfg(target_arch = "wasm32")]
+                #[cfg_attr(
+                    any(not(feature = "native"), target_arch = "wasm32"),
+                    allow(unused_mut)
+                )]
+                #[cfg(not(feature = "native"))]
                 let _ = cmd;
             }
         }
@@ -170,7 +179,7 @@ impl PeakApp for TerminalApp {
             )
         }
 
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(not(feature = "native"))]
         iced::Subscription::none()
     }
 }

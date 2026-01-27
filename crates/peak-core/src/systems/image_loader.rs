@@ -1,14 +1,12 @@
 use iced::widget::image;
-#[cfg(feature = "native")]
+#[cfg(not(target_arch = "wasm32"))]
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Mutex;
-#[cfg(feature = "native")]
-use tokio::io::AsyncWriteExt;
 
 // Global Cache State
-lazy_static::lazy_static! {
+lazy_static! {
     static ref MEMORY_CACHE: Mutex<HashMap<String, image::Handle>> = Mutex::new(HashMap::new());
 }
 
@@ -28,7 +26,7 @@ impl ImageLoader {
             cache_dir.join(format!("{}.jpg", hash))
         }
 
-        #[cfg(not(feature = "native"))]
+        #[cfg(target_arch = "wasm32")]
         {
             let _ = url;
             PathBuf::from("/tmp/cache")
@@ -75,8 +73,9 @@ impl ImageLoader {
             #[cfg(not(target_arch = "wasm32"))]
             {
                 // Save to Disk
-                if let Ok(mut file) = tokio::fs::File::create(&_path).await {
-                    let _ = file.write_all(&bytes_vec).await;
+                if let Ok(mut file) = std::fs::File::create(&_path) {
+                    use std::io::Write;
+                    let _ = file.write_all(&bytes_vec);
                 }
             }
 

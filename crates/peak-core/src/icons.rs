@@ -11,9 +11,9 @@ pub enum AppIcon {
 /// Generic loader that reads from assets/icons/system/{category}/{name}.svg
 /// and replaces "currentColor" with the provided hex color string.
 pub fn load_system_svg(
-    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] category: &str,
-    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] name: &str,
-    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] color: &str,
+    #[allow(unused_variables)] category: &str,
+    #[allow(unused_variables)] name: &str,
+    #[allow(unused_variables)] color: &str,
 ) -> SvgHandle {
     #[cfg(feature = "native")]
     {
@@ -174,6 +174,7 @@ pub fn get_avatar_handle(name: &str, color: &str) -> SvgHandle {
 
 pub const AVATAR_OPTIONS: [&str; 5] = ["robot", "alien", "ghost", "peak", "smile"];
 
+#[cfg(feature = "native")]
 fn resolve_icon_alias(name: &str) -> &str {
     match name {
         "sidebar" => "apps",

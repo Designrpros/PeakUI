@@ -1,7 +1,42 @@
 use crate::modifiers::{Intent, Variant};
 // Force rebuild to pick up peak-icons changes
 use iced::{Alignment, Color, Length, Padding, Renderer, Shadow, Size, Theme, Vector};
+use iced::{Element, Subscription, Task};
 pub use peak_core::registry::ShellMode;
+
+pub trait App: Sized {
+    type Message: Send + Clone + std::fmt::Debug + 'static;
+    type Flags;
+
+    fn new(flags: Self::Flags) -> (Self, Task<Self::Message>);
+    fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
+    fn view(&self) -> Element<'_, Self::Message>;
+    fn subscription(&self) -> Subscription<Self::Message> {
+        Subscription::none()
+    }
+    fn theme(&self) -> Theme {
+        Theme::Dark
+    }
+    fn title(&self) -> String {
+        "Peak App".into()
+    }
+    fn window_settings(_flags: &Self::Flags) -> iced::window::Settings {
+        iced::window::Settings::default()
+    }
+
+    fn run(flags: Self::Flags) -> iced::Result
+    where
+        Self: 'static,
+    {
+        let settings = Self::window_settings(&flags);
+        iced::application(Self::title, Self::update, Self::view)
+            .subscription(Self::subscription)
+            .theme(Self::theme)
+            .window(settings)
+            .run_with(|| Self::new(flags))
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Headset {
     VisionPro,
@@ -1211,7 +1246,7 @@ impl Backend for IcedBackend {
         font: Option<iced::Font>,
         is_secure: bool,
         variant: Variant,
-        context: &Context,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
             .on_input(on_change)

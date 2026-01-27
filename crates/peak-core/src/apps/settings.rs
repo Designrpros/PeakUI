@@ -69,6 +69,8 @@ pub enum SettingsMessage {
     ToggleVoice(bool),
     ModeChanged(crate::registry::ShellMode),
     ShellStyleChanged(crate::registry::ShellStyle),
+    OpenRouterKeyChanged(String),
+    ToggleCloudIntelligence(bool),
 }
 
 #[derive(Debug, Clone)]
@@ -89,6 +91,8 @@ pub struct SettingsApp {
     pub voice_enabled: bool,
     pub current_mode: crate::registry::ShellMode,
     pub current_shell_style: crate::registry::ShellStyle,
+    pub openrouter_key: String,
+    pub cloud_intelligence_enabled: bool,
 }
 
 impl Default for SettingsApp {
@@ -160,6 +164,8 @@ impl SettingsApp {
             voice_enabled: false,
             current_mode: crate::registry::ShellMode::Desktop,
             current_shell_style: crate::registry::ShellStyle::default(),
+            openrouter_key: String::new(),
+            cloud_intelligence_enabled: false,
         }
     }
 }
@@ -308,6 +314,12 @@ impl PeakApp for SettingsApp {
             }
             SettingsMessage::ShellStyleChanged(style) => {
                 self.current_shell_style = style;
+            }
+            SettingsMessage::OpenRouterKeyChanged(key) => {
+                self.openrouter_key = key;
+            }
+            SettingsMessage::ToggleCloudIntelligence(enabled) => {
+                self.cloud_intelligence_enabled = enabled;
             }
         }
         Task::none()

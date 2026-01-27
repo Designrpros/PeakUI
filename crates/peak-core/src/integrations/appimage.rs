@@ -32,7 +32,8 @@ impl AppImageManager {
     pub fn new() -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let install_dir = dirs::home_dir()
+            let install_dir = directories::UserDirs::new()
+                .map(|u| u.home_dir().to_owned())
                 .unwrap_or_else(|| PathBuf::from("."))
                 .join(".peak")
                 .join("appimages");

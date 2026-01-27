@@ -1,5 +1,8 @@
 #![allow(dead_code)]
-use crate::models::{MediaItem, MediaKind, MediaStatus};
+use crate::models::MediaItem;
+#[cfg(feature = "native")]
+use crate::models::{MediaKind, MediaStatus};
+#[cfg(feature = "native")]
 use std::path::Path;
 
 pub struct AppScanner;
@@ -18,7 +21,7 @@ impl AppScanner {
     }
 
     fn scan_macos_apps() -> Vec<MediaItem> {
-        #[cfg_attr(target_arch = "wasm32", allow(unused_mut))]
+        #[allow(unused_mut)]
         let mut apps = Vec::new();
 
         #[cfg(feature = "native")]
@@ -59,7 +62,7 @@ impl AppScanner {
     }
 
     fn scan_system_binaries() -> Vec<MediaItem> {
-        #[cfg_attr(target_arch = "wasm32", allow(unused_mut))]
+        #[allow(unused_mut)]
         let mut apps = Vec::new();
 
         #[cfg(feature = "native")]
@@ -173,7 +176,7 @@ pub struct MusicScanner;
 
 impl MusicScanner {
     pub fn scan() -> Vec<MediaItem> {
-        #[cfg_attr(target_arch = "wasm32", allow(unused_mut))]
+        #[allow(unused_mut)]
         let mut tracks = Vec::new();
         #[cfg(feature = "native")]
         {
