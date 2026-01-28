@@ -1,5 +1,5 @@
 use iced::{Result, Task};
-use peak_ui::core::App as _;
+// use peak_ui::core::App as _;
 use peak_ui::reference; // Import trait for method usage
 
 #[cfg(target_arch = "wasm32")]
@@ -33,6 +33,7 @@ fn main() -> Result {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
 fn app_title(_: &reference::App) -> String {
     "PeakUI Showcase".to_string()
 }
