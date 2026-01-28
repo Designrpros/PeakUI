@@ -119,8 +119,8 @@ impl PeakTheme {
                 divider: Color::from_rgba8(160, 140, 120, 0.2),
                 overlay: Color::from_rgba8(60, 55, 50, 0.1),
 
-                text_primary: Color::from_rgb8(60, 55, 50),
-                text_secondary: Color::from_rgb8(100, 95, 90), // Opaque warm gray
+                text_primary: Color::from_rgb8(40, 35, 30),
+                text_secondary: Color::from_rgb8(70, 65, 60), // Darker gray for better visibility
                 text_tertiary: Color::from_rgba8(60, 55, 50, 0.5),
                 text_disabled: Color::from_rgba8(60, 55, 50, 0.3),
             },

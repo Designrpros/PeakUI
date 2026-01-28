@@ -358,7 +358,7 @@ impl View<Message, IcedBackend> for SidebarView {
             .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
         let content = match self.navigation_mode.as_str() {
             "Start" => self.view_guide_sidebar(context),
             "Catalog" => self.view_components_sidebar(context),
@@ -367,7 +367,7 @@ impl View<Message, IcedBackend> for SidebarView {
             _ => self.base_sidebar(context),
         };
 
-        crate::core::SemanticNode {
+        crate::core::SemanticNode { accessibility: None, 
             role: "sidebar".to_string(),
             label: Some(self.navigation_mode.clone()),
             content: None,
@@ -464,8 +464,8 @@ impl View<Message, IcedBackend> for SidebarItem {
         .view(context)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "sidebar_item".to_string(),
             label: Some(format!("{} (page={:?})", self.label, self.page)),
             content: if self.active {

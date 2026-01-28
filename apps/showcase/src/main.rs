@@ -12,10 +12,17 @@ fn main() -> Result {
         log::info!("PeakUI Showcase Native started");
 
         iced::application(
-            "PeakUI Showcase",
+            || {
+                let mut app = reference::App::default();
+                let ftl = include_str!("../assets/locales/en-US/main.ftl");
+                app.localization =
+                    peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
+                (app, Task::none())
+            },
             reference::App::update,
             reference::App::view,
         )
+        .title("PeakUI Showcase")
         .subscription(reference::App::subscription)
         .run()
     }
@@ -96,6 +103,10 @@ pub fn run() {
             app.navigation_mode = initial_page.navigation_mode();
             app.active_tab = initial_page;
 
+            // Load Showcase Localizations
+            let ftl = include_str!("../assets/locales/en-US/main.ftl");
+            app.localization = peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
+
             (app, Task::none())
         },
         reference::App::update,
@@ -115,6 +126,7 @@ pub fn run() {
     .font(include_bytes!("../assets/fonts/Fira_Sans/FiraSans-Medium.ttf").as_slice())
     .font(include_bytes!("../assets/fonts/Fira_Sans/FiraSans-SemiBold.ttf").as_slice())
     .font(include_bytes!("../assets/fonts/Fira_Sans/FiraSans-Light.ttf").as_slice())
+    .font(include_bytes!("../assets/fonts/Noto_Color_Emoji/NotoColorEmoji.ttf").as_slice())
     .subscription(reference::App::subscription)
     .run();
 

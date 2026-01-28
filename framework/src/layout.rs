@@ -9,6 +9,7 @@ pub struct VStack<Message: 'static, B: Backend = IcedBackend> {
     width: Length,
     height: Length,
     align_x: iced::Alignment,
+    align_y: iced::Alignment,
 }
 
 impl<Message: 'static> VStack<Message, IcedBackend> {
@@ -32,7 +33,13 @@ impl<Message: 'static, B: Backend> VStack<Message, B> {
             width: Length::Fill,
             height: Length::Shrink,
             align_x: iced::Alignment::Start,
+            align_y: iced::Alignment::Start,
         }
+    }
+
+    pub fn align_y(mut self, align: iced::Alignment) -> Self {
+        self.align_y = align;
+        self
     }
 
     pub fn spacing(mut self, spacing: f32) -> Self {
@@ -87,6 +94,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
             self.width,
             self.height,
             self.align_x,
+            self.align_y,
             context.theme.scaling,
         )
     }
@@ -94,6 +102,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let children = self.children.iter().map(|c| c.describe(context)).collect();
         crate::core::SemanticNode {
+            accessibility: None,
             role: "vstack".to_string(),
             label: None,
             content: None,
@@ -111,6 +120,7 @@ pub struct HStack<Message: 'static, B: Backend = IcedBackend> {
     padding: iced::Padding,
     width: Length,
     height: Length,
+    align_x: iced::Alignment,
     align_y: iced::Alignment,
 }
 
@@ -134,8 +144,14 @@ impl<Message: 'static, B: Backend> HStack<Message, B> {
             padding: iced::Padding::from(0.0),
             width: Length::Fill,
             height: Length::Shrink,
+            align_x: iced::Alignment::Start,
             align_y: iced::Alignment::Start,
         }
+    }
+
+    pub fn align_x(mut self, align: iced::Alignment) -> Self {
+        self.align_x = align;
+        self
     }
 
     pub fn spacing(mut self, spacing: f32) -> Self {
@@ -189,6 +205,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
             self.padding,
             self.width,
             self.height,
+            self.align_x,
             self.align_y,
             context.theme.scaling,
         )
@@ -197,6 +214,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let children = self.children.iter().map(|c| c.describe(context)).collect();
         crate::core::SemanticNode {
+            accessibility: None,
             role: "hstack".to_string(),
             label: None,
             content: None,
@@ -267,6 +285,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let children = self.children.iter().map(|c| c.describe(context)).collect();
         crate::core::SemanticNode {
+            accessibility: None,
             role: "zstack".to_string(),
             label: None,
             content: None,
@@ -313,14 +332,16 @@ impl<V: View<Message, B> + Sized + 'static, Message: Clone + 'static, B: Backend
         Self: Sized + 'static,
     {
         crate::core::ProxyView::new(move |context| {
-            // Refine scaling: ensure it's not too small or large by clamping or just providing a baseline
             let scaled_width = (width * context.theme.scaling).max(100.0).min(1200.0);
-            B::container(
-                self.view(context),
-                iced::Padding::default(),
+            B::hstack(
+                vec![self.view(context)],
+                0.0,
+                iced::Padding::ZERO,
                 iced::Length::Fixed(scaled_width),
                 iced::Length::Shrink,
-                context,
+                iced::Alignment::Center,
+                iced::Alignment::Center,
+                context.theme.scaling,
             )
         })
     }
@@ -407,6 +428,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
 
         let children = self.children.iter().map(|c| c.describe(context)).collect();
         crate::core::SemanticNode {
+            accessibility: None,
             role: "grid".to_string(),
             label: Some(format!("responsive_columns: {}", items_per_row)),
             content: None,

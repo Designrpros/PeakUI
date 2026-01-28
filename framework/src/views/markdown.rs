@@ -261,8 +261,8 @@ where
             .into()
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "article".to_string(),
             label: Some("Markdown Content".to_string()),
             content: Some(self.content.chars().take(100).collect()),

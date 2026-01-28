@@ -6,7 +6,12 @@ fn main() {
     // Setup a basic context
     let mode = ShellMode::Desktop;
     let tokens = ThemeTokens::get(mode, ThemeTone::Dark);
-    let context = Context::new(mode, tokens, Size::new(1024.0, 768.0));
+    let context = Context::new(
+        mode,
+        tokens,
+        Size::new(1024.0, 768.0),
+        Localization::default(),
+    );
 
     // Create a simple UI
     let ui = VStack::<(), AIBackend>::new_generic()

@@ -188,6 +188,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
 
     fn describe(&self, _context: &Context) -> SemanticNode {
         SemanticNode {
+            accessibility: None,
             role: "navigation_link".to_string(),
             label: Some(self.label.clone()),
             content: None,
@@ -235,6 +236,7 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
 
     fn describe(&self, context: &Context) -> SemanticNode {
         SemanticNode {
+            accessibility: None,
             role: "detail_view".to_string(),
             label: None,
             content: None,
@@ -330,6 +332,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             Length::Fill,
             Length::Shrink,
             Alignment::Start,
+            Alignment::Start,
             context.theme.scaling,
         );
 
@@ -338,6 +341,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
 
     fn describe(&self, context: &Context) -> SemanticNode {
         SemanticNode {
+            accessibility: None,
             role: "sidebar".to_string(),
             label: Some(self.title.clone()),
             content: None,

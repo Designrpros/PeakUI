@@ -94,6 +94,7 @@ pub struct App {
     // Infinite Scroll / Lazy Load
     pub icon_limit: usize,
     pub window_width: f32,
+    pub localization: Localization,
 }
 
 #[derive(Debug, Clone)]
@@ -207,6 +208,8 @@ pub enum Message {
     CloseContextMenu,
     ContextMenuAction(String),
     EnterApp,
+    SetLanguage(String, Vec<String>),
+    OpenUrl(String),
 
     // Chat
     Chat(ChatViewMessage),
@@ -397,6 +400,7 @@ impl Default for App {
             api_key: settings.api_key,
             icon_limit: 50,
             window_width: 1024.0, // Default assume desktop until resized
+            localization: Localization::default(),
         }
     }
 }
@@ -409,6 +413,10 @@ impl App {
             Message::EnterApp => {
                 self.show_landing = false;
                 self.show_sidebar = true;
+                Task::none()
+            }
+            Message::SetLanguage(lang, resources) => {
+                self.localization = Localization::new(&lang, resources);
                 Task::none()
             }
             Message::SetTab(tab) => {
@@ -491,6 +499,19 @@ impl App {
                 Task::none()
             }
             Message::CopyCode(code) => iced::clipboard::write(code),
+            Message::OpenUrl(url) => {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let _ = web_sys::window()
+                        .and_then(|w| w.open_with_url_and_target(&url, "_blank").ok());
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    log::info!("Opening URL: {}", url);
+                }
+                Task::none()
+            }
+
             Message::SetRenderMode(mode) => {
                 self.render_mode = mode;
                 Task::none()
@@ -1158,7 +1179,6 @@ impl App {
                 self.icon_limit += 100;
                 Task::none()
             }
-            Message::None => Task::none(),
         }
     }
 
@@ -1168,6 +1188,7 @@ impl App {
             crate::core::ShellMode::Desktop,
             ThemeTokens::new(PeakTheme::Peak, ThemeTone::Light),
             iced::Size::new(1280.0, 800.0),
+            self.localization.clone(),
         );
         let view = crate::reference::views::ContentView::new(self);
         let tree = view.describe(&ctx);
@@ -1221,16 +1242,21 @@ impl App {
         let tokens = ThemeTokens::with_theme(self.theme, tone);
 
         if self.show_landing {
-            return crate::core::responsive(mode, tokens.clone(), move |context| {
-                iced::widget::container(super::pages::landing::view(&context))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style(move |_| iced::widget::container::Style {
-                        background: Some(tokens.colors.background.into()),
-                        ..Default::default()
-                    })
-                    .into()
-            });
+            return crate::core::responsive(
+                mode,
+                tokens.clone(),
+                self.localization.clone(),
+                move |context| {
+                    iced::widget::container(super::pages::landing::view(&context))
+                        .width(Length::Fill)
+                        .height(Length::Fill)
+                        .style(move |_| iced::widget::container::Style {
+                            background: Some(tokens.colors.background.into()),
+                            ..Default::default()
+                        })
+                        .into()
+                },
+            );
         }
 
         // 1. Prepare Content
@@ -1242,7 +1268,12 @@ impl App {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let tokens = ThemeTokens::with_theme(self.theme, self.theme_tone);
-            let ctx = Context::new(ShellMode::Desktop, tokens, iced::Size::new(1200.0, 800.0));
+            let ctx = Context::new(
+                ShellMode::Desktop,
+                tokens,
+                iced::Size::new(1200.0, 800.0),
+                self.localization.clone(),
+            );
             let semantic_tree = content.describe(&ctx);
             let state = serde_json::json!({
                 "active_tab": self.active_tab,
@@ -1257,53 +1288,58 @@ impl App {
             );
         }
 
-        crate::core::responsive(mode, tokens.clone(), move |context| {
-            // Main App Content
-            let base_content = iced::widget::container(content.view(&context))
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .style(move |_| iced::widget::container::Style {
-                    background: Some(tokens.colors.background.into()),
-                    ..Default::default()
-                });
+        crate::core::responsive(
+            mode,
+            tokens.clone(),
+            self.localization.clone(),
+            move |context| {
+                // Main App Content
+                let base_content = iced::widget::container(content.view(&context))
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .style(move |_| iced::widget::container::Style {
+                        background: Some(tokens.colors.background.into()),
+                        ..Default::default()
+                    });
 
-            let mut stack = iced::widget::stack![base_content]
-                .width(Length::Fill)
-                .height(Length::Fill);
+                let mut stack = iced::widget::stack![base_content]
+                    .width(Length::Fill)
+                    .height(Length::Fill);
 
-            // Overlay Context Menu
-            if let Some(pos) = context_menu_pos {
-                let menu = crate::views::ContextMenu::new()
-                    .item(
-                        "Reload",
-                        "rotate-cw",
-                        Message::ContextMenuAction("Reload".to_string()),
-                    )
-                    .item(
-                        "Inspect",
-                        "search-code",
-                        Message::ContextMenuAction("Inspect".to_string()),
-                    )
-                    .item("Close", "circle-x", Message::CloseContextMenu);
+                // Overlay Context Menu
+                if let Some(pos) = context_menu_pos {
+                    let menu = crate::views::ContextMenu::new()
+                        .item(
+                            "Reload",
+                            "rotate-cw",
+                            Message::ContextMenuAction("Reload".to_string()),
+                        )
+                        .item(
+                            "Inspect",
+                            "search-code",
+                            Message::ContextMenuAction("Inspect".to_string()),
+                        )
+                        .item("Close", "circle-x", Message::CloseContextMenu);
 
-                stack = stack.push(
-                    iced::widget::container(menu.view(&context))
-                        .width(Length::Fill)
-                        .height(Length::Fill)
-                        .padding(iced::Padding {
-                            top: pos.y,
-                            left: pos.x,
-                            ..Default::default()
-                        }),
-                );
-            }
+                    stack = stack.push(
+                        iced::widget::container(menu.view(&context))
+                            .width(Length::Fill)
+                            .height(Length::Fill)
+                            .padding(iced::Padding {
+                                top: pos.y,
+                                left: pos.x,
+                                ..Default::default()
+                            }),
+                    );
+                }
 
-            // Render Window Chrome ON TOP of everything (or wrapping)
-            // Since we want the notch button to be clickable, and it's in the chrome.
+                // Render Window Chrome ON TOP of everything (or wrapping)
+                // Since we want the notch button to be clickable, and it's in the chrome.
 
-            let content_view: Element<'_, Message> = stack.into();
-            content_view
-        })
+                let content_view: Element<'_, Message> = stack.into();
+                content_view
+            },
+        )
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
@@ -1331,20 +1367,20 @@ impl App {
                 key, modifiers, ..
             }) = event
             {
-                let is_cmd = modifiers.command() || modifiers.logo();
-                let is_ctrl = modifiers.control();
+                let _is_cmd = modifiers.command() || modifiers.logo();
+                let _is_ctrl = modifiers.control();
 
-                let is_backspace = matches!(
+                let _is_backspace = matches!(
                     key,
                     iced::keyboard::Key::Named(iced::keyboard::key::Named::Backspace)
                 );
-                let is_delete_forward = matches!(
+                let _is_delete_forward = matches!(
                     key,
                     iced::keyboard::Key::Named(iced::keyboard::key::Named::Delete)
                 );
-                let is_d =
+                let _is_d =
                     matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "d");
-                let is_u =
+                let _is_u =
                     matches!(key, iced::keyboard::Key::Character(ref c) if c.as_str() == "u");
 
                 // if is_backspace && is_cmd {
@@ -1357,7 +1393,7 @@ impl App {
                 // }
 
                 // Ctrl+U -> Close Context Menu
-                if is_u && is_ctrl {
+                if _is_u && _is_ctrl {
                     return Message::CloseContextMenu;
                 }
             }

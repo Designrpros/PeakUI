@@ -125,8 +125,8 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for AICha
             .view(context)
     }
 
-    fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
+    fn describe(&self, _context: &Context) -> SemanticNode { 
+        SemanticNode { accessibility: None, 
             role: "ai_chat".to_string(),
             label: Some("AI Assistant".to_string()),
             content: None,
@@ -142,7 +142,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for AICha
     fn view(&self, _context: &Context) -> String {
         "AI Chat (Terminal Not Supported)".to_string()
     }
-    fn describe(&self, _context: &Context) -> SemanticNode {
+    fn describe(&self, _context: &Context) -> SemanticNode { 
         Default::default()
     }
 }
@@ -209,8 +209,8 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
         }
     }
 
-    fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
+    fn describe(&self, _context: &Context) -> SemanticNode { 
+        SemanticNode { accessibility: None, 
             role: "chat_bubble".to_string(),
             content: Some(self.message.content.clone()),
             label: None,
@@ -233,7 +233,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for ChatB
             self.message.content
         )
     }
-    fn describe(&self, _context: &Context) -> SemanticNode {
+    fn describe(&self, _context: &Context) -> SemanticNode { 
         Default::default()
     }
 }

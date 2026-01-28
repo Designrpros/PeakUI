@@ -190,8 +190,8 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
         )
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "text".to_string(),
             label: None,
             content: Some(self.content.clone()),
@@ -259,8 +259,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Rectangle<B> {
         )
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "rectangle".to_string(),
             label: None,
             content: None,
@@ -298,8 +298,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Circle<B> {
         B::circle(self.radius, self.color)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "circle".to_string(),
             label: None,
             content: None,
@@ -339,8 +339,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Capsule<B> {
         B::capsule(self.width, self.height, self.color)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "capsule".to_string(),
             label: None,
             content: None,
@@ -373,8 +373,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Space<B> {
         B::space(self.width, self.height)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "space".to_string(),
             label: None,
             content: None,
@@ -403,8 +403,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Divider<B> {
         B::divider(context)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "divider".to_string(),
             label: None,
             content: None,
@@ -482,8 +482,8 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
         B::icon(self.name.clone(), self.size, self.color, context)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "icon".to_string(),
             label: Some(self.name.clone()),
             content: None,
@@ -534,8 +534,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
         B::image(self.path.clone(), self.width, self.height, self.radius)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "image".to_string(),
             label: Some(self.path.clone()),
             content: None,
@@ -621,8 +621,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
         )
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "container".to_string(),
             label: None,
             content: None,

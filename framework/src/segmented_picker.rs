@@ -204,12 +204,12 @@ where
         clone.build()
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
         let children = self
             .options
             .iter()
             .enumerate()
-            .map(|(idx, opt)| crate::core::SemanticNode {
+            .map(|(idx, opt)| crate::core::SemanticNode { accessibility: None, 
                 role: "segment_option".to_string(),
                 label: Some(opt.label.clone()),
                 content: if idx == self.active_index {
@@ -223,7 +223,7 @@ where
             })
             .collect();
 
-        crate::core::SemanticNode {
+        crate::core::SemanticNode { accessibility: None, 
             role: "segmented_picker".to_string(),
             label: None,
             content: Some(format!("active_index: {}", self.active_index)),

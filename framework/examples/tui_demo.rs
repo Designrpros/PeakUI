@@ -7,7 +7,12 @@ use peak_ui::prelude::*;
 
 fn main() {
     let tokens = ThemeTokens::get(ShellMode::Desktop, peak_theme::ThemeTone::Dark);
-    let context = Context::new(ShellMode::Desktop, tokens, Size::new(800.0, 600.0));
+    let context = Context::new(
+        ShellMode::Desktop,
+        tokens,
+        Size::new(800.0, 600.0),
+        Localization::default(),
+    );
 
     // Define a UI using the SAME components as the Desktop app
     // We use the full Catalog here to prove parity!

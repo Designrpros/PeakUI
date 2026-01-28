@@ -168,15 +168,31 @@ impl PeakApp for TerminalApp {
     fn subscription(&self) -> iced::Subscription<Self::Message> {
         #[cfg(feature = "native")]
         {
-            iced::Subscription::run_with_id(
-                "terminal_listener",
-                iced::futures::stream::unfold(self.receiver.clone(), |receiver| async move {
+            use std::hash::{Hash, Hasher};
+
+            struct TerminalSubData(Arc<tokio::sync::Mutex<mpsc::UnboundedReceiver<String>>>);
+
+            impl Hash for TerminalSubData {
+                fn hash<H: Hasher>(&self, state: &mut H) {
+                    "terminal_listener".hash(state);
+                }
+            }
+            impl PartialEq for TerminalSubData {
+                fn eq(&self, other: &Self) -> bool {
+                    Arc::ptr_eq(&self.0, &other.0)
+                }
+            }
+            impl Eq for TerminalSubData {}
+
+            iced::Subscription::run_with(TerminalSubData(self.receiver.clone()), |data| {
+                let receiver = data.0.clone();
+                iced::futures::stream::unfold(receiver, |receiver| async move {
                     let mut rx = receiver.lock().await;
                     rx.recv()
                         .await
                         .map(|text| (TerminalMessage::OutputReceived(text), receiver.clone()))
-                }),
-            )
+                })
+            })
         }
 
         #[cfg(not(feature = "native"))]

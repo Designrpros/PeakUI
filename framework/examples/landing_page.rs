@@ -5,12 +5,17 @@ use peak_ui::prelude::*;
 
 pub fn main() -> iced::Result {
     iced::application(
-        "PeakUI Landing Page",
+        || (LandingPage::default(), Task::none()),
         LandingPage::update,
         LandingPage::view,
     )
-    .theme(|_| Theme::Dark) // Enforce Dark theme based on requirement
+    .title("PeakUI Landing Page")
+    .theme(_theme)
     .run()
+}
+
+fn _theme(_: &LandingPage) -> Theme {
+    Theme::Dark
 }
 
 struct LandingPage {
@@ -40,7 +45,7 @@ impl LandingPage {
         }
     }
 
-    fn view(&self) -> Element<'_, Message, Theme, iced::Renderer> {
+    fn view(&self) -> Element<'_, Message> {
         // Enforce Dark, Industrial Vibe as requested
         let mode = ShellMode::Desktop;
         let tone = ThemeTone::Dark;
@@ -48,7 +53,7 @@ impl LandingPage {
 
         let input_val = self.input_value;
 
-        responsive(mode, tokens, move |context| {
+        responsive(mode, tokens, Localization::default(), move |context| {
             let t = context.theme;
 
             // --- Helper Text Styles ---

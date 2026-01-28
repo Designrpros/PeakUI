@@ -132,6 +132,7 @@ impl<Message: 'static> View<Message, IcedBackend> for ToolbarGroup<Message> {
             Length::Shrink,
             Length::Shrink,
             Alignment::Center,
+            Alignment::Center,
             theme.scaling,
         );
 

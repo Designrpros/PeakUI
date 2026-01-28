@@ -121,6 +121,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[cfg(feature = "native")]
 async fn handle_request(req: JsonRpcRequest, tx: mpsc::Sender<String>) -> JsonRpcResponse {
     match req.method.as_str() {
         "tools/list" => {

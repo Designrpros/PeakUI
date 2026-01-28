@@ -151,7 +151,7 @@ impl View<Message, IcedBackend> for CanvasView {
             .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
         let page = self.render_page(context);
         page.view.describe(context)
     }

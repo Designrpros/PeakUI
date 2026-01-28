@@ -372,7 +372,7 @@ impl ContentView {
         final_view
     }
 
-    pub fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+    pub fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
         let is_mobile = context.is_slim();
 
         let canvas_manager = CanvasView::new(
@@ -407,7 +407,7 @@ impl ContentView {
             }
         }
 
-        crate::core::SemanticNode {
+        crate::core::SemanticNode { accessibility: None, 
             role: "content_view".to_string(),
             label: Some(format!("Page: {:?}", self.active_tab)),
             content: None,

@@ -4,7 +4,9 @@ use peak_theme::{ThemeTokens, ThemeTone};
 use peak_ui::prelude::*;
 
 pub fn main() -> iced::Result {
-    iced::application("PeakUI Showcase", App::update, App::view).run()
+    iced::application(|| (App::default(), Task::none()), App::update, App::view)
+        .title("PeakUI Showcase")
+        .run()
 }
 
 struct App {
@@ -40,7 +42,7 @@ impl App {
         // Clone for closure capture
         let catalog = self.catalog.clone();
 
-        responsive(mode, tokens, move |context| {
+        responsive(mode, tokens, Localization::default(), move |context| {
             catalog.view(&context).map(Message::Catalog)
         })
     }

@@ -14,6 +14,7 @@ fn main() {
             peak_theme::ThemeTone::Dark,
         ),
         iced::Size::new(80.0, 24.0),
+        Localization::default(),
     );
 
     println!("{}", catalog.view(&context));

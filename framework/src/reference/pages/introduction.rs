@@ -26,29 +26,24 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
                         iced::Alignment::Start
                     })
                     .push(
-                        Text::<IcedBackend>::new("PeakUI")
-                            .size(if is_narrow { 48.0 } else { 84.0 })
+                        Text::<IcedBackend>::new("Quick Start")
+                            .size(if is_narrow { 32.0 } else { 48.0 })
                             .bold()
                             .color(t.colors.text_primary),
                     )
                     .push(
-                        Text::<IcedBackend>::new("The Operating System for your User Interface")
-                            .size(if is_narrow { 24.0 } else { 32.0 })
+                        Text::<IcedBackend>::new("Welcome to the PeakUI documentation! This page will give you an introduction to 80% of the PeakUI concepts that you will use on a daily basis.")
+                            .size(20.0)
                             .color(t.colors.text_secondary),
                     ),
-            )
-            .push(
-                Text::<IcedBackend>::new("PeakUI is a cross-platform design system engine built for performance, type-safety, and absolute developer control across GUI, Terminal, and Neural interfaces.")
-                    .body()
-                    .color(t.colors.text_secondary)
-                    .width(if is_narrow { Length::Fill } else { Length::Fixed(600.0) }),
             )
             .push(
                 HStack::new_generic()
                     .spacing(20.0)
                     .align_y(iced::Alignment::Center)
                     .push(
-                        Button::label("Quick Start")
+                        Button::label("Learn more")
+                            .variant(Variant::Outline)
                             .on_press(Message::SetTab(Page::Architecture))
                             .size(ControlSize::Large)
                             .width(Length::Fixed(180.0)),
@@ -62,128 +57,40 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
                     ),
             );
 
-        // --- 2. Features Section ---
-        let feature_card = |icon: &'static str, title: &'static str, desc: &'static str| {
-            ProxyView::<Message, IcedBackend>::new(move |ctx| {
-                let t = ctx.theme;
-                let is_internal_narrow = ctx.size.width < 1000.0;
+        // --- Helper: Content Section ---
+        let doc_section =
+            |title: &'static str, content: Vec<Box<dyn View<Message, IcedBackend>>>| {
+                let mut column = VStack::new_generic()
+                    .spacing(24.0)
+                    .align_x(iced::Alignment::Start)
+                    .width(Length::Fill);
 
+                column = column.push(
+                    Text::<IcedBackend>::new(title)
+                        .title2()
+                        .bold()
+                        .color(t.colors.text_primary),
+                );
+
+                for item in content {
+                    column = column.push(item);
+                }
+
+                column
+            };
+
+        // --- Helper: Code Block ---
+        let code_block = |code: &'static str| {
+            Box::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+                let t = ctx.theme;
                 iced::widget::container(
-                    VStack::new_generic()
-                        .spacing(20.0)
-                        .push(
-                            Icon::<IcedBackend>::new(icon)
-                                .size(28.0)
-                                .color(t.colors.primary),
-                        )
-                        .push(
-                            VStack::new_generic()
-                                .spacing(12.0)
-                                .push(
-                                    Text::<IcedBackend>::new(title)
-                                        .title3()
-                                        .bold()
-                                        .color(t.colors.text_primary),
-                                )
-                                .push(
-                                    Text::<IcedBackend>::new(desc)
-                                        .body()
-                                        .color(t.colors.text_secondary),
-                                ),
-                        )
+                    Text::<IcedBackend>::new(code)
+                        .size(14.0)
+                        .color(t.colors.text_primary)
                         .view(ctx),
                 )
                 .padding(24)
                 .width(Length::Fill)
-                .height(if is_internal_narrow {
-                    Length::Shrink
-                } else {
-                    Length::Fill
-                })
-                .style(move |_| iced::widget::container::Style {
-                    background: Some(t.colors.surface.into()),
-                    border: iced::Border {
-                        radius: 20.0.into(),
-                        color: t.colors.border.scale_alpha(0.3),
-                        width: 1.0,
-                    },
-                    ..Default::default()
-                })
-                .into()
-            })
-        };
-
-        // We wrap the entire feature content logic in its own responsive block
-        let features = ProxyView::<Message, IcedBackend>::new(move |ctx| {
-            let is_internal_narrow = is_mobile || ctx.size.width < 1000.0;
-
-            if is_internal_narrow {
-                VStack::new_generic()
-                    .spacing(24.0)
-                    .width(Length::Fill)
-                    .push(feature_card(
-                        "layers",
-                        "Modular Architecture",
-                        "Composed of independent atoms and molecules for maximum reusability.",
-                    ))
-                    .push(feature_card(
-                        "zap",
-                        "High Performance",
-                        "Built on Iced and WGPU for fluid, hardware-accelerated 120fps rendering.",
-                    ))
-                    .push(feature_card(
-                        "shield",
-                        "Type Safe",
-                        "Leveraging Rust's ownership and type system for guaranteed reliability.",
-                    ))
-                    .view(ctx)
-            } else {
-                HStack::new_generic()
-                    .spacing(24.0)
-                    .width(Length::Fill)
-                    .height(Length::Fixed(240.0))
-                    .push(feature_card(
-                        "layers",
-                        "Modular Architecture",
-                        "Composed of independent atoms and molecules for maximum reusability.",
-                    ))
-                    .push(feature_card(
-                        "zap",
-                        "High Performance",
-                        "Built on Iced and WGPU for fluid, hardware-accelerated 120fps rendering.",
-                    ))
-                    .push(feature_card(
-                        "shield",
-                        "Type Safe",
-                        "Leveraging Rust's ownership and type system for guaranteed reliability.",
-                    ))
-                    .view(ctx)
-            }
-        });
-
-        // --- 3. Quick Start Section ---
-        let quick_start = VStack::new_generic()
-            .spacing(24.0)
-            .align_x(if is_narrow { iced::Alignment::Center } else { iced::Alignment::Start })
-            .width(Length::Fill)
-            .push(
-                Text::<IcedBackend>::new("Seamless Implementation")
-                    .title2()
-                    .bold()
-                    .color(t.colors.text_primary),
-            )
-            .push(ProxyView::<Message, IcedBackend>::new(move |ctx| {
-                let t = ctx.theme;
-                iced::widget::container(
-                    Text::<IcedBackend>::new(
-                        "VStack::new()\n  .spacing(16.0)\n  .push(Text::new(\"Hello PeakUI\").title1())\n  .push(Button::label(\"Get Started\"))",
-                    )
-                    .size(14.0)
-                    .color(t.colors.text_primary)
-                    .view(ctx),
-                )
-                .padding(24)
-                .width(if ctx.size.width < 1000.0 { Length::Fill } else { Length::Fixed(500.0) })
                 .style(move |_| iced::widget::container::Style {
                     background: Some(t.colors.surface.scale_alpha(0.5).into()),
                     border: iced::Border {
@@ -194,59 +101,75 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
                     ..Default::default()
                 })
                 .into()
-            }));
+            })) as Box<dyn View<Message, IcedBackend>>
+        };
 
-        // --- 4. Footer ---
-        let footer = VStack::new_generic()
-            .spacing(32.0)
-            .align_x(if is_narrow {
-                iced::Alignment::Center
-            } else {
-                iced::Alignment::Start
-            })
-            .width(Length::Fill)
-            .push(
-                VStack::new_generic()
-                    .spacing(16.0)
-                    .align_x(if is_narrow {
-                        iced::Alignment::Center
-                    } else {
-                        iced::Alignment::Start
-                    })
-                    .push(
-                        Text::<IcedBackend>::new("Ready to scale?")
-                            .title1()
-                            .bold()
-                            .color(t.colors.text_primary),
-                    )
-                    .push(
-                        Text::<IcedBackend>::new(
-                            "Explore our technical documentation and design patterns.",
-                        )
-                        .body()
-                        .color(t.colors.text_secondary),
-                    ),
-            )
-            .push(
-                HStack::new_generic()
-                    .spacing(20.0)
-                    .align_y(iced::Alignment::Center)
-                    .push(
-                        Button::<Message, IcedBackend>::label("View Roadmap")
-                            .variant(Variant::Ghost)
-                            .on_press(Message::SetTab(Page::Roadmap)),
-                    )
-                    .push(
-                        Button::<Message, IcedBackend>::label("Project Structure")
-                            .variant(Variant::Ghost)
-                            .on_press(Message::SetTab(Page::ProjectStructure)),
-                    ),
-            );
+        // --- Sections ---
+
+        let you_will_learn = doc_section(
+            "You will learn",
+            vec![
+                Box::new(Text::new("• How to create and nest components")),
+                Box::new(Text::new(
+                    "• How to add markup and styles using Method Chaining",
+                )),
+                Box::new(Text::new(
+                    "• How to display data and handle conditional rendering",
+                )),
+                Box::new(Text::new(
+                    "• How to respond to events and update the screen (MVU)",
+                )),
+                Box::new(Text::new(
+                    "• How to share data between components via state lifting",
+                )),
+            ],
+        );
+
+        let creating_components = doc_section("Creating and nesting components", vec![
+            Box::new(Text::new("PeakUI apps are made out of views. A view is a piece of the UI that has its own logic and appearance. Concepts flow logically from small atoms to entire pages.")),
+            Box::new(Text::new("PeakUI views are Rust functions that return a `View` trait object:")),
+            Box::new(code_block("fn my_button() -> impl View<Message> {\n  Button::label(\"I'm a button\")\n}")),
+            Box::new(Text::new("Now that you've declared my_button, you can nest it into another view:")),
+            Box::new(code_block("fn my_app() -> impl View<Message> {\n  VStack::new()\n    .push(Text::new(\"Welcome to my app\"))\n    .push(my_button())\n}")),
+        ]);
+
+        let adding_styles = doc_section("Adding styles", vec![
+            Box::new(Text::new("In PeakUI, you specify styles using semantic variants and intent via modifiers. This ensures consistency across your entire application.")),
+            Box::new(code_block("Button::label(\"Action\")\n  .variant(Variant::Solid)\n  .intent(Intent::Primary)")),
+            Box::new(Text::new("You can also use custom theme tokens to style your components:")),
+            Box::new(code_block("Text::new(\"Hello\")\n  .color(t.colors.primary)\n  .bold()")),
+        ]);
+
+        let conditional_rendering = doc_section("Conditional rendering", vec![
+            Box::new(Text::new("In PeakUI, there is no special syntax for writing conditions. Instead, you'll use regular Rust code, such as `if` statements or `match` expressions.")),
+            Box::new(code_block("let content = if is_logged_in {\n    Box::new(AdminPanel::new())\n} else {\n    Box::new(LoginForm::new())\n};\n\nVStack::new().push(content)")),
+        ]);
+
+        let rendering_lists = doc_section("Rendering lists", vec![
+            Box::new(Text::new("You will rely on Rust's powerful iterators to render lists of components.")),
+            Box::new(code_block("let list_items = products.iter().map(|product| {\n    Text::new(&product.title)\n});\n\nVStack::new().extend(list_items)")),
+        ]);
+
+        let localization = doc_section("Localization", vec![
+            Box::new(Text::new("For global applications, PeakUI leverages the Mozilla Fluent system. This allows for complex translations, including plurals and gender-neutral terms.")),
+            Box::new(code_block("// .ftl: welcome-user = Welcome, { $user }!\nText::new(context.t(\"welcome-user\"))")),
+        ]);
+
+        let responding_to_events = doc_section("Responding to events", vec![
+            Box::new(Text::new("You can respond to events by mapping them to your application's `Message` enum:")),
+            Box::new(code_block("fn my_button() -> impl View<Message> {\n  Button::label(\"Click me\")\n    .on_press(Message::ButtonClicked)\n}")),
+            Box::new(Text::new("The `update` function in your app will then handle these messages to change the state.")),
+        ]);
+
+        let updating_the_screen = doc_section("Updating the screen", vec![
+            Box::new(Text::new("To update the screen, you change your application's Model in the `update` function. PeakUI handles the re-rendering for you efficiently.")),
+            Box::new(code_block("fn update(&mut self, message: Message) -> Task<Message> {\n    match message {\n        Message::Increment => {\n            self.count += 1;\n            Task::none()\n        }\n    }\n}")),
+        ]);
 
         // --- Final Assembly ---
         VStack::new_generic()
             .width(Length::Fill)
-            .spacing(if is_narrow { 48.0 } else { 80.0 })
+            .spacing(64.0)
             .padding(Padding {
                 top: 48.0,
                 right: if is_narrow { 24.0 } else { 48.0 },
@@ -255,9 +178,14 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
             })
             .align_x(iced::Alignment::Start)
             .push(hero)
-            .push(features)
-            .push(quick_start)
-            .push(footer)
+            .push(you_will_learn)
+            .push(creating_components)
+            .push(adding_styles)
+            .push(conditional_rendering)
+            .push(rendering_lists)
+            .push(localization)
+            .push(responding_to_events)
+            .push(updating_the_screen)
             .view(ctx)
     }))
 }

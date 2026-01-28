@@ -329,8 +329,8 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         doc_content.view(context)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "component_doc".to_string(),
             label: Some(self.title.clone()),
             content: Some(self.description.clone()),

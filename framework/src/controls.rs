@@ -134,6 +134,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             self.width,
             Length::Shrink,
             Alignment::Center,
+            Alignment::Center,
             context.theme.scaling,
         );
 
@@ -147,13 +148,30 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let content_node = self.content.describe(context);
+        let label = content_node
+            .content
+            .clone()
+            .or(content_node.label.clone())
+            .unwrap_or_default();
+
         crate::core::SemanticNode {
             role: "button".to_string(),
-            label: Some(format!("{:?}_{:?}", self.intent, self.variant)),
+            label: Some(label.clone()),
             content: None,
-            children: vec![self.content.describe(context)],
+            children: vec![content_node],
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: "button".to_string(),
+                label: label,
+                hint: self
+                    .on_press
+                    .as_ref()
+                    .map(|_| "Activates the button".to_string()),
+                value: None,
+                states: vec![],
+            }),
         }
     }
 }
@@ -195,6 +213,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Tog
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
+            accessibility: None,
             role: "toggle".to_string(),
             label: Some(self.label.clone()),
             content: Some(self.is_active.to_string()),
@@ -249,6 +268,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
+            accessibility: None,
             role: "slider".to_string(),
             label: None,
             content: Some(self.value.to_string()),
@@ -297,7 +317,6 @@ impl<Message, B: crate::core::Backend> Stepper<Message, B> {
 
 impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Stepper<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        // ... (existing implementation)
         B::hstack(
             vec![
                 B::text(
@@ -354,12 +373,14 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
             Length::Fill,
             Length::Shrink,
             Alignment::Center,
+            Alignment::Center,
             context.theme.scaling,
         )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
+            accessibility: None,
             role: "stepper".to_string(),
             label: Some(self.label.clone()),
             content: Some(self.value.to_string()),
@@ -444,6 +465,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
+            accessibility: None,
             role: "text_input".to_string(),
             label: Some(self.placeholder.clone()),
             content: Some(if self.is_secure {

@@ -1,4 +1,6 @@
+pub mod accessibility;
 pub mod alert;
+pub mod localization;
 pub mod navigation;
 pub mod reference;
 pub mod segmented_picker;
@@ -34,6 +36,7 @@ pub mod prelude {
     pub use crate::forms::{Form, FormStyle};
     pub use crate::gestures::{Gesture, GestureDetector};
     pub use crate::layout::{HStack, LayoutExt, ResponsiveGrid, VStack, ZStack};
+    pub use crate::localization::Localization;
     pub use crate::modifiers::{ControlSize, Intent, Variant};
     pub use crate::motion::{AnimationConfig, Interpolatable, MotionState, Spring};
     pub use crate::nav_split_view::NavigationSplitView;

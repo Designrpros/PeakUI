@@ -97,8 +97,8 @@ impl<Message: 'static> View<Message, IcedBackend> for Card<Message, IcedBackend>
         .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "card".to_string(),
             label: None,
             content: None,
@@ -133,8 +133,8 @@ impl<Message: 'static> View<Message, TermBackend> for Card<Message, TermBackend>
         out
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "card".to_string(),
             label: None,
             content: None,
@@ -207,8 +207,8 @@ impl<Message: 'static> View<Message, IcedBackend> for Section<Message, IcedBacke
         .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "section".to_string(),
             label: Some(self.title.clone()),
             content: None,
@@ -228,8 +228,8 @@ impl<Message: 'static> View<Message, TermBackend> for Section<Message, TermBacke
         )
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "section".to_string(),
             label: Some(self.title.clone()),
             content: None,
@@ -304,8 +304,8 @@ impl<Message: 'static> View<Message, IcedBackend> for GlassCard<Message, IcedBac
             .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "glass_card".to_string(),
             label: None,
             content: None,
@@ -321,8 +321,8 @@ impl<Message: 'static> View<Message, TermBackend> for GlassCard<Message, TermBac
         format!("(GLASS)\n{}", self.content.view(context))
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+        crate::core::SemanticNode { accessibility: None, 
             role: "glass_card".to_string(),
             label: None,
             content: None,

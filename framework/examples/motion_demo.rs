@@ -5,10 +5,11 @@ use std::time::{Duration, Instant};
 #[cfg(not(target_arch = "wasm32"))]
 pub fn main() -> iced::Result {
     iced::application(
-        "PeakUI - Motion Showcase",
+        || (MotionDemo::default(), Task::none()),
         MotionDemo::update,
         MotionDemo::view,
     )
+    .title("PeakUI - Motion Showcase")
     .subscription(MotionDemo::subscription)
     .run()
 }
@@ -70,6 +71,7 @@ impl MotionDemo {
         responsive(
             ShellMode::Desktop,
             ThemeTokens::get(ShellMode::Desktop, ThemeTone::Dark),
+            Localization::default(),
             |context| {
                 VStack::new()
                     .push(Text::new("Motion Engine").size(48.0))
