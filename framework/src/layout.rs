@@ -109,6 +109,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -221,6 +222,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -292,6 +294,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -435,6 +438,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }

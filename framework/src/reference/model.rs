@@ -147,67 +147,78 @@ impl ToString for Page {
 
 impl From<String> for Page {
     fn from(s: String) -> Self {
-        match s.as_str() {
-            "Landing" => Page::Landing,
-            "Introduction" => Page::Introduction,
-            "Roadmap" => Page::Roadmap,
-            "Community" => Page::Community,
-            "Intelligence" => Page::Intelligence,
-            "Overview" => Page::Overview,
-            "Architecture" => Page::Architecture,
-            "Project Structure" => Page::ProjectStructure,
-            "Customizations" => Page::Customizations,
-            "Basic Sizing" => Page::BasicSizing,
-            "Colors" => Page::Colors,
-            "Typography" => Page::Typography,
-            "Layout" => Page::Layout,
+        let normalized = s.trim().to_lowercase();
+        match normalized.as_str() {
+            "landing" => Page::Landing,
+            "introduction" | "intro" | "start" => Page::Introduction,
+            "roadmap" => Page::Roadmap,
+            "community" => Page::Community,
+            "intelligence" | "ai_overview" => Page::Intelligence,
+            "overview" => Page::Overview,
+            "architecture" => Page::Architecture,
+            "project structure" | "project-structure" | "projectstructure" => {
+                Page::ProjectStructure
+            }
+            "customizations" => Page::Customizations,
+            "basic sizing" | "basicsizing" | "sizing" => Page::BasicSizing,
+            "colors" => Page::Colors,
+            "typography" => Page::Typography,
+            "layout" => Page::Layout,
 
-            "Text" => Page::Text,
-            "Icon" => Page::Icon,
-            "Divider" => Page::Divider,
-            "Button" => Page::Button,
-            "Shapes" => Page::Shapes,
-            "Image" => Page::Image,
+            "text" => Page::Text,
+            "icon" => Page::Icon,
+            "divider" => Page::Divider,
+            "button" => Page::Button,
+            "shapes" => Page::Shapes,
+            "image" => Page::Image,
 
-            "VStack" => Page::VStack,
-            "HStack" => Page::HStack,
-            "ZStack" => Page::ZStack,
-            "Overlay" => Page::Overlay,
-            "ScrollView" => Page::ScrollView,
-            "Card" => Page::Card,
+            "vstack" => Page::VStack,
+            "hstack" => Page::HStack,
+            "zstack" => Page::ZStack,
+            "overlay" => Page::Overlay,
+            "scrollview" => Page::ScrollView,
+            "card" => Page::Card,
 
-            "Sidebar" => Page::Sidebar,
-            "Tabbar" => Page::Tabbar,
-            "Modal" => Page::Modal,
-            "NavigationSplit" => Page::NavigationSplit,
-            "Section" => Page::Section,
+            "sidebar" => Page::Sidebar,
+            "tabbar" => Page::Tabbar,
+            "modal" => Page::Modal,
+            "navigationsplit" | "navigation-split" | "navigation_split" => Page::NavigationSplit,
+            "section" => Page::Section,
 
-            "API Schema" => Page::ApiSchema,
+            "api schema" | "apischema" | "api-schema" => Page::ApiSchema,
 
-            "Buttons" => Page::ShowcaseButtons,
-            "Inputs" => Page::ShowcaseInputs,
-            "Toggles" => Page::ShowcaseToggles,
-            "Sliders" => Page::ShowcaseSliders,
-            "Pickers" => Page::ShowcasePickers,
+            "buttons" | "showcasebuttons" => Page::ShowcaseButtons,
+            "inputs" | "showcaseinputs" => Page::ShowcaseInputs,
+            "toggles" | "showcasetoggles" => Page::ShowcaseToggles,
+            "sliders" | "showcasesliders" => Page::ShowcaseSliders,
+            "pickers" | "showcasepickers" => Page::ShowcasePickers,
 
-            "use_state" => Page::UseState,
-            "use_effect" => Page::UseEffect,
-            "use_memo" => Page::UseMemo,
-            "use_callback" => Page::UseCallback,
+            "use_state" | "usestate" => Page::UseState,
+            "use_effect" | "useeffect" => Page::UseEffect,
+            "use_memo" | "usememo" => Page::UseMemo,
+            "use_callback" | "usecallback" => Page::UseCallback,
 
-            "PeakDB" => Page::PeakDB,
-            "PeakCloud" => Page::PeakCloud,
-            "PeakDesktop" => Page::PeakDesktop,
-            "PeakOS Core" => Page::PeakOSCore,
+            "peakdb" | "db" => Page::PeakDB,
+            "peakcloud" | "cloud" => Page::PeakCloud,
+            "peakdesktop" => Page::PeakDesktop,
+            "peakos core" | "peakoscore" => Page::PeakOSCore,
 
-            "Appearance" => Page::Appearance,
-            "Scaling" => Page::Scaling,
-            "Shortcuts" => Page::Shortcuts,
-            "About" => Page::About,
-            "Updates" => Page::Updates,
-            "AI" => Page::SettingsAI,
+            "appearance" | "theme" => Page::Appearance,
+            "scaling" => Page::Scaling,
+            "shortcuts" => Page::Shortcuts,
+            "about" => Page::About,
+            "updates" => Page::Updates,
+            "ai" | "settingsai" | "settings_ai" => Page::SettingsAI,
 
-            _ => Page::Unknown(s),
+            _ => {
+                // Try to find if any of the to_string() matches (case insensitive)
+                for p in Page::all() {
+                    if p.to_string().to_lowercase() == normalized {
+                        return p.clone();
+                    }
+                }
+                Page::Unknown(s)
+            }
         }
     }
 }
@@ -433,5 +444,29 @@ impl Page {
 
             Page::Unknown(_) => "Start".to_string(),
         }
+    }
+    pub fn all() -> &'static [Page] {
+        &[
+            Page::Introduction,
+            Page::Roadmap,
+            Page::Community,
+            Page::Architecture,
+            Page::ProjectStructure,
+            Page::Intelligence,
+            Page::Typography,
+            Page::Customizations,
+            Page::BasicSizing,
+            Page::Colors,
+            Page::Layout,
+            Page::Text,
+            Page::Icon,
+            Page::Button,
+            Page::Shapes,
+            Page::PeakDB,
+            Page::PeakCloud,
+            Page::Appearance,
+            Page::SettingsAI,
+            Page::About,
+        ]
     }
 }

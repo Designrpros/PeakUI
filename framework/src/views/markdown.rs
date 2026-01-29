@@ -261,14 +261,12 @@ where
             .into()
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
-        crate::core::SemanticNode { accessibility: None, 
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
             role: "article".to_string(),
             label: Some("Markdown Content".to_string()),
             content: Some(self.content.chars().take(100).collect()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

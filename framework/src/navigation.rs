@@ -182,6 +182,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
             Some(self.destination.clone()),
             Variant::Ghost,
             Intent::Neutral,
+            false,
             context,
         )
     }
@@ -195,6 +196,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -243,6 +245,7 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
             children: vec![self.content.describe(context)],
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -336,7 +339,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             context.theme.scaling,
         );
 
-        B::scroll_view(inner)
+        B::scroll_view(inner, Length::Fill, Length::Fill, None, context)
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
@@ -348,6 +351,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             children: self.items.iter().map(|i| i.describe(context)).collect(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }

@@ -1,8 +1,8 @@
 use crate::localization::Localization;
 use crate::modifiers::{Intent, Variant};
 // Force rebuild to pick up peak-icons changes
+use iced::{widget::Id, Element, Subscription, Task};
 use iced::{Alignment, Color, Length, Padding, Renderer, Shadow, Size, Theme, Vector};
-use iced::{Element, Subscription, Task};
 pub use peak_core::registry::ShellMode;
 
 pub trait App: Sized {
@@ -102,6 +102,34 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     }
 }
 
+pub struct NeuralSudo<Message: 'static, B: Backend, V: View<Message, B>> {
+    inner: V,
+    reason: String,
+    _phantom: std::marker::PhantomData<(Message, B)>,
+}
+
+impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+    for NeuralSudo<Message, B, V>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        self.inner.view(context)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe(context);
+        node.is_protected = true;
+        node.protection_reason = Some(self.reason.clone());
+        node
+    }
+
+    fn describe_iced(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe_iced(context);
+        node.is_protected = true;
+        node.protection_reason = Some(self.reason.clone());
+        node
+    }
+}
+
 pub use peak_theme::ThemeTokens;
 use std::sync::Arc;
 
@@ -116,8 +144,23 @@ pub struct Context {
     pub localization: Localization,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+impl Default for Context {
+    fn default() -> Self {
+        Self {
+            theme: ThemeTokens::default(),
+            mode: ShellMode::Desktop,
+            device: DeviceType::Desktop,
+            size: iced::Size::ZERO,
+            safe_area: iced::Padding::ZERO,
+            focused_id: None,
+            localization: Localization::default(),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub enum DeviceType {
+    #[default]
     Desktop,
     Mobile,
     TV,
@@ -392,6 +435,7 @@ impl Backend for SpatialBackend {
         _on_press: Option<Message>,
         _variant: Variant,
         _intent: Intent,
+        _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let is_focused = context.is_focused("button");
@@ -557,7 +601,13 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn scroll_view<Message: 'static>(content: Self::AnyView<Message>) -> Self::AnyView<Message> {
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
+        _id: Option<&'static str>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "scroll_view".to_string(),
             width: content.width,
@@ -659,6 +709,7 @@ pub trait Backend: Sized + Clone + 'static {
         on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -722,7 +773,13 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn scroll_view<Message: 'static>(content: Self::AnyView<Message>) -> Self::AnyView<Message>;
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        width: Length,
+        height: Length,
+        id: Option<&'static str>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
 
     fn mouse_area<Message: Clone + 'static>(
         content: Self::AnyView<Message>,
@@ -906,7 +963,7 @@ impl Backend for IcedBackend {
 
         // 1. Try embedded icons first
         if let Some(svg_data) = peak_icons::get_icon(&name) {
-            // log::debug!("Icon '{}' found in EMBEDDED storage.", name);
+            // log::debug!("Icon '{}' found in EMBEDDED storage.");
             let colored_svg = svg_data
                 .replace("currentColor", &hex_color)
                 .replace("fill=\"#000000\"", &format!("fill=\"{}\"", hex_color))
@@ -1049,6 +1106,7 @@ impl Backend for IcedBackend {
         on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::button;
@@ -1056,6 +1114,7 @@ impl Backend for IcedBackend {
 
         button(content)
             .on_press_maybe(on_press)
+            .padding(if is_compact { 0.0 } else { 4.0 })
             .style(move |_, status| {
                 let color = match intent {
                     Intent::Primary => theme.colors.primary,
@@ -1317,9 +1376,20 @@ impl Backend for IcedBackend {
             .into()
     }
 
-    fn scroll_view<Message: 'static>(content: Self::AnyView<Message>) -> Self::AnyView<Message> {
-        use iced::widget::scrollable;
-        scrollable(content).into()
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        width: Length,
+        height: Length,
+        id: Option<&'static str>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        let mut scroll = iced::widget::scrollable(content)
+            .width(width)
+            .height(height);
+        if let Some(id) = id {
+            scroll = scroll.id(Id::new(id));
+        }
+        scroll.into()
     }
 
     fn mouse_area<Message: Clone + 'static>(
@@ -1497,6 +1567,7 @@ impl Backend for TermBackend {
         _on_press: Option<Message>,
         _variant: Variant,
         _intent: Intent,
+        _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
         if context.is_focused("button") {
@@ -1591,7 +1662,13 @@ impl Backend for TermBackend {
         content
     }
 
-    fn scroll_view<Message: 'static>(content: Self::AnyView<Message>) -> Self::AnyView<Message> {
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
+        _id: Option<&'static str>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         content
     }
 
@@ -1631,17 +1708,10 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         }
     }
 
-    /// Generates a semantic description of the view for AI agents.
     fn describe(&self, _context: &Context) -> SemanticNode {
-        // Default implementation for basic views
         SemanticNode {
-            accessibility: None,
             role: "view".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1651,13 +1721,19 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     /// This method should ideally be removed once `describe` can be made to work with `iced::Element` directly.
     fn describe_iced(&self, _context: &Context) -> SemanticNode {
         SemanticNode {
-            accessibility: None,
             role: "iced_view".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
+        }
+    }
+
+    fn sudo(self, reason: impl Into<String>) -> NeuralSudo<Message, B, Self>
+    where
+        Self: Sized + 'static,
+    {
+        NeuralSudo {
+            inner: self,
+            reason: reason.into(),
+            _phantom: std::marker::PhantomData,
         }
     }
 
@@ -1693,6 +1769,93 @@ pub struct SemanticNode {
     pub neural_tag: Option<String>,
     pub documentation: Option<String>,
     pub accessibility: Option<AccessibilityNode>,
+    pub is_protected: bool,
+    pub protection_reason: Option<String>,
+}
+
+impl SemanticNode {
+    /// Recursively find a node that matches the predicate
+    pub fn find_deep<F>(&self, predicate: &F) -> Option<&SemanticNode>
+    where
+        F: Fn(&SemanticNode) -> bool,
+    {
+        if predicate(self) {
+            return Some(self);
+        }
+        for child in &self.children {
+            if let Some(found) = child.find_deep(predicate) {
+                return Some(found);
+            }
+        }
+        None
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SemanticRecord {
+    pub id: String,
+    pub collection: String,
+    pub content: String,
+    pub vector: Option<Vec<f32>>,
+    pub metadata: serde_json::Value,
+    pub timestamp: u64,
+}
+
+pub trait DataProvider: Send + Sync {
+    fn save(&self, record: SemanticRecord) -> Task<std::result::Result<(), String>>;
+    fn find(&self, query: String) -> Task<std::result::Result<Vec<SemanticRecord>, String>>;
+    fn delete(&self, id: String) -> Task<std::result::Result<(), String>>;
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ChatCompletionMessage {
+    pub role: String,
+    pub content: String,
+}
+
+pub trait IntelligenceProvider: Send + Sync {
+    fn chat(
+        &self,
+        messages: Vec<ChatCompletionMessage>,
+    ) -> Task<std::result::Result<String, String>>;
+
+    fn chat_stream(
+        &self,
+        _messages: Vec<ChatCompletionMessage>,
+    ) -> iced::futures::stream::BoxStream<'static, std::result::Result<String, String>> {
+        // Default implementation returns an empty stream as Task conversion requires runtime
+        use iced::futures::StreamExt;
+        iced::futures::stream::empty().boxed()
+    }
+
+    fn reason(
+        &self,
+        prompt: String,
+        context: Vec<SemanticNode>,
+    ) -> Task<std::result::Result<String, String>> {
+        let context_json = serde_json::to_string(&context).unwrap_or_default();
+        let messages = vec![
+            ChatCompletionMessage {
+                role: "system".to_string(),
+                content: format!("UI Context: {}", context_json),
+            },
+            ChatCompletionMessage {
+                role: "user".to_string(),
+                content: prompt,
+            },
+        ];
+        self.chat(messages)
+    }
+
+    fn execute_tool(
+        &self,
+        name: String,
+        args: serde_json::Value,
+    ) -> Task<std::result::Result<serde_json::Value, String>>;
+
+    fn get_system_context(&self) -> String {
+        "Peak Intelligence Provider".to_string()
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize, Default)]
@@ -1739,6 +1902,7 @@ impl Backend for AIBackend {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1760,6 +1924,7 @@ impl Backend for AIBackend {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1783,6 +1948,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1800,6 +1966,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1812,6 +1979,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1824,6 +1992,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1836,6 +2005,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1852,6 +2022,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1871,6 +2042,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1879,6 +2051,7 @@ impl Backend for AIBackend {
         _on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        _is_compact: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
@@ -1889,6 +2062,7 @@ impl Backend for AIBackend {
             children: vec![content],
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1904,16 +2078,14 @@ impl Backend for AIBackend {
             label: Some(title),
             content: Some(icon),
             children: vec![SemanticNode {
-                accessibility: None,
                 role: "state".to_string(),
                 label: Some("selected".to_string()),
                 content: Some(is_selected.to_string()),
-                children: Vec::new(),
-                neural_tag: None,
-                documentation: None,
+                ..Default::default()
             }],
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1935,6 +2107,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1952,6 +2125,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1969,6 +2143,7 @@ impl Backend for AIBackend {
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -1986,6 +2161,7 @@ impl Backend for AIBackend {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -2002,6 +2178,7 @@ impl Backend for AIBackend {
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 
@@ -2012,13 +2189,9 @@ impl Backend for AIBackend {
         _radius: f32,
     ) -> Self::AnyView<Message> {
         SemanticNode {
-            accessibility: None,
             role: "image".to_string(),
             label: Some(path.into()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 
@@ -2032,7 +2205,13 @@ impl Backend for AIBackend {
         content
     }
 
-    fn scroll_view<Message: 'static>(content: Self::AnyView<Message>) -> Self::AnyView<Message> {
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
+        _id: Option<&'static str>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         content
     }
 

@@ -92,12 +92,15 @@ impl SidebarView {
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("RESOURCES"))
-            .push(sidebar_item(
-                "Roadmap",
-                "milestone",
-                Page::Roadmap,
-                *active_tab == Page::Roadmap,
-            ))
+            .push(
+                sidebar_item(
+                    "Roadmap",
+                    "milestone",
+                    Page::Roadmap,
+                    *active_tab == Page::Roadmap,
+                )
+                .sudo("Accessing vision-critical roadmap data"),
+            )
             .push(sidebar_item(
                 "Community",
                 "users",
@@ -358,7 +361,7 @@ impl View<Message, IcedBackend> for SidebarView {
             .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let content = match self.navigation_mode.as_str() {
             "Start" => self.view_guide_sidebar(context),
             "Catalog" => self.view_components_sidebar(context),
@@ -367,13 +370,11 @@ impl View<Message, IcedBackend> for SidebarView {
             _ => self.base_sidebar(context),
         };
 
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
             role: "sidebar".to_string(),
             label: Some(self.navigation_mode.clone()),
-            content: None,
             children: vec![content.describe(context)],
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -464,8 +465,8 @@ impl View<Message, IcedBackend> for SidebarItem {
         .view(context)
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
-        crate::core::SemanticNode { accessibility: None, 
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
             role: "sidebar_item".to_string(),
             label: Some(format!("{} (page={:?})", self.label, self.page)),
             content: if self.active {
@@ -473,9 +474,7 @@ impl View<Message, IcedBackend> for SidebarItem {
             } else {
                 None
             },
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

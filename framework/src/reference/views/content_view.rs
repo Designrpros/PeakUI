@@ -18,6 +18,9 @@ pub struct ContentView {
     pub layout_lab: super::super::app::LayoutLabState,
     pub sizing_lab: super::super::app::SizingLabState,
     pub render_mode: super::super::app::RenderMode,
+    pub is_thinking: bool,
+    pub chat_messages: Vec<crate::views::chat::ChatMessage>,
+    pub chat_input: String,
     pub sidebar_width: f32,
     pub inspector_width: f32,
     pub is_resizing_sidebar: bool,
@@ -25,10 +28,10 @@ pub struct ContentView {
     pub inspector_tab: super::super::app::InspectorTab,
 
     // Chat State for Global Inspector
-    pub chat_messages: Vec<crate::views::chat::ChatMessage>,
-    pub chat_input: String,
     pub api_key: String,
+    pub ai_provider: super::super::app::AIProviderChoice,
     pub icon_limit: usize,
+    pub pending_sudo_action: Option<super::super::app::SudoAction>,
 }
 
 impl ContentView {
@@ -47,15 +50,18 @@ impl ContentView {
             layout_lab: app.layout_lab.clone(),
             sizing_lab: app.sizing_lab.clone(),
             render_mode: app.render_mode,
+            is_thinking: app.is_thinking,
+            chat_messages: app.chat_messages.clone(),
+            chat_input: app.chat_input.clone(),
             sidebar_width: app.sidebar_width,
             inspector_width: app.inspector_width,
             is_resizing_sidebar: app.is_resizing_sidebar,
             is_resizing_inspector: app.is_resizing_inspector,
             inspector_tab: app.inspector_tab,
-            chat_messages: app.chat_messages.clone(),
-            chat_input: app.chat_input.clone(),
             api_key: app.api_key.clone(),
+            ai_provider: app.ai_provider,
             icon_limit: app.icon_limit,
+            pending_sudo_action: app.pending_sudo_action.clone(),
         }
     }
 
@@ -72,6 +78,7 @@ impl ContentView {
             self.sizing_lab.clone(),
             self.render_mode,
             self.api_key.clone(),
+            self.ai_provider,
             self.search_query.clone(),
             self.icon_limit,
         );
@@ -233,6 +240,7 @@ impl ContentView {
             let ai_inspector = crate::views::chat::AIChatView::new(
                 self.chat_messages.clone(),
                 self.chat_input.clone(),
+                self.is_thinking,
                 Message::Chat,
             );
 
@@ -372,7 +380,7 @@ impl ContentView {
         final_view
     }
 
-    pub fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    pub fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let is_mobile = context.is_slim();
 
         let canvas_manager = CanvasView::new(
@@ -384,6 +392,7 @@ impl ContentView {
             self.sizing_lab.clone(),
             self.render_mode,
             self.api_key.clone(),
+            self.ai_provider,
             self.search_query.clone(),
             self.icon_limit,
         );
@@ -407,13 +416,11 @@ impl ContentView {
             }
         }
 
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
             role: "content_view".to_string(),
             label: Some(format!("Page: {:?}", self.active_tab)),
-            content: None,
             children: vec![split_view.describe(context)],
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

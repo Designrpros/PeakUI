@@ -115,15 +115,14 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
         column.into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let children = self.sections.iter().map(|s| s.describe(context)).collect();
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
             role: "form".to_string(),
             label: Some(format!("{:?}", self.style)),
             content: None,
             children,
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

@@ -1,4 +1,4 @@
-use iced::{Result, Task};
+use peak_ui::prelude::{Result, Task};
 // use peak_ui::core::App as _;
 use peak_ui::reference; // Import trait for method usage
 
@@ -69,7 +69,7 @@ pub fn run() {
         on_context_menu.forget();
     }
 
-    let result = iced::application(
+    peak_ui::prelude::application(
         || {
             #[cfg(target_arch = "wasm32")]
             let (initial_page, hash, path) = {
@@ -114,9 +114,9 @@ pub fn run() {
         reference::App::view,
     )
     .title(app_title)
-    .window(iced::window::Settings {
+    .window(peak_ui::prelude::window::Settings {
         visible: true,
-        platform_specific: iced::window::settings::PlatformSpecific {
+        platform_specific: peak_ui::prelude::window::settings::PlatformSpecific {
             target: Some("iced-canvas".to_string()),
             ..Default::default()
         },

@@ -40,14 +40,11 @@ where
         self.content.view(context)
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
-        crate::core::SemanticNode { accessibility: None, 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
             role: "gesture_detector".to_string(),
-            label: None,
-            content: None,
             children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

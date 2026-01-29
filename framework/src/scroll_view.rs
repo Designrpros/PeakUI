@@ -1,11 +1,12 @@
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
-use iced::{Element, Length, Renderer, Theme};
+use iced::{widget::Id, Element, Length, Renderer, Theme};
 
 /// A scrollable container that wraps content and provides styled scrollbars.
 pub struct ScrollView<Message: 'static, B: Backend = IcedBackend> {
     content: Box<dyn View<Message, B>>,
     width: Length,
     height: Length,
+    id: Option<&'static str>,
     show_indicators: bool,
 }
 
@@ -21,6 +22,7 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
             content,
             width: Length::Fill,
             height: Length::Fill,
+            id: None,
             show_indicators: true,
         }
     }
@@ -40,6 +42,7 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
             content: Box::new(content),
             width: Length::Fill,
             height: Length::Fill,
+            id: None,
             show_indicators: true,
         }
     }
@@ -66,20 +69,31 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
     pub fn hide(self) -> Self {
         self.hide_indicators()
     }
+
+    /// Sets the ID of the `ScrollView`.
+    pub fn id(mut self, id: &'static str) -> Self {
+        self.id = Some(id);
+        self
+    }
 }
 
 impl<Message: 'static> View<Message, IcedBackend> for ScrollView<Message, IcedBackend> {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let content = iced::widget::container(self.content.view(context)).width(Length::Fill);
 
-        Self::apply_style(
+        let mut s = Self::apply_style(
             iced::widget::scrollable(content),
             &context.theme,
             self.show_indicators,
         )
         .width(self.width)
-        .height(self.height)
-        .into()
+        .height(self.height);
+
+        if let Some(id) = self.id {
+            s = s.id(Id::new(id));
+        }
+
+        s.into()
     }
 }
 

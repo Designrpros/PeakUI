@@ -12,6 +12,7 @@ pub struct Button<Message, B: crate::core::Backend = crate::core::IcedBackend> {
     variant: Variant,
     size: ControlSize,
     width: Length,
+    is_compact: bool,
     _phantom: std::marker::PhantomData<B>,
 }
 
@@ -34,6 +35,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
             variant: Variant::Solid,
             size: ControlSize::Medium,
             width: Length::Shrink,
+            is_compact: false,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -69,6 +71,11 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
 
     pub fn size(mut self, size: ControlSize) -> Self {
         self.size = size;
+        self
+    }
+
+    pub fn compact(mut self) -> Self {
+        self.is_compact = true;
         self
     }
 
@@ -143,6 +150,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             self.on_press.clone(),
             self.variant,
             self.intent,
+            self.is_compact,
             context,
         )
     }
@@ -162,16 +170,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             children: vec![content_node],
             neural_tag: None,
             documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: "button".to_string(),
-                label: label,
-                hint: self
-                    .on_press
-                    .as_ref()
-                    .map(|_| "Activates the button".to_string()),
-                value: None,
-                states: vec![],
-            }),
+            ..Default::default()
         }
     }
 }
@@ -220,6 +219,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Tog
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -275,6 +275,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -347,6 +348,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Some((self.on_change)(self.value - self.step)),
                     Variant::Outline,
                     Intent::Neutral,
+                    false,
                     context,
                 ),
                 B::button(
@@ -365,6 +367,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Some((self.on_change)(self.value + self.step)),
                     Variant::Outline,
                     Intent::Neutral,
+                    false,
                     context,
                 ),
             ],
@@ -387,6 +390,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -476,6 +480,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }

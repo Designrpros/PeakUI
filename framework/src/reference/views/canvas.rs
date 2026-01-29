@@ -12,6 +12,7 @@ pub struct CanvasView {
     pub sizing_lab: super::super::app::SizingLabState,
     pub render_mode: super::super::app::RenderMode,
     pub api_key: String,
+    pub ai_provider: super::super::app::AIProviderChoice,
     pub search_query: String,
     pub icon_limit: usize,
 }
@@ -28,6 +29,7 @@ impl CanvasView {
         sizing_lab: super::super::app::SizingLabState,
         render_mode: super::super::app::RenderMode,
         api_key: String,
+        ai_provider: super::super::app::AIProviderChoice,
         search_query: String,
         icon_limit: usize,
     ) -> Self {
@@ -40,6 +42,7 @@ impl CanvasView {
             sizing_lab,
             render_mode,
             api_key,
+            ai_provider,
             search_query,
             icon_limit,
         }
@@ -127,7 +130,12 @@ impl CanvasView {
             Page::Scaling => pages::settings::scaling::view(context, is_mobile),
             Page::Shortcuts => pages::settings::shortcuts::view(context, is_mobile),
             Page::About | Page::Updates => pages::settings::about::view(context, is_mobile),
-            Page::SettingsAI => pages::settings::ai::view(context, is_mobile, self.api_key.clone()),
+            Page::SettingsAI => pages::settings::ai::view(
+                context,
+                is_mobile,
+                self.api_key.clone(),
+                self.ai_provider,
+            ),
 
             // Fallback
             Page::Landing | Page::Unknown(_) => pages::introduction::view(context, is_mobile),
@@ -151,7 +159,7 @@ impl View<Message, IcedBackend> for CanvasView {
             .into()
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let page = self.render_page(context);
         page.view.describe(context)
     }

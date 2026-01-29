@@ -502,7 +502,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
         }
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let mut children = vec![
             self.sidebar.describe(context),
             self.content.describe(context),
@@ -512,13 +512,15 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
             children.push(inspector.describe(context));
         }
 
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
+            accessibility: None,
             role: "navigation_split_view".to_string(),
             label: Some("Main Layout".to_string()),
             content: None,
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }
@@ -535,7 +537,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, TermBackend>
         out
     }
 
-    fn describe(&self, context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let mut children = vec![
             self.sidebar.describe(context),
             self.content.describe(context),
@@ -545,13 +547,15 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, TermBackend>
             children.push(inspector.describe(context));
         }
 
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
+            accessibility: None,
             role: "navigation_split_view".to_string(),
             label: Some("Main Layout".to_string()),
             content: None,
             children,
             neural_tag: None,
             documentation: None,
+            ..Default::default()
         }
     }
 }

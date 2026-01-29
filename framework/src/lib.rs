@@ -30,8 +30,8 @@ pub mod prelude {
     pub use crate::containers::{Card, GlassCard, Section};
     pub use crate::controls::{Button, ButtonStyle, Slider, Stepper, TextInput, Toggle};
     pub use crate::core::{
-        responsive, AIBackend, Context, DeviceType, IcedBackend, ProxyView, SemanticNode,
-        ShellMode, TermBackend, ThemeTokens, View,
+        responsive, AIBackend, Backend, ChatCompletionMessage, Context, DeviceType, IcedBackend,
+        ProxyView, SemanticNode, ShellMode, TermBackend, ThemeTokens, View,
     };
     pub use crate::forms::{Form, FormStyle};
     pub use crate::gestures::{Gesture, GestureDetector};
@@ -52,7 +52,7 @@ pub mod prelude {
     pub use peak_theme::ThemeTone;
 
     // Re-export core UI types so showcase doesn't need direct iced imports
-    pub use iced::widget::{column, container, row, stack};
+    pub use iced::widget::{column, container, row, scrollable, stack, Id};
     pub use iced::{
         application, run, Alignment, Background, Border, Color, Element, Font, Length, Padding,
         Renderer, Result, Shadow, Size, Task, Theme, Vector,

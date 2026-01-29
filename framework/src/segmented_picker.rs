@@ -204,12 +204,13 @@ where
         clone.build()
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode { 
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         let children = self
             .options
             .iter()
             .enumerate()
-            .map(|(idx, opt)| crate::core::SemanticNode { accessibility: None, 
+            .map(|(idx, opt)| crate::core::SemanticNode {
+                accessibility: None,
                 role: "segment_option".to_string(),
                 label: Some(opt.label.clone()),
                 content: if idx == self.active_index {
@@ -220,16 +221,16 @@ where
                 children: Vec::new(),
                 neural_tag: None,
                 documentation: None,
+                ..Default::default()
             })
             .collect();
 
-        crate::core::SemanticNode { accessibility: None, 
+        crate::core::SemanticNode {
             role: "segmented_picker".to_string(),
             label: None,
             content: Some(format!("active_index: {}", self.active_index)),
             children,
-            neural_tag: None,
-            documentation: None,
+            ..Default::default()
         }
     }
 }

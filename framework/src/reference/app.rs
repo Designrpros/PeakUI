@@ -1,8 +1,12 @@
 use super::model::Page;
+use crate::core::IntelligenceProvider;
 use crate::prelude::*;
+use crate::reference::db_bridge::PeakDBBridge;
+use crate::reference::intelligence_bridge::PeakIntelligenceBridge;
 use crate::views::chat::{ChatMessage, ChatRole, ChatViewMessage};
 use peak_core::registry::ShellMode;
 use peak_theme::{PeakTheme, ThemeTokens, ThemeTone};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum InspectorTab {
@@ -20,13 +24,34 @@ pub enum RenderMode {
     Spatial,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Default)]
-struct Settings {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum AIProviderChoice {
+    Ollama,
+    LlamaCpp,
+    OpenRouter,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct Settings {
     pub api_key: String,
+    pub ai_provider: AIProviderChoice,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            api_key: String::new(),
+            ai_provider: AIProviderChoice::Ollama,
+        }
+    }
 }
 
 impl Settings {
     pub fn load() -> Self {
+        Self::load_or_default()
+    }
+
+    pub fn load_or_default() -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
             if let Ok(content) = std::fs::read_to_string(".peak/settings.json") {
@@ -36,12 +61,21 @@ impl Settings {
             }
         }
 
-        // Fallback to environment variable (useful for production/WASM builds)
+        // Fallback or default
         let api_key = option_env!("OPENROUTER_API_KEY")
             .map(|s| s.to_string())
             .unwrap_or_default();
 
-        Self { api_key }
+        let ai_provider = if !api_key.is_empty() {
+            AIProviderChoice::OpenRouter
+        } else {
+            AIProviderChoice::Ollama
+        };
+
+        Self {
+            api_key,
+            ai_provider,
+        }
     }
 
     pub fn save(&self) {
@@ -90,11 +124,22 @@ pub struct App {
 
     // AI Integration
     pub api_key: String,
+    pub ai_provider: AIProviderChoice,
 
     // Infinite Scroll / Lazy Load
     pub icon_limit: usize,
     pub window_width: f32,
     pub localization: Localization,
+    pub pending_sudo_action: Option<SudoAction>,
+    pub is_thinking: bool,
+    pub intelligence: Arc<crate::reference::intelligence_bridge::PeakIntelligenceBridge>,
+    pub db: Arc<crate::reference::db_bridge::PeakDBBridge>,
+}
+
+#[derive(Debug, Clone)]
+pub struct SudoAction {
+    pub message: Box<Message>,
+    pub reason: String,
 }
 
 #[derive(Debug, Clone)]
@@ -214,8 +259,11 @@ pub enum Message {
     // Chat
     Chat(ChatViewMessage),
     AIResponse(std::result::Result<String, String>),
+    ChatStreamUpdate(std::result::Result<String, String>),
+    AIChatComplete,
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
+    SetAIProvider(AIProviderChoice),
 
     // Button Lab Messages
     UpdateButtonLabel(String),
@@ -256,6 +304,9 @@ pub enum Message {
     CmdBackspacePressed,
     LoadMoreIcons,
     Heartbeat,
+    SudoRequest(SudoAction),
+    SudoApprove,
+    SudoDeny,
     None,
 }
 
@@ -275,6 +326,7 @@ pub enum Command {
     SetRenderMode(RenderMode),
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
+    SetAIProvider(AIProviderChoice),
 
     // Button Lab
     UpdateButtonLabel(String),
@@ -357,6 +409,7 @@ impl Command {
 
             Command::SetInspectorTab(tab) => Message::SetInspectorTab(tab),
             Command::SetApiKey(key) => Message::SetApiKey(key),
+            Command::SetAIProvider(provider) => Message::SetAIProvider(provider),
             Command::None => Message::None,
         }
     }
@@ -365,6 +418,12 @@ impl Command {
 impl Default for App {
     fn default() -> Self {
         let settings = Settings::load();
+        let provider = match settings.ai_provider {
+            AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
+            AIProviderChoice::LlamaCpp => peak_os_intelligence::llm::ModelProvider::LlamaCpp,
+            AIProviderChoice::OpenRouter => peak_os_intelligence::llm::ModelProvider::OpenRouter,
+        };
+
         Self {
             active_tab: Page::Introduction,
             show_search: false,
@@ -389,6 +448,18 @@ impl Default for App {
             is_resizing_inspector: false,
             context_menu_pos: None,
             last_cursor_pos: iced::Point::ORIGIN,
+            intelligence: Arc::new(PeakIntelligenceBridge::new(
+                provider,
+                "google/gemini-3-flash-preview",
+                if settings.api_key.is_empty() {
+                    None
+                } else {
+                    Some(settings.api_key.clone())
+                },
+            )),
+            db: Arc::new(PeakDBBridge::new()),
+            pending_sudo_action: None,
+            is_thinking: false,
             show_chat_overlay: false,
             chat_messages: vec![ChatMessage {
                 role: ChatRole::System,
@@ -398,6 +469,7 @@ impl Default for App {
             }],
             chat_input: String::new(),
             api_key: settings.api_key,
+            ai_provider: settings.ai_provider,
             icon_limit: 50,
             window_width: 1024.0, // Default assume desktop until resized
             localization: Localization::default(),
@@ -645,8 +717,60 @@ impl App {
             }
             Message::SetApiKey(key) => {
                 self.api_key = key.clone();
-                let settings = Settings { api_key: key };
+                let settings = Settings {
+                    api_key: self.api_key.clone(),
+                    ai_provider: self.ai_provider,
+                };
                 settings.save();
+
+                // Hot-reload intelligence bridge with new key
+                let provider = match self.ai_provider {
+                    AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
+                    AIProviderChoice::LlamaCpp => {
+                        peak_os_intelligence::llm::ModelProvider::LlamaCpp
+                    }
+                    AIProviderChoice::OpenRouter => {
+                        peak_os_intelligence::llm::ModelProvider::OpenRouter
+                    }
+                };
+
+                self.intelligence = Arc::new(PeakIntelligenceBridge::new(
+                    provider,
+                    "google/gemini-3-flash-preview",
+                    if key.is_empty() { None } else { Some(key) },
+                ));
+
+                Task::none()
+            }
+            Message::SetAIProvider(provider) => {
+                self.ai_provider = provider;
+                let settings = Settings {
+                    api_key: self.api_key.clone(),
+                    ai_provider: self.ai_provider,
+                };
+                settings.save();
+
+                // Hot-reload intelligence bridge with new provider
+                let model_provider = match provider {
+                    AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
+                    AIProviderChoice::LlamaCpp => {
+                        peak_os_intelligence::llm::ModelProvider::LlamaCpp
+                    }
+                    AIProviderChoice::OpenRouter => {
+                        peak_os_intelligence::llm::ModelProvider::OpenRouter
+                    }
+                };
+
+                self.intelligence = Arc::new(PeakIntelligenceBridge::new(
+                    model_provider,
+                    "google/gemini-3-flash-preview",
+                    if self.api_key.is_empty() {
+                        None
+                    } else {
+                        Some(self.api_key.clone())
+                    },
+                ));
+
                 Task::none()
             }
             Message::OpenContextMenu(pos) => {
@@ -678,6 +802,21 @@ impl App {
             }
             Message::FontLoaded(_) => Task::none(),
             Message::Heartbeat => Task::none(),
+            Message::SudoRequest(action) => {
+                self.pending_sudo_action = Some(action);
+                Task::none()
+            }
+            Message::SudoApprove => {
+                if let Some(action) = self.pending_sudo_action.take() {
+                    Task::perform(async {}, move |_| *action.message)
+                } else {
+                    Task::none()
+                }
+            }
+            Message::SudoDeny => {
+                self.pending_sudo_action = None;
+                Task::none()
+            }
             Message::None => Task::none(),
 
             Message::Chat(msg) => match msg {
@@ -735,450 +874,209 @@ impl App {
                         }
 
                         // We collected reverse, so reverse back to chronological order
-                        let mut history: Vec<crate::reference::ai::ChatCompletionMessage> =
-                            history_messages
-                                .into_iter()
-                                .rev()
-                                .map(|m| crate::reference::ai::ChatCompletionMessage {
-                                    role: match m.role {
-                                        ChatRole::System => "system".to_string(),
-                                        ChatRole::User => "user".to_string(),
-                                        ChatRole::Assistant => "assistant".to_string(),
-                                    },
-                                    content: m.content.clone(),
-                                })
-                                .collect();
+                        let mut history: Vec<crate::core::ChatCompletionMessage> = history_messages
+                            .into_iter()
+                            .rev()
+                            .map(|m| crate::core::ChatCompletionMessage {
+                                role: match m.role {
+                                    ChatRole::System => "system".to_string(),
+                                    ChatRole::User => "user".to_string(),
+                                    ChatRole::Assistant => "assistant".to_string(),
+                                },
+                                content: m.content.clone(),
+                            })
+                            .collect();
 
                         // Inject REAL system context at the front
                         history.insert(
                             0,
-                            crate::reference::ai::ChatCompletionMessage {
+                            crate::core::ChatCompletionMessage {
                                 role: "system".to_string(),
                                 content: self.get_system_prompt(),
                             },
                         );
 
-                        let api_key = self.api_key.clone();
+                        self.is_thinking = true;
+                        let stream = self.intelligence.chat_stream(history);
 
-                        return Task::perform(
-                            async move {
-                                let client = crate::reference::ai::OpenRouterClient::new(api_key);
-                                client.chat(history).await
-                            },
-                            Message::AIResponse,
+                        use iced::futures::StreamExt;
+                        let mapped_stream = stream.map(|res| Message::ChatStreamUpdate(res)).chain(
+                            iced::futures::stream::once(async { Message::AIChatComplete }),
                         );
+
+                        return Task::stream(mapped_stream);
                     }
                     Task::none()
                 }
             },
-            Message::AIResponse(res) => {
-                match res {
-                    Ok(mut content) => {
-                        // Action Bridge: Check for structured actions in the response
-                        // Format: [Action: Navigate(Introduction)]
-                        if let Some(start) = content.find("[Action: Navigate(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Navigate to {}", action_text);
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    let clean_content =
-                                        content.replace(full_tag, "").trim().to_string();
-
-                                    let page: crate::reference::model::Page =
-                                        action_text.to_string().into();
-                                    self.active_tab = page.clone();
-                                    self.navigation_mode = page.navigation_mode();
-                                    self.show_landing = false;
-                                    content = clean_content;
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetButtonVariant
-                        if let Some(start) = content.find("[Action: SetButtonVariant(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Button Variant: {}", action_text);
-
-                                    let variant = match action_text.to_lowercase().as_str() {
-                                        "solid" => crate::prelude::Variant::Solid,
-                                        "soft" => crate::prelude::Variant::Soft,
-                                        "outline" => crate::prelude::Variant::Outline,
-                                        "ghost" => crate::prelude::Variant::Ghost,
-                                        _ => crate::prelude::Variant::Solid,
-                                    };
-                                    self.button_lab.variant = variant;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetButtonIntent
-                        if let Some(start) = content.find("[Action: SetButtonIntent(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Button Intent: {}", action_text);
-
-                                    let intent = match action_text.to_lowercase().as_str() {
-                                        "primary" => crate::prelude::Intent::Primary,
-                                        "secondary" => crate::prelude::Intent::Secondary,
-                                        "success" => crate::prelude::Intent::Success,
-                                        "warning" => crate::prelude::Intent::Warning,
-                                        "danger" => crate::prelude::Intent::Danger,
-                                        "info" => crate::prelude::Intent::Info,
-                                        "neutral" => crate::prelude::Intent::Neutral,
-                                        _ => crate::prelude::Intent::Primary,
-                                    };
-                                    self.button_lab.intent = intent;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetThemeKind
-                        if let Some(start) = content.find("[Action: SetThemeKind(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Theme Kind: {}", action_text);
-
-                                    let theme = match action_text.to_lowercase().as_str() {
-                                        "peak" => PeakTheme::Peak,
-                                        "mountain" => PeakTheme::Mountain,
-                                        "cupertino" => PeakTheme::Cupertino,
-                                        "smart" => PeakTheme::Smart,
-                                        "material" => PeakTheme::Material,
-                                        "fluent" => PeakTheme::Fluent,
-                                        "highcontrast" => PeakTheme::HighContrast,
-                                        _ => PeakTheme::Peak,
-                                    };
-                                    self.theme = theme;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetLabMode
-                        if let Some(start) = content.find("[Action: SetLabMode(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Lab Mode: {}", action_text);
-
-                                    let mode = match action_text.to_lowercase().as_str() {
-                                        "canvas" => Some(RenderMode::Canvas),
-                                        "terminal" => Some(RenderMode::Terminal),
-                                        "neural" => Some(RenderMode::Neural),
-                                        "spatial" => Some(RenderMode::Spatial),
-                                        _ => None,
-                                    };
-
-                                    if let Some(m) = mode {
-                                        self.render_mode = m;
-                                    }
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetThemeTone
-                        if let Some(start) = content.find("[Action: SetThemeTone(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Theme Tone: {}", action_text);
-
-                                    let tone = match action_text.to_lowercase().as_str() {
-                                        "light" | "lightmode" => ThemeTone::Light,
-                                        "dark" | "darkmode" => ThemeTone::Dark,
-                                        _ => ThemeTone::Light,
-                                    };
-                                    self.theme_tone = tone;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetChildCount
-                        if let Some(start) = content.find("[Action: SetChildCount(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    if let Ok(count) = action_text.parse::<usize>() {
-                                        log::info!("AI Action: Set Child Count: {}", count);
-                                        self.layout_lab.child_count = count.min(10);
-                                    }
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetSpacing
-                        if let Some(start) = content.find("[Action: SetSpacing(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    if let Ok(spacing) = action_text.parse::<f32>() {
-                                        log::info!("AI Action: Set Spacing: {}", spacing);
-                                        self.layout_lab.inner_spacing = spacing;
-                                        self.layout_lab.outer_spacing = spacing;
-                                    }
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetAlignment
-                        if let Some(start) = content.find("[Action: SetAlignment(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Alignment: {}", action_text);
-
-                                    let alignment = match action_text.to_lowercase().as_str() {
-                                        "start" => Alignment::Start,
-                                        "center" => Alignment::Center,
-                                        "end" => Alignment::End,
-                                        _ => Alignment::Start,
-                                    };
-                                    self.layout_lab.alignment = alignment;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetTypographySize
-                        if let Some(start) = content.find("[Action: SetTypographySize(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    if let Ok(size) = action_text.parse::<f32>() {
-                                        log::info!("AI Action: Set Typography Size: {}", size);
-                                        self.typography_lab.size = size;
-                                    }
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetTypographyText
-                        if let Some(start) = content.find("[Action: SetTypographyText(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Typography Text: {}", action_text);
-                                    self.typography_lab.text = action_text.to_string();
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetTypographyBold
-                        if let Some(start) = content.find("[Action: SetTypographyBold(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim()
-                                        .to_lowercase();
-                                    log::info!("AI Action: Set Typography Bold: {}", action_text);
-                                    let bold = action_text == "true"
-                                        || action_text == "yes"
-                                        || action_text == "on"
-                                        || action_text == "bold";
-                                    self.typography_lab.is_bold = bold;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetTypographyWeight (Alias for Bold)
-                        if let Some(start) = content.find("[Action: SetTypographyWeight(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim()
-                                        .to_lowercase();
-                                    log::info!("AI Action: Set Typography Weight: {}", action_text);
-                                    let bold = action_text == "bold"
-                                        || action_text == "heavy"
-                                        || action_text == "black";
-                                    self.typography_lab.is_bold = bold;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetTypographyItalic
-                        if let Some(start) = content.find("[Action: SetTypographyItalic(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim()
-                                        .to_lowercase();
-                                    log::info!("AI Action: Set Typography Italic: {}", action_text);
-                                    let italic = action_text == "true"
-                                        || action_text == "yes"
-                                        || action_text == "on"
-                                        || action_text == "italic";
-                                    self.typography_lab.is_italic = italic;
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetSizingWidth
-                        if let Some(start) = content.find("[Action: SetSizingWidth(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Sizing Width: {}", action_text);
-
-                                    self.sizing_lab.width_type =
-                                        match action_text.to_lowercase().as_str() {
-                                            "fixed" => crate::reference::app::SizingType::Fixed,
-                                            "fill" => crate::reference::app::SizingType::Fill,
-                                            "shrink" => crate::reference::app::SizingType::Shrink,
-                                            _ => crate::reference::app::SizingType::Fixed,
-                                        };
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        // Action Bridge: SetSizingHeight
-                        if let Some(start) = content.find("[Action: SetSizingHeight(") {
-                            if let Some(open_paren) = content[start..].find('(') {
-                                if let Some(close_paren) = content[start + open_paren..].find(")]")
-                                {
-                                    let action_text = content
-                                        [start + open_paren + 1..start + open_paren + close_paren]
-                                        .trim();
-                                    log::info!("AI Action: Set Sizing Height: {}", action_text);
-
-                                    self.sizing_lab.height_type =
-                                        match action_text.to_lowercase().as_str() {
-                                            "fixed" => crate::reference::app::SizingType::Fixed,
-                                            "fill" => crate::reference::app::SizingType::Fill,
-                                            "shrink" => crate::reference::app::SizingType::Shrink,
-                                            _ => crate::reference::app::SizingType::Fixed,
-                                        };
-
-                                    let full_tag =
-                                        &content[start..start + open_paren + close_paren + 2];
-                                    content = content.replace(full_tag, "").trim().to_string();
-                                }
-                            }
-                        }
-
-                        if !content.is_empty() {
+            Message::ChatStreamUpdate(result) => match result {
+                Ok(text) => {
+                    if let Some(last) = self.chat_messages.last_mut() {
+                        if last.role == ChatRole::Assistant {
+                            last.content = text.clone();
+                        } else {
                             self.chat_messages.push(ChatMessage {
                                 role: ChatRole::Assistant,
-                                content,
+                                content: text.clone(),
                             });
                         }
+                    } else {
+                        self.chat_messages.push(ChatMessage {
+                            role: ChatRole::Assistant,
+                            content: text.clone(),
+                        });
+                    }
+
+                    // On Stream Completion (e.g. text is essentially complete or stream finishes)
+                    // We check if it looks like the end, or wait for AIResponse logic.
+                    // For now, let's process actions in AIResponse or if stream results in Ok("") which signals end
+                    Task::none()
+                }
+                Err(e) => {
+                    self.is_thinking = false;
+                    self.chat_messages.push(ChatMessage {
+                        role: ChatRole::System,
+                        content: format!("Error: {}", e),
+                    });
+                    Task::none()
+                }
+            },
+            Message::AIChatComplete => {
+                self.is_thinking = false;
+                if let Some(last) = self.chat_messages.last() {
+                    if last.role == ChatRole::Assistant {
+                        let content = last.content.clone();
+                        return self.process_assistant_actions(&content);
+                    }
+                }
+                Task::none()
+            }
+            Message::AIResponse(res) => {
+                self.is_thinking = false;
+                match res {
+                    Ok(content) => {
+                        let task = self.process_assistant_actions(&content);
+
+                        if !content.is_empty() {
+                            // Check if last message is already this content from streaming
+                            let already_pushed = self
+                                .chat_messages
+                                .last()
+                                .map(|m| m.role == ChatRole::Assistant && m.content == content)
+                                .unwrap_or(false);
+
+                            if !already_pushed {
+                                self.chat_messages.push(ChatMessage {
+                                    role: ChatRole::Assistant,
+                                    content,
+                                });
+                            }
+                        }
+                        task
                     }
                     Err(err) => {
                         self.chat_messages.push(ChatMessage {
                             role: ChatRole::System,
                             content: format!("Error: {}", err),
                         });
+                        Task::none()
                     }
                 }
-                Task::none()
             }
             Message::LoadMoreIcons => {
                 self.icon_limit += 100;
                 Task::none()
             }
+        }
+    }
+
+    pub fn process_assistant_actions(&mut self, text: &str) -> Task<Message> {
+        let mut tasks = Vec::new();
+        let content = text.to_string();
+        let lower_content = content.to_lowercase();
+
+        let action_marker = "[action: ";
+        let mut search_pos = 0;
+
+        while let Some(start_rel) = lower_content[search_pos..].find(action_marker) {
+            let start = search_pos + start_rel;
+            if let Some(open_paren_rel) = lower_content[start..].find('(') {
+                let open_paren = start + open_paren_rel;
+                if let Some(close_paren_rel) = lower_content[open_paren..].find(")]") {
+                    let close_paren = open_paren + close_paren_rel;
+
+                    let action_name = lower_content[start + action_marker.len()..open_paren].trim();
+                    let params = &content[open_paren + 1..close_paren]; // Keep original casing for params
+
+                    log::info!("AI Action Detected: {}({})", action_name, params);
+
+                    match action_name {
+                        "navigate" => {
+                            let page: crate::reference::model::Page = params.to_string().into();
+                            log::info!(" -> Navigating to: {:?}", page);
+                            tasks.push(Task::perform(async {}, move |_| {
+                                Message::SetTab(page.clone())
+                            }));
+                        }
+                        "setbuttonvariant" => match params.to_lowercase().trim() {
+                            "solid" => self.button_lab.variant = crate::prelude::Variant::Solid,
+                            "soft" => self.button_lab.variant = crate::prelude::Variant::Soft,
+                            "outline" => self.button_lab.variant = crate::prelude::Variant::Outline,
+                            "ghost" => self.button_lab.variant = crate::prelude::Variant::Ghost,
+                            _ => {}
+                        },
+                        "setbuttonintent" => match params.to_lowercase().trim() {
+                            "primary" => self.button_lab.intent = crate::prelude::Intent::Primary,
+                            "secondary" => {
+                                self.button_lab.intent = crate::prelude::Intent::Secondary
+                            }
+                            "success" => self.button_lab.intent = crate::prelude::Intent::Success,
+                            "warning" => self.button_lab.intent = crate::prelude::Intent::Warning,
+                            "danger" => self.button_lab.intent = crate::prelude::Intent::Danger,
+                            "info" => self.button_lab.intent = crate::prelude::Intent::Info,
+                            "neutral" => self.button_lab.intent = crate::prelude::Intent::Neutral,
+                            _ => {}
+                        },
+                        "setthemekind" => match params.to_lowercase().trim() {
+                            "peak" => self.theme = PeakTheme::Peak,
+                            "mountain" => self.theme = PeakTheme::Mountain,
+                            "cupertino" => self.theme = PeakTheme::Cupertino,
+                            "smart" => self.theme = PeakTheme::Smart,
+                            "material" => self.theme = PeakTheme::Material,
+                            "fluent" => self.theme = PeakTheme::Fluent,
+                            "highcontrast" => self.theme = PeakTheme::HighContrast,
+                            _ => {}
+                        },
+                        "setthemetone" => match params.to_lowercase().trim() {
+                            "light" | "lightmode" => self.theme_tone = ThemeTone::Light,
+                            "dark" | "darkmode" => self.theme_tone = ThemeTone::Dark,
+                            _ => {}
+                        },
+                        "setlabmode" => match params.to_lowercase().trim() {
+                            "canvas" => self.render_mode = RenderMode::Canvas,
+                            "terminal" => self.render_mode = RenderMode::Terminal,
+                            "neural" => self.render_mode = RenderMode::Neural,
+                            "spatial" => self.render_mode = RenderMode::Spatial,
+                            _ => {}
+                        },
+                        _ => {
+                            log::warn!("Unknown AI Action: {}", action_name);
+                        }
+                    }
+
+                    search_pos = close_paren + 2;
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+        }
+
+        if tasks.is_empty() {
+            Task::none()
+        } else {
+            Task::batch(tasks)
         }
     }
 
@@ -1195,11 +1093,27 @@ impl App {
         // MINIFICATION: Use to_string instead of to_string_pretty
         let ui_json = serde_json::to_string(&tree).unwrap_or_default();
 
+        let valid_pages = Page::all()
+            .iter()
+            .map(|p| p.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let valid_themes = PeakTheme::all()
+            .iter()
+            .map(|t| t.display_name())
+            .collect::<Vec<_>>()
+            .join(", ");
+
         format!(
-            "You are the PeakUI AI Assistant. You have eyes and hands. You can see the app and interact with it.\n\n\
-             VIEWPORT: 1280x800 (Desktop)\n\
-             CURRENT SCREEN (JSON Structure):\n{}\n\n\
-             GOAL: Help the user. If they ask to see a page, go there.\n\n\
+            "You are the PeakUI AI Assistant. You are a helpful companion for the user.\n\n\
+             UI CONTEXT:\n\
+             - Provider: {}\n\
+             - Viewport: 1280x800 (Desktop)\n\
+             - Current UI Structure (JSON):\n{}\n\n\
+             GOAL: Help the user explore the PeakUI framework. \n\
+             1. If the user wants to talk, respond conversationally. \n\
+             2. If the user explicitly asks to navigate, change themes, or modify components, use the [Action: ...] tags.\n\n\
              PROTOCOL for ACTIONS:\n\
              - To navigate, use: [Action: Navigate(PAGE_NAME)]\n\
              - To change Button variant, use: [Action: SetButtonVariant(VARIANT)]\n\
@@ -1216,23 +1130,19 @@ impl App {
              - To change Sizing width type, use: [Action: SetSizingWidth(SIZING)]\n\
              - To change Sizing height type, use: [Action: SetSizingHeight(SIZING)]\n\n\
              VALID VALUES:\n\
-             - PAGE_NAME: Introduction, Architecture, Roadmap, Intelligence, Typography, Customizations, Sizing, Layout, Text, Icon, Button, Shapes, PeakDB, PeakCloud, Appearance, AI, About.\n\
+             - PAGE_NAME: {}\n\
              - VARIANT: Solid, Soft, Outline, Ghost.\n\
              - INTENT: Primary, Secondary, Success, Warning, Danger, Info, Neutral.\n\
-             - THEME: Peak, Gaming, Cupertino, Terminal, Mountain, Smart, Material, Fluent, HighContrast, Media, Ambient, Automotive.\n\
+             - THEME: {}\n\
              - TONE: Light, Dark.\n\
              - MODE: Canvas, Terminal, Neural, Spatial.\n\
              - ALIGNMENT: Start, Center, End.\n\
              - SIZING: Fixed, Fill, Shrink.\n\n\
-             EXAMPLES:\n\
-             - User: 'Set the button to outline style'\n\
-             - Assistant: 'Done! [Action: SetButtonVariant(Outline)]'\n\
-             - User: 'Show me 5 boxes in the layout'\n\
-             - Assistant: 'Updating the layout for you. [Action: SetChildCount(5)]'\n\
-             - User: 'Make the text larger, bold and say Hello'\n\
-             - Assistant: 'Updating typography. [Action: SetTypographySize(32)] [Action: SetTypographyBold(true)] [Action: SetTypographyText(Hello)]'\n\n\
-             Always explain what you are doing. Use the action tag as part of your natural response.",
-            ui_json
+             Always maintain a conversational tone. Only use action tags when an explicit change is requested.",
+            self.intelligence.get_system_context(),
+            ui_json,
+            valid_pages,
+            valid_themes,
         )
     }
 
@@ -1251,7 +1161,10 @@ impl App {
                         .width(Length::Fill)
                         .height(Length::Fill)
                         .style(move |_| iced::widget::container::Style {
-                            background: Some(tokens.colors.background.into()),
+                            background: Some(Background::Color(Color {
+                                a: 0.5,
+                                ..tokens.colors.background
+                            })),
                             ..Default::default()
                         })
                         .into()
@@ -1328,6 +1241,66 @@ impl App {
                             .padding(iced::Padding {
                                 top: pos.y,
                                 left: pos.x,
+                                ..Default::default()
+                            }),
+                    );
+                }
+
+                // Overlay Sudo Prompt
+                if let Some(sudo) = &content.pending_sudo_action {
+                    let prompt = iced::widget::container(
+                        iced::widget::column![
+                            iced::widget::text("Neural Sudo Permission").size(24),
+                            iced::widget::Space::new().height(10),
+                            iced::widget::text(format!("AI wants to perform an action:")).size(16),
+                            iced::widget::text(format!("{:?}", sudo.message))
+                                .size(14)
+                                .color(tokens.colors.primary),
+                            iced::widget::Space::new().height(5),
+                            iced::widget::text(format!("Reason: {}", sudo.reason))
+                                .size(14)
+                                .size(14),
+                            iced::widget::Space::new().height(20),
+                            iced::widget::row![
+                                iced::widget::button("Deny")
+                                    .padding(10)
+                                    .on_press(Message::SudoDeny),
+                                iced::widget::Space::new().width(10),
+                                iced::widget::button("Approve")
+                                    .padding(10)
+                                    .on_press(Message::SudoApprove),
+                            ]
+                        ]
+                        .align_x(iced::Alignment::Center),
+                    )
+                    .width(400.0)
+                    .padding(30)
+                    .style(move |_| iced::widget::container::Style {
+                        background: Some(tokens.colors.surface.into()),
+                        border: iced::Border {
+                            radius: 12.0.into(),
+                            width: 1.0,
+                            color: tokens.colors.border,
+                        },
+                        shadow: iced::Shadow {
+                            color: Color::BLACK,
+                            offset: iced::Vector::new(0.0, 10.0),
+                            blur_radius: 30.0,
+                        },
+                        ..Default::default()
+                    });
+
+                    stack = stack.push(
+                        iced::widget::container(prompt)
+                            .width(Length::Fill)
+                            .height(Length::Fill)
+                            .center_x(Length::Fill)
+                            .center_y(Length::Fill)
+                            .style(move |_| iced::widget::container::Style {
+                                background: Some(Background::Color(Color {
+                                    a: 0.5,
+                                    ..tokens.colors.background
+                                })),
                                 ..Default::default()
                             }),
                     );
