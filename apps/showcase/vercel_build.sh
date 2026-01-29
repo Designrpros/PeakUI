@@ -20,26 +20,37 @@ then
     export PATH="$PWD/bin:$PATH"
 fi
 
-# 4. Clone PeakOS Dependency (Tightly coupled sibling repo)
-echo "Cloning PeakOS dependency for path-based bridges..."
+# 4. Clone Sibling Dependencies (Tightly coupled sibling repos)
+echo "Cloning sibling dependencies for path-based bridges..."
 # We go up two levels from apps/showcase to reach the sibling directory level
-# PeakUI is at /vercel/path0 (or similar), so PeakOS should be at /vercel/PeakOS
 pushd ../.. > /dev/null
-# Check if we are in a Vercel-like environment and PeakOS is missing
+# Check if we are in a Vercel-like environment and dependencies are missing
 if [[ "$PWD" == *"/vercel/path0"* ]] || [[ "$PWD" == *"/vercel/repo"* ]]; then
     # We navigate to /vercel which is the $HOME in the log
     pushd /vercel > /dev/null
     if [ ! -d "PeakOS" ]; then
         git clone https://github.com/Designrpros/PeakOS.git
     fi
+    if [ ! -d "PeakDB" ]; then
+        git clone https://github.com/Designrpros/PeakDB.git
+    fi
+    if [ ! -d "PeakCloud" ]; then
+        git clone https://github.com/Designrpros/PeakCloud.git
+    fi
     popd > /dev/null
 else
     # General fallback for other CI environments
-    if [ ! -d "../PeakOS" ]; then
-        pushd .. > /dev/null
+    pushd .. > /dev/null
+    if [ ! -d "PeakOS" ]; then
         git clone https://github.com/Designrpros/PeakOS.git
-        popd > /dev/null
     fi
+    if [ ! -d "PeakDB" ]; then
+        git clone https://github.com/Designrpros/PeakDB.git
+    fi
+    if [ ! -d "PeakCloud" ]; then
+        git clone https://github.com/Designrpros/PeakCloud.git
+    fi
+    popd > /dev/null
 fi
 popd > /dev/null
 
