@@ -41,14 +41,7 @@ else
 fi
 popd > /dev/null
 
-# 5. Fix Workspace Conflicts
-echo "Optimizing workspace for Showcase build..."
-# apps/hub depends on a different PeakDB repo which causes a sqlite3 link conflict.
-# Since we are only building the Showcase, we can exclude apps/hub from the workspace metadata.
-# This prevents cargo from attempting to resolve hub's conflicting dependencies.
-sed -i 's/"apps\/hub",//g' Cargo.toml
-
-# 6. Build the Application
+# 5. Build the Application
 echo "Building PeakUI Showcase..."
 
 # Create dist directory to prevent canonical path error in Trunk config
