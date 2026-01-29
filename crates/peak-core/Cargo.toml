@@ -29,7 +29,7 @@ peak-intelligence = { path = "../peak-intelligence", default-features = false }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iced = { version = "0.14", default-features = false, features = ["canvas", "advanced", "image", "svg"] }
-reqwest = { version = "0.11", default-features = false, features = ["json", "rustls-tls", "stream"] }
+reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
 web-sys = { version = "0.3", features = [
     "Request", "RequestInit", "RequestMode",
     "Response", "Window", "Headers"
