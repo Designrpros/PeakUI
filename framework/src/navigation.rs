@@ -2,7 +2,7 @@ use crate::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, SemanticNode, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::{Intent, Variant};
-use iced::{Alignment, Length, Padding};
+use iced::{Alignment, Color, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -108,6 +108,57 @@ pub trait ViewExt<Message: 'static, B: Backend>: View<Message, B> + Sized {
         Self: View<Message, B> + 'static,
     {
         NavigationListView::new().push(self)
+    }
+
+    // --- Tailwind-style Utility Modifiers ---
+
+    fn padding(self, padding: impl Into<iced::Padding>) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).padding(padding)
+    }
+
+    fn width(self, width: Length) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).width(width)
+    }
+
+    fn height(self, height: Length) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).height(height)
+    }
+
+    fn background(self, color: Color) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).background(color)
+    }
+
+    fn corner_radius(self, radius: f32) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).radius(radius)
+    }
+
+    fn border(self, width: f32, color: Color) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).border(width, color)
+    }
+
+    fn shadow(self, shadow: iced::Shadow) -> crate::atoms::Container<Message, B>
+    where
+        Self: 'static,
+    {
+        crate::atoms::Container::new(self).shadow(shadow)
     }
 }
 
@@ -232,6 +283,11 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
             Padding::from([48, 64]),
             Length::Fill,
             Length::Fill,
+            None,
+            0.0,
+            0.0,
+            None,
+            None,
             context,
         )
     }

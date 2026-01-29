@@ -363,13 +363,18 @@ impl<V: View<Message, B> + Sized + 'static, Message: Clone + 'static, B: Backend
 }
 
 pub struct ResponsiveGrid<Message: 'static, B: Backend = IcedBackend> {
-    children: Vec<Box<dyn View<Message, B>>>,
-    spacing: f32,
+    pub children: Vec<Box<dyn View<Message, B>>>,
+    pub spacing: f32,
+    pub items_per_row: usize,
 }
 
 impl<Message: 'static> ResponsiveGrid<Message, IcedBackend> {
     pub fn new() -> Self {
-        Self::new_generic()
+        Self {
+            children: Vec::new(),
+            spacing: 20.0,
+            items_per_row: 2,
+        }
     }
 }
 
@@ -384,7 +389,13 @@ impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
         Self {
             children: Vec::new(),
             spacing: 20.0,
+            items_per_row: 2,
         }
+    }
+
+    pub fn columns(mut self, count: usize) -> Self {
+        self.items_per_row = count;
+        self
     }
 
     pub fn spacing(mut self, spacing: f32) -> Self {
@@ -402,14 +413,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let items_per_row = if context.size.width < 600.0 {
             1
-        } else if context.size.width < 900.0 {
-            2
-        } else if context.size.width < 1200.0 {
-            3
-        } else if context.size.width < 1600.0 {
-            4
         } else {
-            5
+            self.items_per_row
         };
 
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
@@ -419,14 +424,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let items_per_row = if context.size.width < 600.0 {
             1
-        } else if context.size.width < 900.0 {
-            2
-        } else if context.size.width < 1200.0 {
-            3
-        } else if context.size.width < 1600.0 {
-            4
         } else {
-            5
+            self.items_per_row
         };
 
         let children = self.children.iter().map(|c| c.describe(context)).collect();

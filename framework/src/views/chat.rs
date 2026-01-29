@@ -410,6 +410,11 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for Think
             Padding::new(12.0).right(20.0).left(20.0),
             Length::Fill,
             Length::Shrink,
+            None,
+            0.0,
+            0.0,
+            None,
+            None,
             context,
         )
     }

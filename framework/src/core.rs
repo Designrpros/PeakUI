@@ -142,6 +142,7 @@ pub struct Context {
     pub safe_area: Padding,
     pub focused_id: Option<String>,
     pub localization: Localization,
+    pub peak_id: String,
 }
 
 impl Default for Context {
@@ -154,6 +155,7 @@ impl Default for Context {
             safe_area: iced::Padding::ZERO,
             focused_id: None,
             localization: Localization::default(),
+            peak_id: String::new(),
         }
     }
 }
@@ -188,6 +190,7 @@ impl Context {
             safe_area: Padding::default(),
             focused_id: None,
             localization,
+            peak_id: String::new(),
         }
     }
 
@@ -232,6 +235,13 @@ impl Context {
     pub fn t(&self, key: &str) -> String {
         self.localization.simple(key)
     }
+
+    pub fn scale_length(&self, l: Length) -> Length {
+        match l {
+            Length::Fixed(f) => Length::Fixed(f * self.theme.scaling),
+            _ => l,
+        }
+    }
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -243,6 +253,13 @@ pub struct SpatialNode {
     pub transform: Transform3D,
     pub is_focused: bool,
     pub children: Vec<SpatialNode>,
+}
+
+fn scale_length(l: Length, scale: f32) -> Length {
+    match l {
+        Length::Fixed(p) => Length::Fixed(p * scale),
+        _ => l,
+    }
 }
 
 #[derive(Debug, Clone, Copy, Default, serde::Serialize)]
@@ -588,6 +605,11 @@ impl Backend for SpatialBackend {
         _padding: Padding,
         _width: Length,
         _height: Length,
+        _background: Option<Color>,
+        _radius: f32,
+        _border_width: f32,
+        _border_color: Option<Color>,
+        _shadow: Option<iced::Shadow>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -770,6 +792,11 @@ pub trait Backend: Sized + Clone + 'static {
         padding: Padding,
         width: Length,
         height: Length,
+        background: Option<Color>,
+        radius: f32,
+        border_width: f32,
+        border_color: Option<Color>,
+        shadow: Option<iced::Shadow>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -816,8 +843,8 @@ impl Backend for IcedBackend {
 
         let col = column(children)
             .spacing(spacing * scale)
-            .width(width)
-            .height(height)
+            .width(scale_length(width, scale))
+            .height(scale_length(height, scale))
             .align_x(align_x);
 
         let mut c = container(col).padding(Padding {
@@ -828,18 +855,20 @@ impl Backend for IcedBackend {
         });
 
         if align_x == Alignment::Center && width != Length::Shrink {
-            c = c.center_x(width);
+            c = c.center_x(scale_length(width, scale));
         } else if align_x == Alignment::End && width != Length::Shrink {
             c = c.align_x(iced::alignment::Horizontal::Right);
         }
 
         if align_y == Alignment::Center && height != Length::Shrink {
-            c = c.center_y(height);
+            c = c.center_y(scale_length(height, scale));
         } else if align_y == Alignment::End && height != Length::Shrink {
             c = c.align_y(iced::alignment::Vertical::Bottom);
         }
 
-        c.width(width).height(height).into()
+        c.width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .into()
     }
 
     fn hstack<Message: 'static>(
@@ -856,8 +885,8 @@ impl Backend for IcedBackend {
 
         let r = row(children)
             .spacing(spacing * scale)
-            .width(width)
-            .height(height)
+            .width(scale_length(width, scale))
+            .height(scale_length(height, scale))
             .align_y(align_y);
 
         let mut c = container(r).padding(Padding {
@@ -868,18 +897,20 @@ impl Backend for IcedBackend {
         });
 
         if align_x == Alignment::Center && width != Length::Shrink {
-            c = c.center_x(width);
+            c = c.center_x(scale_length(width, scale));
         } else if align_x == Alignment::End && width != Length::Shrink {
             c = c.align_x(iced::alignment::Horizontal::Right);
         }
 
         if align_y == Alignment::Center && height != Length::Shrink {
-            c = c.center_y(height);
+            c = c.center_y(scale_length(height, scale));
         } else if align_y == Alignment::End && height != Length::Shrink {
             c = c.align_y(iced::alignment::Vertical::Bottom);
         }
 
-        c.width(width).height(height).into()
+        c.width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .into()
     }
 
     fn text<Message: Clone + 'static>(
@@ -942,6 +973,7 @@ impl Backend for IcedBackend {
             .font(base_font)
             .width(width)
             .align_x(alignment)
+            .align_y(iced::alignment::Vertical::Center)
             .into()
     }
 
@@ -1112,86 +1144,97 @@ impl Backend for IcedBackend {
         use iced::widget::button;
         let theme = context.theme;
 
-        button(content)
-            .on_press_maybe(on_press)
-            .padding(if is_compact { 0.0 } else { 4.0 })
-            .style(move |_, status| {
-                let color = match intent {
-                    Intent::Primary => theme.colors.primary,
-                    Intent::Secondary => theme.colors.secondary,
-                    Intent::Success => theme.colors.success,
-                    Intent::Warning => theme.colors.warning,
-                    Intent::Danger => theme.colors.danger,
-                    Intent::Info => theme.colors.info,
-                    Intent::Neutral => theme.colors.surface,
-                };
+        button(
+            iced::widget::container(content)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .center_x(Length::Fill)
+                .center_y(Length::Fill),
+        )
+        .on_press_maybe(on_press)
+        .padding(Padding::from([0, 16]))
+        .height(Length::Fixed(if is_compact {
+            32.0 * theme.scaling
+        } else {
+            44.0 * theme.scaling
+        }))
+        .style(move |_, status| {
+            let color = match intent {
+                Intent::Primary => theme.colors.primary,
+                Intent::Secondary => theme.colors.secondary,
+                Intent::Success => theme.colors.success,
+                Intent::Warning => theme.colors.warning,
+                Intent::Danger => theme.colors.danger,
+                Intent::Info => theme.colors.info,
+                Intent::Neutral => theme.colors.surface,
+            };
 
-                match variant {
-                    Variant::Solid => button::Style {
-                        background: Some(if status == button::Status::Hovered {
-                            let mut c = color;
-                            c.a = 0.8;
-                            c.into()
-                        } else {
-                            color.into()
-                        }),
-                        text_color: theme.colors.on_primary,
-                        border: iced::Border {
-                            radius: 8.0.into(),
-                            ..Default::default()
-                        },
+            match variant {
+                Variant::Solid => button::Style {
+                    background: Some(if status == button::Status::Hovered {
+                        let mut c = color;
+                        c.a = 0.8;
+                        c.into()
+                    } else {
+                        color.into()
+                    }),
+                    text_color: theme.colors.on_primary,
+                    border: iced::Border {
+                        radius: 32.0.into(),
                         ..Default::default()
                     },
-                    Variant::Soft => button::Style {
-                        background: Some({
-                            let mut c = color;
-                            c.a = 0.1;
-                            if status == button::Status::Hovered {
-                                c.a = 0.2;
-                            }
-                            c.into()
-                        }),
-                        text_color: color,
-                        border: iced::Border {
-                            radius: 8.0.into(),
-                            ..Default::default()
-                        },
+                    ..Default::default()
+                },
+                Variant::Soft => button::Style {
+                    background: Some({
+                        let mut c = color;
+                        c.a = 0.1;
+                        if status == button::Status::Hovered {
+                            c.a = 0.2;
+                        }
+                        c.into()
+                    }),
+                    text_color: color,
+                    border: iced::Border {
+                        radius: 32.0.into(),
                         ..Default::default()
                     },
-                    Variant::Outline => button::Style {
-                        background: if status == button::Status::Hovered {
-                            let mut c = color;
-                            c.a = 0.05;
-                            Some(c.into())
-                        } else {
-                            None
-                        },
-                        text_color: color,
-                        border: iced::Border {
-                            color,
-                            width: 1.0,
-                            radius: 8.0.into(),
-                        },
+                    ..Default::default()
+                },
+                Variant::Outline => button::Style {
+                    background: if status == button::Status::Hovered {
+                        let mut c = color;
+                        c.a = 0.05;
+                        Some(c.into())
+                    } else {
+                        None
+                    },
+                    text_color: color,
+                    border: iced::Border {
+                        color,
+                        width: 1.0,
+                        radius: 32.0.into(),
+                    },
+                    ..Default::default()
+                },
+                Variant::Ghost => button::Style {
+                    background: if status == button::Status::Hovered {
+                        let mut c = color;
+                        c.a = 0.1;
+                        Some(c.into())
+                    } else {
+                        None
+                    },
+                    text_color: color,
+                    border: iced::Border {
+                        radius: 32.0.into(),
                         ..Default::default()
                     },
-                    Variant::Ghost => button::Style {
-                        background: if status == button::Status::Hovered {
-                            let mut c = color;
-                            c.a = 0.1;
-                            Some(c.into())
-                        } else {
-                            None
-                        },
-                        text_color: color,
-                        border: iced::Border {
-                            radius: 8.0.into(),
-                            ..Default::default()
-                        },
-                        ..Default::default()
-                    },
-                }
-            })
-            .into()
+                    ..Default::default()
+                },
+            }
+        })
+        .into()
     }
 
     fn sidebar_item<Message: Clone + 'static>(
@@ -1327,10 +1370,19 @@ impl Backend for IcedBackend {
         while !children.is_empty() {
             let chunk: Vec<_> = children
                 .drain(0..std::cmp::min(columns, children.len()))
+                .map(|child| iced::widget::container(child).width(Length::Fill).into())
                 .collect();
-            rows.push(iced::widget::row(chunk).spacing(spacing).into());
+            rows.push(
+                iced::widget::row(chunk)
+                    .spacing(spacing)
+                    .width(Length::Fill)
+                    .into(),
+            );
         }
-        iced::widget::column(rows).spacing(spacing).into()
+        iced::widget::column(rows)
+            .spacing(spacing)
+            .width(Length::Fill)
+            .into()
     }
 
     fn image<Message: 'static>(
@@ -1366,13 +1418,35 @@ impl Backend for IcedBackend {
         padding: Padding,
         width: Length,
         height: Length,
-        _context: &Context,
+        background: Option<Color>,
+        radius: f32,
+        border_width: f32,
+        border_color: Option<Color>,
+        shadow: Option<iced::Shadow>,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
+        let scale = context.theme.scaling;
+
         container(content)
-            .padding(padding)
-            .width(width)
-            .height(height)
+            .padding(Padding {
+                top: padding.top * scale,
+                right: padding.right * scale,
+                bottom: padding.bottom * scale,
+                left: padding.left * scale,
+            })
+            .width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .style(move |_| container::Style {
+                background: background.map(iced::Background::Color),
+                border: iced::Border {
+                    radius: (radius * scale).into(),
+                    width: border_width * scale,
+                    color: border_color.unwrap_or(iced::Color::TRANSPARENT),
+                },
+                shadow: shadow.unwrap_or_default(),
+                ..Default::default()
+            })
             .into()
     }
 
@@ -1657,6 +1731,11 @@ impl Backend for TermBackend {
         _padding: Padding,
         _width: Length,
         _height: Length,
+        _background: Option<Color>,
+        _radius: f32,
+        _border_width: f32,
+        _border_color: Option<Color>,
+        _shadow: Option<iced::Shadow>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -2200,6 +2279,11 @@ impl Backend for AIBackend {
         _padding: Padding,
         _width: Length,
         _height: Length,
+        _background: Option<Color>,
+        _radius: f32,
+        _border_width: f32,
+        _border_color: Option<Color>,
+        _shadow: Option<iced::Shadow>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content

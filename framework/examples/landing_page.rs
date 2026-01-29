@@ -62,74 +62,143 @@ impl LandingPage {
                     .large_title()
                     .bold()
                     .color(t.colors.text_primary)
-                    .center()
             };
-            let subhead = |text: &'static str| {
-                Text::new(text)
-                    .title2()
-                    .color(t.colors.text_secondary)
-                    .center()
-            };
+            let subhead =
+                |text: &'static str| Text::new(text).title2().color(t.colors.text_secondary);
             let body = |text: &'static str| Text::new(text).body().color(t.colors.text_secondary);
 
             // --- Section 1: Hero ---
             let hero = VStack::new()
-                .spacing(24.0)
+                .spacing(40.0)
                 .align_x(Alignment::Center)
-                .push(headline("The Multi-Kernel OS for Humans and Robots"))
-                .push(subhead("Render to Pixels (GPU), Text (TUI), and Intelligence (Neural) from a single codebase."))
                 .push(
                     HStack::new()
-                        .spacing(16.0)
-                        .push(Button::label("Watch GUI Demo").intent(Intent::Primary).on_press(Message::NoOp))
-                        .push(Button::label("Connect via SSH").variant(Variant::Soft).on_press(Message::NoOp))
+                        .spacing(32.0)
+                        .push(Text::new("Stack").caption1().secondary())
+                        .push(Text::new("Vision").caption1().secondary())
+                        .push(Text::new("Architecture").caption1().secondary())
+                        .push(Space::new(Length::Fixed(16.0), Length::Shrink))
+                        .push(
+                            Button::label("Launch")
+                                .intent(Intent::Primary)
+                                .on_press(Message::NoOp),
+                        ),
+                )
+                .push(headline("The Multi-Kernel OS for Humans and Robots").center())
+                .push(
+                    subhead("Render to Pixels, Text, and Intelligence from a single codebase.")
+                        .center(),
                 );
 
-            // --- Section 2: Green Math ---
-            // Left (Problem)
+            let metric_item = |label: &'static str, val: &'static str, sub: &'static str| {
+                VStack::new()
+                    .spacing(4.0)
+                    .align_x(Alignment::Center)
+                    .push(Text::new(label).size(10.0).bold().secondary())
+                    .push(Text::new(val).size(16.0).bold())
+                    .push(Text::new(sub).size(10.0).dim())
+            };
+
+            let metrics_bar = Container::new(
+                VStack::new()
+                    .width(Length::Fill)
+                    .align_x(Alignment::Center)
+                    .push(
+                        ResponsiveGrid::new()
+                            .columns(4)
+                            .spacing(64.0)
+                            .push(metric_item("SAFETY", "100%", "Safe Rust"))
+                            .push(metric_item("LATENCY", "0.8ms", "GPU Mesh"))
+                            .push(metric_item("SOCIETY", "DECENTRALIZED", "Peer Relay"))
+                            .push(metric_item("ORIGIN", "OSLO", "Norway 2026")),
+                    ),
+            )
+            .padding(32.0)
+            .width(Length::Fill)
+            .background(t.colors.text_primary.scale_alpha(0.03));
+
+            // --- Section 2: Technical Pillars (Green Math) ---
             let old_way = VStack::new()
-                .spacing(16.0)
-                .width(Length::Fill)
+                .spacing(24.0)
                 .align_x(Alignment::Center)
-                .push(Text::new("Visual AI (The Old Way)").title3().color(t.colors.danger)) // Error/Danger color
+                .push(Text::new("Visual AI (The Old Way)").title3().color(t.colors.danger))
                 .push(body("Requires Computer Vision to process millions of pixels. High Latency. High Energy.").center())
                 .push(Icon::new("cpu").size(64.0).color(t.colors.danger));
 
-            // Right (Solution)
             let new_way = VStack::new()
-                .spacing(16.0)
-                .width(Length::Fill)
+                .spacing(24.0)
                 .align_x(Alignment::Center)
-                .push(Text::new("Semantic AI (PeakUI)").title3().color(t.colors.success)) // Success color
+                .push(Text::new("Semantic AI (PeakUI)").title3().color(t.colors.success))
                 .push(body("Exposes the Semantic Node Tree directly to the Agent. 99% Energy Reduction. Zero Latency.").center())
                 .push(Icon::new("leaf").size(64.0).color(t.colors.success));
 
-            let green_math = GlassCard::new(
-                HStack::new()
-                    .spacing(48.0)
-                    .push(old_way)
-                    .push(
-                        Rectangle::new(Length::Fixed(1.0), Length::Fixed(100.0))
-                            .color(t.colors.border),
-                    ) // Vertical divider simulation
-                    .push(new_way),
-            )
-            .padding(32.0);
+            let pillars = ResponsiveGrid::new()
+                .push(GlassCard::new(old_way).padding(32.0))
+                .push(GlassCard::new(new_way).padding(32.0))
+                .spacing(32.0);
 
-            // --- Section 3: Robot OS ---
-            let robot_os = VStack::new()
-                .spacing(24.0)
+            let technical_pillars = VStack::new()
+                .spacing(48.0)
                 .align_x(Alignment::Center)
-                .push(headline("Every App is an API"))
-                .push(body("Industrial robots don't need cameras. They query the PeakUI Multi-Kernel backend directly."))
-                .push(
-                     VStack::new() // Wrap in VStack to control width since CodeBlock doesn't support .width() directly
-                        .width(Length::Fixed(600.0))
-                        .push(CodeBlock::rust("let pressure = app.get_semantic_state(\"pressure_gauge\");"))
-                );
+                .push(headline("The Efficiency Equation"))
+                .push(pillars);
 
-            // --- Section 4: Demo ---
-            // Overlay badge using GlassCard
+            // --- Section 3: Every App is an API ---
+            let api_intro = VStack::new()
+                .spacing(16.0)
+                .push(headline("Every App is an API"))
+                .push(body("PeakUI isn't just for human eyes. It's a standardized protocol for machine-to-machine interaction."));
+
+            let api_code = VStack::new()
+                .push(CodeBlock::rust("let pressure = app.get_state(\"pressure\");\nif pressure > 100.0 {\n    app.trigger(\"shutdown\");\n}"));
+
+            let api_section = ResponsiveGrid::new()
+                .push(api_intro)
+                .push(api_code)
+                .spacing(48.0);
+
+            // --- Section 4: Industrial Verticals ---
+            let vertical_card = |title: &'static str, desc: &'static str, icon: &'static str| {
+                GlassCard::new(
+                    VStack::new()
+                        .spacing(16.0)
+                        .push(Icon::new(icon).size(32.0).color(t.colors.accent))
+                        .push(Text::new(title).title3())
+                        .push(body(desc)),
+                )
+                .padding(24.0)
+            };
+
+            let industrial_grid = ResponsiveGrid::new()
+                .push(vertical_card(
+                    "Oil & Gas",
+                    "Predictive maintenance for remote pipelines via low-latency terminal feeds.",
+                    "droplet",
+                ))
+                .push(vertical_card(
+                    "Precision Robotics",
+                    "High-frequency state management without visual overhead.",
+                    "cpu",
+                ))
+                .push(vertical_card(
+                    "Space Systems",
+                    "Radiation-hardened UI logic that runs on minimal CPU cycles.",
+                    "zap",
+                ))
+                .push(vertical_card(
+                    "Smart Logistics",
+                    "Seamless handoff between human dispatchers and autonomous fleets.",
+                    "truck",
+                ))
+                .spacing(24.0);
+
+            let industrial_verticals = VStack::new()
+                .spacing(48.0)
+                .align_x(Alignment::Center)
+                .push(headline("Industrial Verticals"))
+                .push(industrial_grid);
+
+            // --- Section 5: Demo ---
             let badge_view = GlassCard::new(
                 HStack::new()
                     .spacing(8.0)
@@ -149,21 +218,26 @@ impl LandingPage {
                     .push(Text::new(format!("Temperature: {:.1}°C", input_val)).title3())
                     .push(Slider::new(0.0..=100.0, input_val, Message::SliderChanged)),
             )
-            .width(Length::Fixed(500.0))
             .padding(32.0);
 
-            let active_demo = reactor_card.overlay(badge_view, Alignment::Center);
+            let active_demo = VStack::new()
+                .spacing(48.0)
+                .align_x(Alignment::Center)
+                .push(headline("Interactive Control"))
+                .push(reactor_card.overlay(badge_view, Alignment::Center));
 
             // --- Assembly ---
             ScrollView::new(
                 VStack::new()
                     .width(Length::Fill)
-                    .padding(80.0)
+                    .padding(context.size.width.min(80.0))
                     .spacing(120.0)
                     .align_x(Alignment::Center)
                     .push(hero)
-                    .push(green_math)
-                    .push(robot_os)
+                    .push(metrics_bar)
+                    .push(technical_pillars)
+                    .push(api_section)
+                    .push(industrial_verticals)
                     .push(active_demo),
             )
             .view(&context)

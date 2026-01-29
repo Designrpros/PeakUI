@@ -1,315 +1,420 @@
 use super::super::app::Message;
 use crate::prelude::*;
-// No direct iced imports! Rely on PeakUI abstractions. Force re-include.
+use iced::{Alignment, Color, Length, Padding};
 
 pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
-    let t = context.theme;
     let is_mobile = context.is_slim();
 
-    // --- Helpers ---
-    let section_title = |title: String| {
-        Text::new(title)
-            .title2()
-            .bold()
-            .color(t.colors.text_primary)
-            .align_center()
+    // --- Asset Detection ---
+    let core_asset = if cfg!(target_arch = "wasm32") {
+        "/assets/design_marvel/neural_core.png"
+    } else {
+        "framework/assets/design_marvel/neural_core.png"
     };
 
-    let section_desc = |text: String| {
-        VStack::new()
-            .width(if is_mobile {
-                Length::Fill
-            } else {
-                Length::Fixed(600.0)
-            })
-            .push(
-                Text::new(text)
-                    .body()
-                    .color(t.colors.text_secondary)
-                    .align_center()
-                    .width(Length::Fill),
-            )
-    };
+    // --- Main Composition ---
+    let mut root = VStack::new()
+        .width(Length::Fill)
+        .spacing(if is_mobile { 80.0 } else { 120.0 });
 
-    // --- Hero Section ---
-    let hero = VStack::<Message>::new()
-        .spacing(40.0)
-        .padding(Padding {
-            top: 100.0,
-            ..Default::default()
-        })
-        .align_x(Alignment::Center)
+    // 1. Hero & Navigation
+    root = root.push(hero_section(context, core_asset, is_mobile));
+
+    // 3. Technical Core (Responsive 2x2 Grid)
+    root = root.push(pillars_section(context, is_mobile));
+
+    // 4. GREEN AI STORY
+    root = root.push(green_ai_section(context, is_mobile));
+
+    // 5. INDUSTRIAL API STORY (Markdown-style Code Block)
+    root = root.push(industrial_api_section(context, is_mobile));
+
+    // 6. INDUSTRIAL VERTICALS (Responsive Grid)
+    root = root.push(verticals_section(context, is_mobile));
+
+    // 7. SAFETY LEDGER (Responsive Grid)
+    root = root.push(safety_ledger_section(context, is_mobile));
+
+    // 8. Footer
+    root = root.push(footer(context, is_mobile));
+
+    ScrollView::new(root).view(context)
+}
+
+fn hero_section(context: &Context, asset: &str, is_mobile: bool) -> ZStack<Message, IcedBackend> {
+    let t = context.theme;
+    ZStack::new()
+        .height(Length::Fixed(if is_mobile { 400.0 } else { 600.0 }))
+        .width(Length::Fill)
         .push(
-            Text::new(context.t("hero-title"))
-                .title1()
-                .bold()
-                .color(t.colors.text_primary)
-                .align_center(),
-        )
-        .push(
-            Text::new(context.t("hero-subtitle"))
-                .title2()
-                .color(t.colors.text_primary)
-                .align_center(),
+            ZStack::new()
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .push(Image::new(asset).width(Length::Fill).height(Length::Fill))
+                .push(Container::new(Space::new(Length::Fill, Length::Fill)).background(Color::from_rgba(0.0, 0.0, 0.0, 0.7)))
         )
         .push(
             VStack::new()
-                .width(if is_mobile {
-                    Length::Fill
-                } else {
-                    Length::Fixed(700.0)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .padding(Padding {
+                    top: 16.0,
+                    right: 40.0,
+                    bottom: 0.0,
+                    left: 40.0,
                 })
+                .align_x(Alignment::Center)
+                .push(nav_bar(context, is_mobile))
+                .push(Space::new(Length::Shrink, Length::Fill))
                 .push(
-                    Text::new(context.t("hero-desc"))
-                        .body()
-                        .color(t.colors.text_secondary)
-                        .align_center()
-                        .width(Length::Fill),
-                ),
-        )
-        .push(
-            HStack::new()
-                .spacing(12.0)
-                .width(Length::Shrink) // Shrink to enable centering by parent VStack
-                .align_y(Alignment::Center)
-                .push(
-                    Button::label("🇺🇸 English")
-                        .variant(Variant::Ghost)
-                        .on_press(Message::SetLanguage(
-                            "en-US".into(),
-                            vec![include_str!(
-                                "../../../../apps/showcase/assets/locales/en-US/main.ftl"
-                            )
-                            .to_string()],
-                        )),
+                    VStack::new()
+                        .spacing(32.0)
+                        .align_x(Alignment::Center)
+                        .width(Length::Fill)
+                        .push(
+                            VStack::new()
+                                .spacing(8.0)
+                                .align_x(Alignment::Center)
+                                .push(Text::new("ERA 01").bold().size(11.0).color(t.colors.primary))
+                                .push(Text::new("AUTONOMOUS\nINTELLIGENCE").size(if is_mobile { 32.0 } else { 56.0 }).bold().align_center())
+                                .push(Rectangle::new(Length::Fixed(120.0), Length::Fixed(4.0)).color(t.colors.primary).radius(2.0))
+                        )
+                        .push(Text::new(if is_mobile { "The industrial kernel.\nDeterministic. Sovereign." } else { "The only UI framework built for the eyes of LLMs.\nDeterministic. Semantic. Sovereign." }).size(16.0).secondary().align_center())
                 )
-                .push(Text::new("|").secondary())
-                .push(Button::label("🇳🇴 Norsk").variant(Variant::Ghost).on_press(
-                    Message::SetLanguage(
-                        "nb-NO".into(),
-                        vec![include_str!(
-                                "../../../../apps/showcase/assets/locales/nb-NO/main.ftl"
-                            )
-                            .to_string()],
-                    ),
-                )),
+                .push(Space::new(Length::Shrink, Length::Fill))
+                .push(Icon::new("chevron-down").size(32.0).secondary())
         )
-        .push(
-            Button::new(
-                Text::new(context.t("catalog-button"))
-                    .bold()
-                    .align_center()
-                    .width(Length::Fill),
-            )
-            .variant(Variant::Outline)
-            .width(Length::Fixed(240.0))
-            .on_press(Message::EnterApp),
-        );
+}
 
-    // --- Core Values (Text Focused) ---
-    // Instead of heavy cards, we'll use clean columns
-    let feature_item = |icon: &'static str, title: String, desc: String| {
-        VStack::new()
-            .spacing(16.0)
-            .align_x(Alignment::Center) // Center items
-            .push(Icon::new(icon).size(32.0).color(t.colors.primary))
-            .push(
-                Text::new(title)
-                    .title3()
-                    .bold()
-                    .color(t.colors.text_primary)
-                    .align_center(),
-            )
-            .push(
-                VStack::new()
-                    .align_x(Alignment::Center) // Fix centering of description
-                    .push(
-                        Text::new(desc)
-                            .body()
-                            .color(t.colors.text_secondary)
-                            .align_center(),
-                    ),
-            )
+fn nav_bar(_context: &Context, is_mobile: bool) -> GlassCard<Message, IcedBackend> {
+    let nav_links = if is_mobile {
+        Container::new(Space::new(Length::Shrink, Length::Shrink))
+    } else {
+        Container::new(
+            HStack::new()
+                .spacing(24.0)
+                .width(Length::Shrink)
+                .align_y(Alignment::Center)
+                .push(Text::new("Stack").caption1().secondary())
+                .push(Text::new("Vision").caption1().secondary())
+                .push(Text::new("Architecture").caption1().secondary()),
+        )
     };
 
-    let features_grid = VStack::<Message>::new()
-        .spacing(64.0) // More breathing room
-        .align_x(Alignment::Center)
-        .push(if is_mobile {
-            // Stack vertically
-            Box::new(
-                VStack::new()
-                    .spacing(48.0)
-                    .width(Length::Fill)
-                    .push(feature_item(
-                        "boxes",
-                        context.t("feature-modular"),
-                        context.t("feature-modular-desc"),
-                    ))
-                    .push(feature_item(
-                        "zap",
-                        context.t("feature-performant"),
-                        context.t("feature-performant-desc"),
-                    ))
-                    .push(feature_item(
-                        "shield-check",
-                        context.t("feature-typesafe"),
-                        context.t("feature-typesafe-desc"),
-                    )),
-            ) as Box<dyn View<Message, IcedBackend>>
-        } else {
-            // Horizontal Grid
-            Box::new(
-                HStack::new()
-                    .spacing(48.0)
-                    .width(Length::Fill)
-                    .push(feature_item(
-                        "boxes",
-                        context.t("feature-modular"),
-                        context.t("feature-modular-desc"),
-                    ))
-                    .push(feature_item(
-                        "zap",
-                        context.t("feature-performant"),
-                        context.t("feature-performant-desc"),
-                    ))
-                    .push(feature_item(
-                        "shield-check",
-                        context.t("feature-typesafe"),
-                        context.t("feature-typesafe-desc"),
-                    )),
-            ) as Box<dyn View<Message, IcedBackend>>
-        });
+    GlassCard::new(
+        HStack::new()
+            .align_y(Alignment::Center)
+            .padding(Padding::from([0, 24]))
+            .push(Text::new("PEAKSUITE").bold().size(14.0))
+            .push(Space::new(Length::Fill, Length::Shrink))
+            .push(nav_links)
+            .push(Space::new(
+                if is_mobile {
+                    Length::Fixed(16.0)
+                } else {
+                    Length::Fixed(32.0)
+                },
+                Length::Shrink,
+            ))
+            .push(
+                Button::label("Launch")
+                    .variant(Variant::Solid)
+                    .intent(Intent::Primary)
+                    .width(Length::Fixed(80.0))
+                    .compact()
+                    .on_press(Message::EnterApp),
+            ),
+    )
+    .padding(0.0)
+    .height(Length::Fixed(44.0))
+    .width(if is_mobile {
+        Length::Fill
+    } else {
+        Length::Fixed(900.0)
+    })
+}
 
-    // --- Section: Green AI (Storytelling) ---
-    let green_ai = VStack::<Message>::new()
-        .spacing(40.0)
-        .align_x(Alignment::Center)
-        .push(section_title(context.t("green-ai-title")))
-        .push(section_desc(context.t("green-ai-desc1")))
-        .push(section_desc(context.t("green-ai-desc2")))
+fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let content = VStack::new()
+        .spacing(48.0)
+        .width(Length::Fill)
+        .push(section_header(
+            "The Technical Core",
+            "Unified hierarchy for intelligence swarms.",
+            is_mobile,
+        ))
+        .push(
+            ResponsiveGrid::new()
+                .spacing(32.0)
+                .push(pillar_card(
+                    "PeakOS",
+                    "Real-Time Orchestration",
+                    "Deterministic kernel for hardware coordination.",
+                    "cpu",
+                    context,
+                ))
+                .push(pillar_card(
+                    "PeakUI",
+                    "Semantic Vision",
+                    "The world's first AI-native semantic interface.",
+                    "eye",
+                    context,
+                ))
+                .push(pillar_card(
+                    "PeakDB",
+                    "Neural Memory",
+                    "Local-first vector storage for encrypted on-device RAG.",
+                    "database",
+                    context,
+                ))
+                .push(pillar_card(
+                    "PeakRelay",
+                    "Distributed Spirit",
+                    "Peer-to-peer intelligence mesh for sovereign swarms.",
+                    "share-2",
+                    context,
+                )),
+        );
+
+    Container::new(content)
+        .padding(if is_mobile { 24.0 } else { 80.0 })
+        .width(Length::Fill)
+}
+
+fn green_ai_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let t = context.theme;
+    let content = VStack::new()
+        .spacing(32.0)
+        .width(Length::Fill)
+        .push(section_header("Turning Heavy AI into Green AI", "99% Energy Reduction", is_mobile))
+        .push(
+            VStack::new()
+                .spacing(24.0)
+                .push(Text::new("Traditional Computer Vision processes millions of pixels per frame. This approach is computationally expensive and energy-intensive.").body().secondary())
+                .push(Text::new("PeakUI exposes the Semantic Tree directly to AI agents. This eliminates the need for expensive pixel-processing, enabling instant interaction with minimal thermal overhead.").body().secondary())
+        )
         .push(
             HStack::new()
                 .spacing(12.0)
-                .width(Length::Shrink) // Shrink to allow centering
                 .align_y(Alignment::Center)
-                .push(Icon::new("fuel").size(24.0).color(t.colors.success))
-                .push(
-                    Text::new(context.t("green-ai-stat"))
-                        .body()
-                        .bold()
-                        .color(t.colors.success)
-                        .align_start(),
-                ),
+                .push(Icon::new("leaf").size(24.0).color(t.colors.success))
+                .push(Text::new("Sustainable industrial intelligence.").caption1().bold().color(t.colors.success))
         );
 
-    // --- Section: Robot OS ---
-    let robot_os = VStack::<Message>::new()
-        .spacing(40.0)
-        .align_x(Alignment::Center) // Centered!
+    Container::new(content)
+        .padding(if is_mobile { 24.0 } else { 80.0 })
+        .width(Length::Fill)
+}
+
+fn industrial_api_section(_context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let code = r#"// Native Agent Interface
+let pressure = framework.get_state("pressure_gauge");
+if pressure.value > 80.0 {
+    btn_emergency.press();
+}"#;
+
+    let code_block = CodeBlock::new(code).language("rust");
+
+    let content = VStack::new()
+        .spacing(32.0)
+        .width(Length::Fill)
+        .push(section_header("Every UI is an API", "No Cameras Required", is_mobile))
+        .push(Text::new("An industrial robot does not need a camera to see the screen. With PeakUI's semantic state, the UI itself becomes a structured API.").body().secondary())
         .push(
-            Text::new(context.t("every-ui-api-title"))
-                .title2()
-                .bold()
-                .color(t.colors.text_primary)
-                .align_center(),
+            Container::new(code_block)
+                .width(if is_mobile { Length::Fill } else { Length::Fixed(600.0) })
+        );
+
+    Container::new(content)
+        .padding(if is_mobile { 24.0 } else { 80.0 })
+        .width(Length::Fill)
+}
+
+fn verticals_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let grid = ResponsiveGrid::new()
+        .spacing(32.0)
+        .push(vertical_card(
+            "Energy",
+            "Smart-grid orchestration and autonomous swarms.",
+            "activity",
+            context,
+        ))
+        .push(vertical_card(
+            "Defense",
+            "Decentralized zero-trust tactical secure compute.",
+            "shield",
+            context,
+        ))
+        .push(vertical_card(
+            "Manufacturing",
+            "Deterministic control for precision robotics.",
+            "target",
+            context,
+        ));
+
+    Container::new(
+        VStack::new()
+            .spacing(48.0)
+            .width(Length::Fill)
+            .push(section_header(
+                "Industrial Verticals",
+                "Sovereign tech for infrastructure.",
+                is_mobile,
+            ))
+            .push(grid),
+    )
+    .padding(if is_mobile { 24.0 } else { 80.0 })
+    .width(Length::Fill)
+}
+
+fn safety_ledger_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let grid = ResponsiveGrid::new()
+        .spacing(64.0)
+        .push(blue_print_item(
+            "SAFE RUST Foundation",
+            "100% memory safety. No zero-day exploits.",
+            context,
+        ))
+        .push(blue_print_item(
+            "ZERO-TRUST Protocol",
+            "Hardware root-of-trust encryption.",
+            context,
+        ));
+
+    Container::new(
+        VStack::new()
+            .spacing(48.0)
+            .width(Length::Fill)
+            .push(section_header(
+                "The Safety Ledger",
+                "Verified industrial security.",
+                is_mobile,
+            ))
+            .push(grid),
+    )
+    .padding(if is_mobile { 24.0 } else { 80.0 })
+    .width(Length::Fill)
+}
+
+fn section_header(title: &str, subtitle: &str, is_mobile: bool) -> VStack<Message, IcedBackend> {
+    VStack::new()
+        .spacing(12.0)
+        .width(Length::Fill)
+        .push(
+            Text::new(title)
+                .size(if is_mobile { 32.0 } else { 48.0 })
+                .bold(),
+        )
+        .push(
+            Text::new(subtitle)
+                .secondary()
+                .size(if is_mobile { 16.0 } else { 20.0 }),
+        )
+}
+
+fn pillar_card(
+    title: &str,
+    sub: &str,
+    desc: &str,
+    icon: &str,
+    context: &Context,
+) -> Container<Message, IcedBackend> {
+    let t = context.theme;
+    let is_beta = title == "PeakOS" || title == "PeakRelay" || title == "PeakDB";
+
+    let mut header = HStack::new().align_y(Alignment::Center).width(Length::Fill);
+
+    header = header.push(Icon::new(icon).size(24.0).color(t.colors.primary));
+
+    if is_beta {
+        header = header.push(Space::new(Length::Fill, Length::Shrink)).push(
+            Container::new(
+                Text::new("BETA")
+                    .size(10.0)
+                    .bold()
+                    .color(t.colors.on_primary),
+            )
+            .padding(Padding::from([2, 8]))
+            .background(t.colors.primary)
+            .radius(12.0),
+        );
+    }
+
+    let card_stack = VStack::new()
+        .spacing(16.0)
+        .padding(20.0)
+        .width(Length::Fill)
+        .push(header)
+        .push(
+            VStack::new()
+                .spacing(4.0)
+                .push(Text::new(title).headline().bold())
+                .push(Text::new(sub).caption1().secondary()),
+        )
+        .push(Text::new(desc).body().secondary());
+
+    Container::new(card_stack)
+        .width(Length::Fill)
+        .background(t.colors.surface)
+        .border(1.0, t.colors.border.scale_alpha(0.1))
+        .corner_radius(24.0)
+}
+
+fn vertical_card(
+    title: &str,
+    desc: &str,
+    icon: &str,
+    context: &Context,
+) -> Container<Message, IcedBackend> {
+    let t = context.theme;
+    let card = VStack::new()
+        .spacing(16.0)
+        .padding(20.0)
+        .width(Length::Fill)
+        .push(Icon::new(icon).size(24.0).color(t.colors.primary))
+        .push(Text::new(title).headline().bold())
+        .push(Text::new(desc).body().secondary());
+
+    Container::new(card)
+        .width(Length::Fill)
+        .background(t.colors.surface)
+        .border(1.0, t.colors.border.scale_alpha(0.1))
+        .corner_radius(24.0)
+}
+
+fn blue_print_item(label: &str, desc: &str, context: &Context) -> HStack<Message, IcedBackend> {
+    let t = context.theme;
+    HStack::new()
+        .spacing(24.0)
+        .align_y(Alignment::Center)
+        .width(Length::Fill)
+        .push(
+            Rectangle::new(Length::Fixed(4.0), Length::Fixed(40.0))
+                .color(t.colors.primary)
+                .radius(2.0),
         )
         .push(
             VStack::new()
-                .width(if is_mobile {
-                    Length::Fill
-                } else {
-                    Length::Fixed(700.0)
-                })
-                .push(
-                    Text::new(context.t("every-ui-api-desc"))
-                        .body()
-                        .color(t.colors.text_secondary)
-                        .align_center()
-                        .width(Length::Fill),
-                ),
+                .push(Text::new(label).caption1().bold().secondary())
+                .push(Text::new(desc).body()),
         )
-        .push(
-            // Constrain width to nicely align with text and provide "outer padding" visually
-            VStack::new()
-                .width(if is_mobile {
-                    Length::Fill
-                } else {
-                    Length::Fixed(700.0)
-                }) // Responsive Width
-                .push(CodeBlock::rust(
-                    "let pressure = framework.get_state(\"pressure_gauge\");",
-                )),
-        );
+}
 
-    // --- Footer ---
-    let footer = VStack::<Message>::new()
+fn footer(_context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let content = VStack::new()
         .spacing(48.0)
         .align_x(Alignment::Center)
-        .padding(Padding {
-            top: 120.0,
-            ..Default::default()
-        })
         .width(Length::Fill)
         .push(Divider::new())
         .push(
-            VStack::new()
-                .spacing(16.0)
-                .align_x(Alignment::Center)
-                .push(
-                    Text::new(context.t("footer-framework"))
-                        .bold()
-                        .color(t.colors.text_primary)
-                        .align_center(),
-                )
-                .push(
-                    Text::new(context.t("footer-version"))
-                        .caption1()
-                        .color(t.colors.text_primary)
-                        .align_center(),
-                ),
-        )
-        .push(
             HStack::new()
                 .spacing(32.0)
-                .width(Length::Shrink)
-                .push(
-                    Button::label(context.t("footer-docs"))
-                        .variant(Variant::Ghost)
-                        .on_press(Message::EnterApp),
-                )
-                .push(
-                    Button::label(context.t("footer-github"))
-                        .variant(Variant::Ghost)
-                        .on_press(Message::OpenUrl(
-                            "https://github.com/Designrpros/PeakUI".into(),
-                        )),
-                ),
+                .push(Text::new("Oslo").caption1().secondary())
+                .push(Text::new("ERA 2026").caption1().secondary())
+                .push(Text::new("BSL-1.1").caption1().secondary()),
         );
 
-    // --- Assembly ---
-    let main_content = VStack::<Message>::new()
+    Container::new(content)
+        .padding(if is_mobile { 32.0 } else { 80.0 })
         .width(Length::Fill)
-        .spacing(if is_mobile { 100.0 } else { 160.0 }) // Reduce spacing on mobile
-        .padding(Padding {
-            top: 140.0,
-            right: if is_mobile { 24.0 } else { 0.0 }, // Add horizontal padding on mobile
-            bottom: 140.0,
-            left: if is_mobile { 24.0 } else { 0.0 }, // Add horizontal padding on mobile
-        })
-        .push(hero)
-        .push(features_grid)
-        .push(green_ai)
-        .push(robot_os)
-        .push(footer);
-
-    // Wrap in a centered container with max width
-    // ScrollView generates the scrolling area.
-    ScrollView::new(
-        VStack::new()
-            .width(Length::Fill)
-            .align_x(Alignment::Center) // Center the column
-            .push(main_content),
-    )
-    .view(context)
 }

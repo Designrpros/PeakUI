@@ -293,18 +293,26 @@ impl<Message: 'static> View<Message, IcedBackend> for GlassCard<Message, IcedBac
             theme.shadow_blur,
         );
 
-        let radius = context.radius(theme.radius);
+        let scale = theme.scaling;
+        let radius = context.radius(theme.radius * scale);
+        let padding = Padding {
+            top: self.padding.top * scale,
+            right: self.padding.right * scale,
+            bottom: self.padding.bottom * scale,
+            left: self.padding.left * scale,
+        };
 
         container(self.content.view(context))
-            .padding(self.padding)
-            .width(self.width)
-            .height(self.height)
+            .padding(padding)
+            .width(context.scale_length(self.width))
+            .height(context.scale_length(self.height))
+            .center_y(Length::Fill)
             .style(move |_| container::Style {
                 background: Some(bg.into()),
                 border: iced::Border {
                     radius,
                     color: Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-                    width: 1.0,
+                    width: 1.0 * scale,
                 },
                 shadow,
                 ..Default::default()

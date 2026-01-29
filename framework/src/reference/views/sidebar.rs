@@ -279,6 +279,12 @@ impl SidebarView {
                 Page::PeakDB,
                 *active_tab == Page::PeakDB,
             ))
+            .push(sidebar_item(
+                "Swarm Dashboard",
+                "layout-dashboard",
+                Page::SwarmDashboard,
+                *active_tab == Page::SwarmDashboard,
+            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAKCLOUD"))
             .push(sidebar_item(

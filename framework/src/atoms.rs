@@ -572,6 +572,7 @@ pub struct Container<Message: 'static, B: Backend = IcedBackend> {
     border_radius: f32,
     border_width: f32,
     border_color: Option<Color>,
+    shadow: Option<iced::Shadow>,
     _phantom: PhantomData<B>,
 }
 
@@ -586,6 +587,7 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
             border_radius: 0.0,
             border_width: 0.0,
             border_color: None,
+            shadow: None,
             _phantom: PhantomData,
         }
     }
@@ -615,6 +617,11 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
         self
     }
 
+    pub fn shadow(mut self, shadow: iced::Shadow) -> Self {
+        self.shadow = Some(shadow);
+        self
+    }
+
     pub fn border(mut self, width: f32, color: Color) -> Self {
         self.border_width = width;
         self.border_color = Some(color);
@@ -624,15 +631,16 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
 
 impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        // Since Backend trait's container doesn't support background/border directly in its current signature
-        // (it's very minimal), we just use it for layout.
-        // In a more complete system, Backend::container would take a style object.
-        // For now, we'll just use it for padding/sizing.
         B::container(
             self.content.view(context),
             self.padding,
             self.width,
             self.height,
+            self.background,
+            self.border_radius,
+            self.border_width,
+            self.border_color,
+            self.shadow,
             context,
         )
     }

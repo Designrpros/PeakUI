@@ -134,6 +134,7 @@ pub struct App {
     pub is_thinking: bool,
     pub intelligence: Arc<crate::reference::intelligence_bridge::PeakIntelligenceBridge>,
     pub db: Arc<crate::reference::db_bridge::PeakDBBridge>,
+    pub peak_id: String,
 }
 
 #[derive(Debug, Clone)]
@@ -470,6 +471,7 @@ impl Default for App {
             chat_input: String::new(),
             api_key: settings.api_key,
             ai_provider: settings.ai_provider,
+            peak_id: String::new(),
             icon_limit: 50,
             window_width: 1024.0, // Default assume desktop until resized
             localization: Localization::default(),
@@ -1201,11 +1203,13 @@ impl App {
             );
         }
 
+        let peak_id = self.peak_id.clone();
         crate::core::responsive(
             mode,
             tokens.clone(),
             self.localization.clone(),
-            move |context| {
+            move |mut context| {
+                context.peak_id = peak_id.clone();
                 // Main App Content
                 let base_content = iced::widget::container(content.view(&context))
                     .width(Length::Fill)

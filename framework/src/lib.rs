@@ -24,7 +24,9 @@ pub mod scroll_view;
 pub mod views;
 
 pub mod prelude {
-    pub use crate::atoms::{Capsule, Circle, Divider, Icon, Image, Rectangle, Space, Text};
+    pub use crate::atoms::{
+        Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text,
+    };
     pub use crate::catalog::{Catalog, CatalogItem, CatalogMessage};
     pub use crate::console::Console;
     pub use crate::containers::{Card, GlassCard, Section};

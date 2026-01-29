@@ -464,7 +464,18 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             self.variant,
             context,
         );
-        B::container(input, Padding::ZERO, self.width, Length::Shrink, context)
+        B::container(
+            input,
+            Padding::ZERO,
+            self.width,
+            Length::Shrink,
+            None,
+            0.0,
+            0.0,
+            None,
+            None,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
