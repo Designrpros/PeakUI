@@ -63,6 +63,7 @@ pub enum Page {
     // Core Services
     PeakDB,
     PeakCloud,
+    PeakHub,
     SwarmDashboard,
 
     // Applications
@@ -131,6 +132,7 @@ impl ToString for Page {
 
             Page::PeakDB => "PeakDB".to_string(),
             Page::PeakCloud => "PeakCloud".to_string(),
+            Page::PeakHub => "Peak Hub".to_string(),
             Page::SwarmDashboard => "Swarm Dashboard".to_string(),
             Page::PeakDesktop => "PeakDesktop".to_string(),
             Page::PeakOSCore => "PeakOS Core".to_string(),
@@ -202,6 +204,7 @@ impl From<String> for Page {
 
             "peakdb" | "db" => Page::PeakDB,
             "peakcloud" | "cloud" => Page::PeakCloud,
+            "peakhub" | "hub" => Page::PeakHub,
             "swarm" | "dashboard" | "swarmdashboard" => Page::SwarmDashboard,
             "peakdesktop" => Page::PeakDesktop,
             "peakos core" | "peakoscore" => Page::PeakOSCore,
@@ -288,6 +291,7 @@ impl Page {
             // Core
             Page::PeakDB => "/core/peak-db".to_string(),
             Page::PeakCloud => "/core/peak-cloud".to_string(),
+            Page::PeakHub => "/core/peak-hub".to_string(),
             Page::SwarmDashboard => "/swarm-dashboard".to_string(),
             Page::PeakDesktop => "/core/peak-desktop".to_string(),
             Page::PeakOSCore => "/core/peak-os-core".to_string(),
@@ -371,6 +375,7 @@ impl Page {
 
             "/core/peak-db" => Page::PeakDB,
             "/core/peak-cloud" => Page::PeakCloud,
+            "/core/peak-hub" => Page::PeakHub,
             "/swarm-dashboard" => Page::SwarmDashboard,
             "/core/peak-desktop" => Page::PeakDesktop,
             "/core/peak-os-core" => Page::PeakOSCore,
@@ -440,6 +445,7 @@ impl Page {
             Page::ApiSchema
             | Page::PeakDB
             | Page::PeakCloud
+            | Page::PeakHub
             | Page::SwarmDashboard
             | Page::PeakDesktop
             | Page::PeakOSCore => "Data".to_string(),
@@ -470,6 +476,7 @@ impl Page {
             Page::Shapes,
             Page::PeakDB,
             Page::PeakCloud,
+            Page::PeakHub,
             Page::Appearance,
             Page::SettingsAI,
             Page::About,

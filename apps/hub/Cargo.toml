@@ -13,11 +13,13 @@ serde_json = "1.0"
 anyhow = "1.0"
 tokio = { version = "1", features = ["full"] }
 env_logger = "0.10"
+peak-core = { path = "../../crates/peak-core", default-features = false }
+peak-theme = { path = "../../crates/peak-theme", default-features = false }
 
 # Future bridges
 peak_db = { path = "../../../PeakDB" }
 peak_cloud = { path = "../../../PeakCloud" }
-peak-os-intelligence = { path = "../../../PeakOS/crates/peak-intelligence", default_features = false, features = ["llm"] }
+peak-os-intelligence = { path = "../../../PeakOS/crates/peak-intelligence", default-features = false, features = ["llm"] }
 
 [features]
 default = ["native"]

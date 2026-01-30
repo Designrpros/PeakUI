@@ -299,6 +299,13 @@ fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, Ice
                     "Peer-to-peer intelligence mesh for sovereign swarms.",
                     "share-2",
                     context,
+                ))
+                .push(pillar_card(
+                    "Peak Hub",
+                    "Swarm Command",
+                    "The dedicated dashboard for controlling the entire stack.",
+                    "activity",
+                    context,
                 )),
         );
 

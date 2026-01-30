@@ -293,6 +293,14 @@ impl SidebarView {
                 Page::PeakCloud,
                 *active_tab == Page::PeakCloud,
             ))
+            .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
+            .push(sidebar_section_header("PEAK HUB"))
+            .push(sidebar_item(
+                "Peak Hub",
+                "activity",
+                Page::PeakHub,
+                *active_tab == Page::PeakHub,
+            ))
     }
 
     fn view_settings_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {

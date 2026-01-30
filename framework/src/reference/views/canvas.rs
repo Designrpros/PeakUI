@@ -65,6 +65,7 @@ impl CanvasView {
             // Ecosystem
             Page::PeakDB => pages::peak_db::view(context, is_mobile),
             Page::PeakCloud => pages::peak_cloud::view(context, is_mobile),
+            Page::PeakHub => pages::peak_hub::view(context, is_mobile),
             Page::SwarmDashboard => {
                 let view = super::swarm_dashboard::SwarmDashboardView::new(context.peak_id.clone());
                 crate::navigation::PageResult::new(view)
