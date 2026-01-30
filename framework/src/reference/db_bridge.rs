@@ -1,7 +1,6 @@
 use crate::core::{DataProvider, SemanticRecord};
 use iced::Task;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 pub struct PeakDBBridge {
     // For now, using an in-memory storage, but will eventually connect to PeakDB
@@ -21,7 +20,7 @@ impl DataProvider for PeakDBBridge {
         let storage = self.storage.clone();
         Task::perform(
             async move {
-                let mut db = storage.lock().await;
+                let mut db = storage.lock().map_err(|e| e.to_string())?;
                 // If ID exists, replace; otherwise, push
                 if let Some(pos) = db.iter().position(|r| r.id == record.id) {
                     db[pos] = record;
@@ -38,7 +37,7 @@ impl DataProvider for PeakDBBridge {
         let storage = self.storage.clone();
         Task::perform(
             async move {
-                let db = storage.lock().await;
+                let db = storage.lock().map_err(|e| e.to_string())?;
                 // Simple keyword search in content for now
                 let results = db
                     .iter()
@@ -55,7 +54,7 @@ impl DataProvider for PeakDBBridge {
         let storage = self.storage.clone();
         Task::perform(
             async move {
-                let mut db = storage.lock().await;
+                let mut db = storage.lock().map_err(|e| e.to_string())?;
                 db.retain(|r| r.id != id);
                 Ok(())
             },

@@ -69,7 +69,7 @@ pub fn run() {
         on_context_menu.forget();
     }
 
-    peak_ui::prelude::application(
+    let result = peak_ui::prelude::application(
         || {
             #[cfg(target_arch = "wasm32")]
             let (initial_page, hash, path) = {

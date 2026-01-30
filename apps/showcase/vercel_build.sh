@@ -41,7 +41,14 @@ else
 fi
 popd > /dev/null
 
-# 5. Build the Application
+# 5. Patch Workspace for WASM
+echo "Running WASM dependency patcher..."
+chmod +x ../../scripts/patch_wasm.sh
+pushd ../.. > /dev/null
+./scripts/patch_wasm.sh
+popd > /dev/null
+
+# 6. Build the Application
 echo "Building PeakUI Showcase..."
 
 # Create dist directory to prevent canonical path error in Trunk config

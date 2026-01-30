@@ -267,7 +267,7 @@ impl ContentView {
                                     Variant::Ghost
                                 },
                             )
-                            .width(Length::Fill)
+                            .width(Length::Shrink)
                             .on_press(Message::SetInspectorTab(
                                 super::super::app::InspectorTab::Feature,
                             )),
@@ -281,7 +281,7 @@ impl ContentView {
                                     Variant::Ghost
                                 },
                             )
-                            .width(Length::Fill)
+                            .width(Length::Shrink)
                             .on_press(Message::SetInspectorTab(
                                 super::super::app::InspectorTab::App,
                             )),

@@ -415,6 +415,8 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for Think
             0.0,
             None,
             None,
+            Alignment::Start,
+            Alignment::Start,
             context,
         )
     }

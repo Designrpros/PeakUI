@@ -21,6 +21,7 @@ pub enum Intent {
     #[default]
     Primary,
     Secondary,
+    Accent,
     Success,
     Warning,
     Danger,

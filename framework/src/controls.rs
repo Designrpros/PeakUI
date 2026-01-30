@@ -117,15 +117,22 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
 
         let mut children = Vec::new();
 
-        if let Some(icon_name) = &self.icon {
-            let icon_color = match variant {
-                Variant::Solid => Some(theme.colors.on_primary),
-                _ => None,
+        let mut child_context = context.clone();
+        if variant == Variant::Solid {
+            let fg = match self.intent {
+                Intent::Accent => theme.colors.on_accent,
+                Intent::Secondary => theme.colors.on_secondary,
+                _ => theme.colors.on_primary,
             };
-            children.push(B::icon(icon_name.clone(), 16.0, icon_color, context));
+            child_context.foreground = Some(fg);
         }
 
-        children.push(self.content.view(context));
+        if let Some(icon_name) = &self.icon {
+            let icon_color = child_context.foreground;
+            children.push(B::icon(icon_name.clone(), 16.0, icon_color, &child_context));
+        }
+
+        children.push(self.content.view(&child_context));
 
         let padding = match size {
             ControlSize::Small => iced::Padding::from([2, 6]),
@@ -150,6 +157,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             self.on_press.clone(),
             self.variant,
             self.intent,
+            self.width,
             self.is_compact,
             context,
         )
@@ -348,6 +356,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Some((self.on_change)(self.value - self.step)),
                     Variant::Outline,
                     Intent::Neutral,
+                    Length::Fixed(20.0),
                     false,
                     context,
                 ),
@@ -367,6 +376,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Some((self.on_change)(self.value + self.step)),
                     Variant::Outline,
                     Intent::Neutral,
+                    Length::Fixed(20.0),
                     false,
                     context,
                 ),
@@ -474,6 +484,8 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             0.0,
             None,
             None,
+            Alignment::Start,
+            Alignment::Start,
             context,
         )
     }

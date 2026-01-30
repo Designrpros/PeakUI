@@ -435,7 +435,7 @@ impl Default for App {
             search_query: "".to_string(),
             expanded_sections: ["COMPONENTS".to_string()].into_iter().collect(),
             theme_tone: ThemeTone::Light,
-            theme: PeakTheme::Peak,
+            theme: PeakTheme::Mono,
             button_lab: ButtonLabState::default(),
             typography_lab: TypographyLabState::default(),
             layout_lab: LayoutLabState::default(),
@@ -1149,6 +1149,7 @@ impl App {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
+        log::info!("App::view called. show_landing: {}", self.show_landing);
         let mode = ShellMode::Desktop;
         let tone = self.theme_tone;
         let tokens = ThemeTokens::with_theme(self.theme, tone);

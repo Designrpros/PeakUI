@@ -3,6 +3,7 @@ use crate::prelude::*;
 use iced::{Alignment, Color, Length, Padding};
 
 pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
+    log::info!("RENDER: NEW LANDING VIEW");
     let is_mobile = context.is_slim();
 
     // --- Asset Detection ---
@@ -64,7 +65,11 @@ fn hero_section(context: &Context, asset: &str, is_mobile: bool) -> ZStack<Messa
                     left: 40.0,
                 })
                 .align_x(Alignment::Center)
-                .push(nav_bar(context, is_mobile))
+                .push(
+                    Container::new(nav_bar(context, is_mobile))
+                        .width(Length::Fill)
+                        .center_x(Length::Fill),
+                )
                 .push(Space::new(Length::Shrink, Length::Fill))
                 .push(
                     VStack::new()
@@ -86,7 +91,7 @@ fn hero_section(context: &Context, asset: &str, is_mobile: bool) -> ZStack<Messa
         )
 }
 
-fn nav_bar(_context: &Context, is_mobile: bool) -> GlassCard<Message, IcedBackend> {
+fn nav_bar(_context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
     let nav_links = if is_mobile {
         Container::new(Space::new(Length::Shrink, Length::Shrink))
     } else {
@@ -101,7 +106,7 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> GlassCard<Message, IcedBacken
         )
     };
 
-    GlassCard::new(
+    Container::new(
         HStack::new()
             .align_y(Alignment::Center)
             .padding(Padding::from([0, 24]))
@@ -118,9 +123,9 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> GlassCard<Message, IcedBacken
             ))
             .push(
                 Button::label("Launch")
-                    .variant(Variant::Solid)
+                    .variant(Variant::Outline)
                     .intent(Intent::Primary)
-                    .width(Length::Fixed(80.0))
+                    .width(Length::Shrink)
                     .compact()
                     .on_press(Message::EnterApp),
             ),
@@ -132,6 +137,9 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> GlassCard<Message, IcedBacken
     } else {
         Length::Fixed(900.0)
     })
+    .radius(22.0)
+    .border(2.0, _context.theme.colors.border)
+    .radius(22.0)
 }
 
 fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
@@ -222,7 +230,7 @@ if pressure.value > 80.0 {
         .push(Text::new("An industrial robot does not need a camera to see the screen. With PeakUI's semantic state, the UI itself becomes a structured API.").body().secondary())
         .push(
             Container::new(code_block)
-                .width(if is_mobile { Length::Fill } else { Length::Fixed(600.0) })
+                .width(Length::Fill)
         );
 
     Container::new(content)
@@ -348,6 +356,7 @@ fn pillar_card(
         .push(
             VStack::new()
                 .spacing(4.0)
+                .width(Length::Fill)
                 .push(Text::new(title).headline().bold())
                 .push(Text::new(sub).caption1().secondary()),
         )
@@ -355,9 +364,12 @@ fn pillar_card(
 
     Container::new(card_stack)
         .width(Length::Fill)
-        .background(t.colors.surface)
-        .border(1.0, t.colors.border.scale_alpha(0.1))
-        .corner_radius(24.0)
+        .border(1.0, t.colors.border)
+        .radius(if cfg!(target_arch = "wasm32") {
+            0.0
+        } else {
+            4.0
+        })
 }
 
 fn vertical_card(
@@ -377,9 +389,12 @@ fn vertical_card(
 
     Container::new(card)
         .width(Length::Fill)
-        .background(t.colors.surface)
-        .border(1.0, t.colors.border.scale_alpha(0.1))
-        .corner_radius(24.0)
+        .border(1.0, t.colors.border)
+        .radius(if cfg!(target_arch = "wasm32") {
+            0.0
+        } else {
+            4.0
+        })
 }
 
 fn blue_print_item(label: &str, desc: &str, context: &Context) -> HStack<Message, IcedBackend> {

@@ -23,6 +23,8 @@ pub enum PeakTheme {
     Mountain,
     /// Warm, beige/stone aesthetic
     Peak,
+    /// Monochrome black and white aesthetic
+    Mono,
 }
 
 impl PeakTheme {
@@ -37,6 +39,7 @@ impl PeakTheme {
             PeakTheme::HighContrast => Self::high_contrast_colors(tone),
             PeakTheme::Mountain => Self::mountain_colors(tone),
             PeakTheme::Peak => Self::peak_colors(tone),
+            PeakTheme::Mono => Self::mono_colors(tone),
         }
     }
 
@@ -44,16 +47,16 @@ impl PeakTheme {
     /// Get the recommended default theme for a shell mode
     pub fn default_for_mode(mode: ShellMode) -> Self {
         match mode {
-            ShellMode::Desktop => PeakTheme::Peak,
-            ShellMode::Mobile => PeakTheme::Cupertino,
-            ShellMode::Console => PeakTheme::HighContrast,
-            ShellMode::TV => PeakTheme::Peak,
-            ShellMode::Robot => PeakTheme::HighContrast,
-            ShellMode::Auto => PeakTheme::Peak,
-            ShellMode::Fireplace => PeakTheme::Peak,
-            ShellMode::SmartHome => PeakTheme::Smart,
-            ShellMode::Kiosk => PeakTheme::HighContrast,
-            ShellMode::Server => PeakTheme::HighContrast,
+            ShellMode::Desktop => PeakTheme::Mono,
+            ShellMode::Mobile => PeakTheme::Mono,
+            ShellMode::Console => PeakTheme::Mono,
+            ShellMode::TV => PeakTheme::Mono,
+            ShellMode::Robot => PeakTheme::Mono,
+            ShellMode::Auto => PeakTheme::Mono,
+            ShellMode::Fireplace => PeakTheme::Mono,
+            ShellMode::SmartHome => PeakTheme::Mono,
+            ShellMode::Kiosk => PeakTheme::Mono,
+            ShellMode::Server => PeakTheme::Mono,
         }
     }
 
@@ -67,12 +70,14 @@ impl PeakTheme {
             PeakTheme::HighContrast => "High Contrast",
             PeakTheme::Mountain => "Mountain",
             PeakTheme::Peak => "Peak",
+            PeakTheme::Mono => "Mono",
         }
     }
 
     /// Get all available themes
     pub fn all() -> &'static [PeakTheme] {
         &[
+            PeakTheme::Mono,
             PeakTheme::Peak,
             PeakTheme::Cupertino,
             PeakTheme::Smart,
@@ -99,7 +104,7 @@ impl PeakTheme {
                 secondary_container: Color::from_rgb8(235, 230, 225),
                 on_secondary_container: Color::from_rgb8(60, 55, 50),
 
-                accent: Color::from_rgb8(210, 105, 30), // Chocolate orange
+                accent: Color::from_rgb8(45, 60, 110), // Professional Deep Indigo-Navy
                 on_accent: Color::WHITE,
 
                 success: Color::from_rgb8(100, 160, 100), // Muted organic green
@@ -622,6 +627,83 @@ impl PeakTheme {
                 text_secondary: Color::from_rgb8(200, 210, 220),
                 text_tertiary: Color::from_rgb8(140, 150, 160),
                 text_disabled: Color::from_rgb8(80, 90, 100),
+            },
+        }
+    }
+
+    fn mono_colors(tone: ThemeTone) -> PeakColors {
+        match tone {
+            ThemeTone::Light => PeakColors {
+                primary: Color::BLACK,
+                on_primary: Color::WHITE,
+                primary_container: Color::from_rgb8(240, 240, 240),
+                on_primary_container: Color::BLACK,
+
+                secondary: Color::from_rgb8(60, 60, 60),
+                on_secondary: Color::WHITE,
+                secondary_container: Color::from_rgb8(245, 245, 245),
+                on_secondary_container: Color::BLACK,
+
+                accent: Color::BLACK,
+                on_accent: Color::WHITE,
+
+                success: Color::from_rgb8(34, 197, 94), // Vibrant Green
+                warning: Color::from_rgb8(100, 100, 100),
+                danger: Color::from_rgb8(150, 0, 0), // Small hint of red for danger
+                info: Color::from_rgb8(0, 0, 0),
+
+                surface: Color::WHITE,
+                on_surface: Color::BLACK,
+                surface_variant: Color::from_rgb8(248, 248, 248),
+                on_surface_variant: Color::from_rgb8(60, 60, 60),
+
+                background: Color::WHITE,
+                on_background: Color::BLACK,
+
+                border: Color::from_rgba8(0, 0, 0, 0.15),
+                divider: Color::from_rgba8(0, 0, 0, 0.1),
+                overlay: Color::from_rgba(0.0, 0.0, 0.0, 0.5),
+
+                text_primary: Color::BLACK,
+                text_secondary: Color::from_rgb8(80, 80, 80),
+                text_tertiary: Color::from_rgb8(140, 140, 140),
+                text_disabled: Color::from_rgb8(180, 180, 180),
+            },
+            ThemeTone::Dark => PeakColors {
+                primary: Color::WHITE,
+                on_primary: Color::BLACK,
+                primary_container: Color::from_rgb8(40, 40, 40),
+                on_primary_container: Color::WHITE,
+
+                secondary: Color::from_rgb8(180, 180, 180),
+                on_secondary: Color::BLACK,
+                secondary_container: Color::from_rgb8(30, 30, 30),
+                on_secondary_container: Color::WHITE,
+
+                accent: Color::WHITE,
+                on_accent: Color::BLACK,
+
+                success: Color::from_rgb8(34, 197, 94), // Vibrant Green
+                warning: Color::from_rgb8(150, 150, 150),
+                danger: Color::from_rgb8(255, 100, 100),
+                info: Color::WHITE,
+
+                surface: Color::from_rgb8(15, 15, 15),
+                on_surface: Color::WHITE,
+                surface_variant: Color::from_rgb8(25, 25, 25),
+                on_surface_variant: Color::from_rgb8(180, 180, 180),
+
+                background: Color::BLACK,
+                on_background: Color::WHITE,
+
+                border: Color::from_rgba8(255, 255, 255, 0.15),
+                divider: Color::from_rgba8(255, 255, 255, 0.1),
+                overlay: Color::from_rgba(0.0, 0.0, 0.0, 0.7),
+
+                text_primary: Color::WHITE,
+                text_secondary: Color::from_rgb8(180, 180, 180),
+                text_tertiary: Color::from_rgb8(120, 120, 120),
+                text_disabled: Color::from_rgb8(80, 80, 80),
             },
         }
     }

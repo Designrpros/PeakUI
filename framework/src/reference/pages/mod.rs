@@ -16,8 +16,6 @@ pub mod image;
 pub mod intelligence;
 pub mod introduction;
 pub mod landing;
-pub mod landing_legacy;
-pub mod landing_v1;
 pub mod layout;
 pub mod modal_doc;
 pub mod navigation_split;

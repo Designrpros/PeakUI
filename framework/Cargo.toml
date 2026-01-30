@@ -10,7 +10,7 @@ log = "0.4"
 peak-core = { path = "../crates/peak-core", default-features = false }
 peak-theme = { path = "../crates/peak-theme", default-features = false }
 peak-icons = { path = "../crates/peak-icons" }
-peak-os-intelligence = { path = "../../PeakOS/crates/peak-intelligence", default-features = false, features = ["llm"] }
+peak-os-intelligence = { path = "../../PeakOS/crates/peak-intelligence", default-features = false }
 peak-db = { path = "../../PeakOS/crates/peak-db", optional = true }
 iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -50,7 +50,8 @@ native = [
     "peak-db",
     "peak-core/native",
     "peak-theme/native",
-    "peak-os-intelligence/native"
+    "peak-os-intelligence/native",
+    "peak-os-intelligence/llm"
 ]
 tokio = ["iced/tokio"]
 wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]

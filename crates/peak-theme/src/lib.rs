@@ -58,6 +58,7 @@ impl ThemeTokens {
             PeakTheme::HighContrast => (1.0, 0.0, 0.0, 0.0, 8.0),
             PeakTheme::Mountain => (0.5, 60.0, 20.0, 30.0, 10.0),
             PeakTheme::Peak => (0.6, 20.0, 16.0, 20.0, 12.0),
+            PeakTheme::Mono => (1.0, 0.0, 2.0, 0.0, 12.0),
         };
 
         let shadow_offset = match theme {

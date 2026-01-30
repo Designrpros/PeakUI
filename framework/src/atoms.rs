@@ -573,6 +573,8 @@ pub struct Container<Message: 'static, B: Backend = IcedBackend> {
     border_width: f32,
     border_color: Option<Color>,
     shadow: Option<iced::Shadow>,
+    align_x: Alignment,
+    align_y: Alignment,
     _phantom: PhantomData<B>,
 }
 
@@ -588,6 +590,8 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
             border_width: 0.0,
             border_color: None,
             shadow: None,
+            align_x: Alignment::Start,
+            align_y: Alignment::Start,
             _phantom: PhantomData,
         }
     }
@@ -627,6 +631,28 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
         self.border_color = Some(color);
         self
     }
+
+    pub fn align_x(mut self, alignment: Alignment) -> Self {
+        self.align_x = alignment;
+        self
+    }
+
+    pub fn align_y(mut self, alignment: Alignment) -> Self {
+        self.align_y = alignment;
+        self
+    }
+
+    pub fn center_x(mut self, width: Length) -> Self {
+        self.width = width;
+        self.align_x = Alignment::Center;
+        self
+    }
+
+    pub fn center_y(mut self, height: Length) -> Self {
+        self.height = height;
+        self.align_y = Alignment::Center;
+        self
+    }
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
@@ -641,6 +667,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
             self.border_width,
             self.border_color,
             self.shadow,
+            self.align_x,
+            self.align_y,
             context,
         )
     }

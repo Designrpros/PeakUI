@@ -226,6 +226,7 @@ fn render_category<B: Backend>(
                 Some(CatalogMessage::ItemSelected(id)),
                 Variant::Ghost,
                 Intent::Neutral,
+                Length::Fill,
                 false,
                 context,
             )

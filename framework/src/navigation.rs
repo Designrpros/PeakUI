@@ -233,6 +233,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
             Some(self.destination.clone()),
             Variant::Ghost,
             Intent::Neutral,
+            Length::Fill,
             false,
             context,
         )
@@ -288,6 +289,8 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
             0.0,
             None,
             None,
+            Alignment::Start,
+            Alignment::Start,
             context,
         )
     }

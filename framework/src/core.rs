@@ -143,6 +143,7 @@ pub struct Context {
     pub focused_id: Option<String>,
     pub localization: Localization,
     pub peak_id: String,
+    pub foreground: Option<Color>,
 }
 
 impl Default for Context {
@@ -156,6 +157,7 @@ impl Default for Context {
             focused_id: None,
             localization: Localization::default(),
             peak_id: String::new(),
+            foreground: None,
         }
     }
 }
@@ -191,6 +193,7 @@ impl Context {
             focused_id: None,
             localization,
             peak_id: String::new(),
+            foreground: None,
         }
     }
 
@@ -452,6 +455,7 @@ impl Backend for SpatialBackend {
         _on_press: Option<Message>,
         _variant: Variant,
         _intent: Intent,
+        _width: Length,
         _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -610,6 +614,8 @@ impl Backend for SpatialBackend {
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,
+        _align_x: Alignment,
+        _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -731,6 +737,7 @@ pub trait Backend: Sized + Clone + 'static {
         on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        width: Length,
         is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message>;
@@ -797,6 +804,8 @@ pub trait Backend: Sized + Clone + 'static {
         border_width: f32,
         border_color: Option<Color>,
         shadow: Option<iced::Shadow>,
+        align_x: Alignment,
+        align_y: Alignment,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -928,20 +937,24 @@ impl Backend for IcedBackend {
         use iced::widget::text;
 
         let base_color = color.unwrap_or_else(|| {
+            let theme = &context.theme;
             if let Some(i) = intent {
                 match i {
-                    Intent::Primary => context.theme.colors.primary,
-                    Intent::Secondary => context.theme.colors.secondary,
-                    Intent::Success => context.theme.colors.success,
-                    Intent::Warning => context.theme.colors.warning,
-                    Intent::Danger => context.theme.colors.danger,
-                    Intent::Info => context.theme.colors.info,
-                    Intent::Neutral => context.theme.colors.text_primary,
+                    Intent::Primary => theme.colors.primary,
+                    Intent::Secondary => theme.colors.secondary,
+                    Intent::Accent => theme.colors.accent,
+                    Intent::Success => theme.colors.success,
+                    Intent::Warning => theme.colors.warning,
+                    Intent::Danger => theme.colors.danger,
+                    Intent::Info => theme.colors.info,
+                    Intent::Neutral => theme.colors.text_primary,
                 }
             } else if is_dim {
                 context.theme.colors.text_secondary
             } else {
-                context.theme.colors.text_primary
+                context
+                    .foreground
+                    .unwrap_or(context.theme.colors.text_primary)
             }
         });
 
@@ -1138,6 +1151,7 @@ impl Backend for IcedBackend {
         on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        width: Length,
         is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -1146,9 +1160,9 @@ impl Backend for IcedBackend {
 
         button(
             iced::widget::container(content)
-                .width(Length::Fill)
+                .width(width)
                 .height(Length::Fill)
-                .center_x(Length::Fill)
+                .center_x(width)
                 .center_y(Length::Fill),
         )
         .on_press_maybe(on_press)
@@ -1162,11 +1176,18 @@ impl Backend for IcedBackend {
             let color = match intent {
                 Intent::Primary => theme.colors.primary,
                 Intent::Secondary => theme.colors.secondary,
+                Intent::Accent => theme.colors.accent,
                 Intent::Success => theme.colors.success,
                 Intent::Warning => theme.colors.warning,
                 Intent::Danger => theme.colors.danger,
                 Intent::Info => theme.colors.info,
                 Intent::Neutral => theme.colors.surface,
+            };
+
+            let text_color = match intent {
+                Intent::Accent => theme.colors.on_accent,
+                Intent::Secondary => theme.colors.on_secondary,
+                _ => theme.colors.on_primary,
             };
 
             match variant {
@@ -1178,7 +1199,7 @@ impl Backend for IcedBackend {
                     } else {
                         color.into()
                     }),
-                    text_color: theme.colors.on_primary,
+                    text_color: text_color,
                     border: iced::Border {
                         radius: 32.0.into(),
                         ..Default::default()
@@ -1423,12 +1444,14 @@ impl Backend for IcedBackend {
         border_width: f32,
         border_color: Option<Color>,
         shadow: Option<iced::Shadow>,
+        align_x: Alignment,
+        align_y: Alignment,
         context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
         let scale = context.theme.scaling;
 
-        container(content)
+        let mut c = container(content)
             .padding(Padding {
                 top: padding.top * scale,
                 right: padding.right * scale,
@@ -1446,8 +1469,21 @@ impl Backend for IcedBackend {
                 },
                 shadow: shadow.unwrap_or_default(),
                 ..Default::default()
-            })
-            .into()
+            });
+
+        if align_x == Alignment::Center && width != Length::Shrink {
+            c = c.center_x(scale_length(width, scale));
+        } else if align_x == Alignment::End && width != Length::Shrink {
+            c = c.align_x(iced::alignment::Horizontal::Right);
+        }
+
+        if align_y == Alignment::Center && height != Length::Shrink {
+            c = c.center_y(scale_length(height, scale));
+        } else if align_y == Alignment::End && height != Length::Shrink {
+            c = c.align_y(iced::alignment::Vertical::Bottom);
+        }
+
+        c.into()
     }
 
     fn scroll_view<Message: 'static>(
@@ -1579,11 +1615,13 @@ impl Backend for TermBackend {
         if let Some(i) = intent {
             let code = match i {
                 Intent::Primary => "34",
+                Intent::Secondary => "30",
+                Intent::Accent => "35", // Magenta for accent in terminal
                 Intent::Success => "32",
                 Intent::Warning => "33",
                 Intent::Danger => "31",
                 Intent::Info => "36",
-                _ => "0",
+                Intent::Neutral => "0",
             };
             out = format!("\x1b[{}m{}\x1b[0m", code, out);
         }
@@ -1641,6 +1679,7 @@ impl Backend for TermBackend {
         _on_press: Option<Message>,
         _variant: Variant,
         _intent: Intent,
+        _width: Length,
         _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -1736,7 +1775,7 @@ impl Backend for TermBackend {
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,
-        _context: &Context,
+        _align_x: Alignment, _align_y: Alignment, _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }
@@ -2130,6 +2169,7 @@ impl Backend for AIBackend {
         _on_press: Option<Message>,
         variant: Variant,
         intent: Intent,
+        _width: Length,
         _is_compact: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
@@ -2284,7 +2324,7 @@ impl Backend for AIBackend {
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,
-        _context: &Context,
+        _align_x: Alignment, _align_y: Alignment, _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }
