@@ -66,7 +66,9 @@ impl Settings {
             .map(|s| s.to_string())
             .unwrap_or_default();
 
-        let ai_provider = if !api_key.is_empty() {
+        let ai_provider = if cfg!(target_arch = "wasm32") {
+            AIProviderChoice::OpenRouter
+        } else if !api_key.is_empty() {
             AIProviderChoice::OpenRouter
         } else {
             AIProviderChoice::Ollama
@@ -451,7 +453,10 @@ impl Default for App {
             last_cursor_pos: iced::Point::ORIGIN,
             intelligence: Arc::new(PeakIntelligenceBridge::new(
                 provider,
-                "google/gemini-3-flash-preview",
+                match provider {
+                    peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                    _ => "google/gemini-3-flash-preview",
+                },
                 if settings.api_key.is_empty() {
                     None
                 } else {
@@ -738,7 +743,10 @@ impl App {
 
                 self.intelligence = Arc::new(PeakIntelligenceBridge::new(
                     provider,
-                    "google/gemini-3-flash-preview",
+                    match provider {
+                        peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                        _ => "google/gemini-3-flash-preview",
+                    },
                     if key.is_empty() { None } else { Some(key) },
                 ));
 
@@ -765,7 +773,10 @@ impl App {
 
                 self.intelligence = Arc::new(PeakIntelligenceBridge::new(
                     model_provider,
-                    "google/gemini-3-flash-preview",
+                    match model_provider {
+                        peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                        _ => "google/gemini-3-flash-preview",
+                    },
                     if self.api_key.is_empty() {
                         None
                     } else {
@@ -1155,21 +1166,19 @@ impl App {
         let tokens = ThemeTokens::with_theme(self.theme, tone);
 
         if self.show_landing {
+            // Capture the search query state
+            let query = self.search_query.clone();
+
             return crate::core::responsive(
                 mode,
                 tokens.clone(),
                 self.localization.clone(),
                 move |context| {
-                    iced::widget::container(super::pages::landing::view(&context))
+                    // Pass 'query' to the view function
+                    iced::widget::container(super::pages::landing::view(&context, &query))
                         .width(Length::Fill)
                         .height(Length::Fill)
-                        .style(move |_| iced::widget::container::Style {
-                            background: Some(Background::Color(Color {
-                                a: 0.5,
-                                ..tokens.colors.background
-                            })),
-                            ..Default::default()
-                        })
+                        // ... styles ...
                         .into()
                 },
             );

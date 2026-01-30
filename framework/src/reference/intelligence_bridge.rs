@@ -32,6 +32,7 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         Task::perform(async move { client.chat(llm_messages).await }, |res| res)
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn chat_stream(
         &self,
         messages: Vec<crate::core::ChatCompletionMessage>,
@@ -67,6 +68,46 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         .boxed()
     }
 
+    #[cfg(target_arch = "wasm32")]
+    fn chat_stream(
+        &self,
+        messages: Vec<crate::core::ChatCompletionMessage>,
+    ) -> iced::futures::stream::BoxStream<'static, std::result::Result<String, String>> {
+        use iced::futures::{SinkExt, StreamExt};
+        let (mut sender, receiver) = iced::futures::channel::mpsc::channel(100);
+
+        let llm_messages: Vec<Message> = messages
+            .into_iter()
+            .map(|m| Message {
+                role: m.role,
+                content: m.content,
+            })
+            .collect();
+
+        let client = self.client.clone();
+
+        wasm_bindgen_futures::spawn_local(async move {
+            let stream = client.chat_stream(llm_messages);
+            let mut stream = Box::pin(stream);
+            let mut full_text = String::new();
+
+            while let Some(res) = stream.next().await {
+                match res {
+                    Ok(chunk) => {
+                        full_text.push_str(&chunk);
+                        let _ = sender.send(Ok(full_text.clone())).await;
+                    }
+                    Err(e) => {
+                        let _ = sender.send(Err(e)).await;
+                        break;
+                    }
+                }
+            }
+        });
+
+        receiver.boxed()
+    }
+
     fn execute_tool(&self, name: String, args: Value) -> Task<std::result::Result<Value, String>> {
         // For now, this is a stub. In a real scenario, this would route to PeakOS tool handlers.
         Task::perform(
@@ -82,7 +123,12 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
     }
 
     fn get_system_context(&self) -> String {
-        format!("PeakOS Local AI (Ollama). Model: {}", self.client.model())
+        let provider_name = match self.client.provider() {
+            ModelProvider::Ollama => "Local AI (Ollama)",
+            ModelProvider::LlamaCpp => "Local AI (Llama.cpp)",
+            ModelProvider::OpenRouter => "Cloud AI (OpenRouter)",
+        };
+        format!("PeakOS {}. Model: {}", provider_name, self.client.model())
     }
 }
 

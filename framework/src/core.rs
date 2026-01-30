@@ -1775,7 +1775,9 @@ impl Backend for TermBackend {
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,
-        _align_x: Alignment, _align_y: Alignment, _context: &Context,
+        _align_x: Alignment,
+        _align_y: Alignment,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }
@@ -1941,7 +1943,6 @@ pub trait IntelligenceProvider: Send + Sync {
         &self,
         _messages: Vec<ChatCompletionMessage>,
     ) -> iced::futures::stream::BoxStream<'static, std::result::Result<String, String>> {
-        // Default implementation returns an empty stream as Task conversion requires runtime
         use iced::futures::StreamExt;
         iced::futures::stream::empty().boxed()
     }
@@ -2324,7 +2325,9 @@ impl Backend for AIBackend {
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,
-        _align_x: Alignment, _align_y: Alignment, _context: &Context,
+        _align_x: Alignment,
+        _align_y: Alignment,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }

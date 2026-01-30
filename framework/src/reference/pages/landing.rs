@@ -1,68 +1,65 @@
 use super::super::app::Message;
 use crate::prelude::*;
-use iced::{Alignment, Color, Length, Padding};
+use crate::controls::TextInput;
 
-pub fn view(context: &Context) -> Element<'static, Message, Theme, Renderer> {
-    log::info!("RENDER: NEW LANDING VIEW");
+pub fn view(context: &Context, query: &str) -> Element<'static, Message, Theme, Renderer> {
+    log::info!("RENDER: LANDING PAGE");
     let is_mobile = context.is_slim();
+    let _t = context.theme; // Fixed unused variable warning
 
-    // --- Asset Detection ---
+    // Asset selection based on target
     let core_asset = if cfg!(target_arch = "wasm32") {
         "/assets/design_marvel/neural_core.png"
     } else {
         "framework/assets/design_marvel/neural_core.png"
     };
 
-    // --- Main Composition ---
+    // Root Stack
     let mut root = VStack::new()
         .width(Length::Fill)
         .spacing(if is_mobile { 80.0 } else { 120.0 });
 
-    // 1. Hero & Navigation
-    root = root.push(hero_section(context, core_asset, is_mobile));
+    root = root.push(hero_section(context, core_asset, is_mobile, query));
+    
+    // --- NEW SECTION ---
+    root = root.push(about_section(context, is_mobile));
 
-    // 3. Technical Core (Responsive 2x2 Grid)
     root = root.push(pillars_section(context, is_mobile));
-
-    // 4. GREEN AI STORY
     root = root.push(green_ai_section(context, is_mobile));
-
-    // 5. INDUSTRIAL API STORY (Markdown-style Code Block)
     root = root.push(industrial_api_section(context, is_mobile));
-
-    // 6. INDUSTRIAL VERTICALS (Responsive Grid)
     root = root.push(verticals_section(context, is_mobile));
-
-    // 7. SAFETY LEDGER (Responsive Grid)
     root = root.push(safety_ledger_section(context, is_mobile));
-
-    // 8. Footer
     root = root.push(footer(context, is_mobile));
 
     ScrollView::new(root).view(context)
 }
 
-fn hero_section(context: &Context, asset: &str, is_mobile: bool) -> ZStack<Message, IcedBackend> {
+fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -> ZStack<Message, IcedBackend> {
     let t = context.theme;
+    
+    // 1. Viewport Height
+    let viewport_height = context.size.height.max(600.0);
+
     ZStack::new()
-        .height(Length::Fixed(if is_mobile { 400.0 } else { 600.0 }))
+        .height(Length::Fixed(viewport_height))
         .width(Length::Fill)
         .push(
-            ZStack::new()
+            // Layer 1: Background (Pure White)
+            Container::new(Space::new(Length::Fill, Length::Fill))
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .push(Image::new(asset).width(Length::Fill).height(Length::Fill))
-                .push(Container::new(Space::new(Length::Fill, Length::Fill)).background(Color::from_rgba(0.0, 0.0, 0.0, 0.7)))
+                .background(Color::WHITE)
         )
         .push(
+            // Layer 2: Content
             VStack::new()
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .padding(Padding {
                     top: 16.0,
-                    right: 40.0,
-                    bottom: 0.0,
-                    left: 40.0,
+                    right: 20.0,
+                    bottom: 40.0,
+                    left: 20.0,
                 })
                 .align_x(Alignment::Center)
                 .push(
@@ -70,24 +67,88 @@ fn hero_section(context: &Context, asset: &str, is_mobile: bool) -> ZStack<Messa
                         .width(Length::Fill)
                         .center_x(Length::Fill),
                 )
-                .push(Space::new(Length::Shrink, Length::Fill))
+                .push(Space::new(Length::Shrink, Length::Fill)) // Push to optical center
                 .push(
                     VStack::new()
-                        .spacing(32.0)
+                        .spacing(48.0)
                         .align_x(Alignment::Center)
                         .width(Length::Fill)
                         .push(
+                            // Headlines
                             VStack::new()
-                                .spacing(8.0)
+                                .spacing(24.0)
                                 .align_x(Alignment::Center)
-                                .push(Text::new("ERA 01").bold().size(11.0).color(t.colors.primary))
-                                .push(Text::new("AUTONOMOUS\nINTELLIGENCE").size(if is_mobile { 32.0 } else { 56.0 }).bold().align_center())
-                                .push(Rectangle::new(Length::Fixed(120.0), Length::Fixed(4.0)).color(t.colors.primary).radius(2.0))
+                                .push(
+                                    Text::new("ERA 01")
+                                        .bold()
+                                        .size(12.0)
+                                        .color(t.colors.primary)
+                                )
+                                .push(
+                                    Text::new("AUTONOMOUS\nINTELLIGENCE")
+                                        .size(if is_mobile { 48.0 } else { 96.0 })
+                                        .bold()
+                                        .align_center()
+                                        .width(Length::Fill)
+                                        .color(t.colors.primary)
+                                )
+                                .push(
+                                    Rectangle::new(Length::Fixed(160.0), Length::Fixed(6.0))
+                                        .color(t.colors.primary)
+                                        .radius(3.0)
+                                )
                         )
-                        .push(Text::new(if is_mobile { "The industrial kernel.\nDeterministic. Sovereign." } else { "The only UI framework built for the eyes of LLMs.\nDeterministic. Semantic. Sovereign." }).size(16.0).secondary().align_center())
+                        .push(
+                            // --- OUTLINED CAPSULE INPUT ---
+                            Container::new(
+                                HStack::new()
+                                    .align_y(Alignment::Center)
+                                    .spacing(16.0)
+                                    .padding(Padding::from([12, 24]))
+                                    .push(Icon::new("sparkles").size(24.0).color(t.colors.primary))
+                                    .push(
+                                        TextInput::new(
+                                            query.to_string(), 
+                                            "Ask PeakOS to build a swarm...", 
+                                            Message::Search
+                                        )
+                                        .variant(Variant::Ghost)
+                                        .on_submit(Message::EnterApp)
+                                        .width(Length::Fill)
+                                    )
+                                    .push(
+                                        Button::new(
+                                            Container::new(Icon::new("arrow-right").size(20.0).color(Color::WHITE))
+                                                .padding(10.0)
+                                                .background(t.colors.primary)
+                                                .radius(100.0)
+                                        )
+                                        .on_press(Message::EnterApp)
+                                        .variant(Variant::Ghost)
+                                        .padding(0.0)
+                                    )
+                            )
+                            .background(Color::TRANSPARENT)
+                            .border(1.5, t.colors.primary)
+                            .radius(100.0)
+                            .width(Length::Fixed(if is_mobile { 320.0 } else { 560.0 }))
+                        )
+                        .push(
+                            Text::new("try \"change theme\", or modify the button, or how do you experience the framework")
+                                .caption1()
+                                .secondary()
+                                .align_center()
+                        )
                 )
                 .push(Space::new(Length::Shrink, Length::Fill))
-                .push(Icon::new("chevron-down").size(32.0).secondary())
+                // Footer
+                .push(
+                    VStack::new()
+                        .spacing(8.0)
+                        .align_x(Alignment::Center)
+                        .push(Text::new("SCROLL TO EXPLORE").caption2().secondary())
+                        .push(Icon::new("chevron-down").size(24.0).secondary())
+                )
         )
 }
 
@@ -131,7 +192,7 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> Container<Message, IcedBacken
             ),
     )
     .padding(0.0)
-    .height(Length::Fixed(44.0))
+    .center_y(Length::Fixed(44.0))
     .width(if is_mobile {
         Length::Fill
     } else {
@@ -139,7 +200,64 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> Container<Message, IcedBacken
     })
     .radius(22.0)
     .border(2.0, _context.theme.colors.border)
-    .radius(22.0)
+}
+
+// --- NEW ABOUT SECTION ---
+fn about_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
+    let t = context.theme;
+
+    let content = VStack::new()
+        .spacing(48.0)
+        .width(Length::Fill)
+        .align_x(Alignment::Start)
+        .push(
+            VStack::new()
+                .spacing(24.0)
+                .width(Length::Fill)
+                .align_x(Alignment::Start)
+                .push(
+                    Text::new("PeakUI")
+                        .size(if is_mobile { 40.0 } else { 64.0 })
+                        .bold()
+                        .color(t.colors.primary)
+                )
+                .push(
+                    Text::new("The Universal Language for Machines")
+                        .size(if is_mobile { 20.0 } else { 24.0 })
+                        .secondary()
+                )
+        )
+        .push(
+            Container::new(
+                Text::new("PeakUI is not just a framework; it is the first sovereign interface layer designed for the Intelligence Era. It decouples logic from rendering, allowing a single Rust codebase to deploy natively to Linux, macOS, Windows, Web (WASM), VR, and Terminal (TUI) without modification. By exposing a semantic tree instead of raw pixels, it allows AI agents to 'see' and control the interface with zero latency and 100% determinism.")
+                    .body()
+                    .height(Length::Shrink)
+            )
+            .width(Length::Fixed(if is_mobile { 340.0 } else { 800.0 }))
+        )
+        .push(
+            // Platform Badges
+            HStack::new()
+                .spacing(12.0)
+                .align_y(Alignment::Center)
+                .push(platform_badge("LINUX", t))
+                .push(platform_badge("MACOS", t))
+                .push(platform_badge("WINDOWS", t))
+                .push(platform_badge("WASM", t))
+                .push(platform_badge("TUI", t))
+                .push(platform_badge("VR/AR", t))
+        );
+
+    Container::new(content)
+        .padding(if is_mobile { 24.0 } else { 80.0 })
+        .width(Length::Fill)
+}
+
+fn platform_badge(label: &str, t: ThemeTokens) -> Container<Message, IcedBackend> {
+    Container::new(Text::new(label).size(12.0).bold().color(t.colors.primary))
+        .padding(Padding::from([8, 16]))
+        .border(1.0, t.colors.border)
+        .radius(100.0)
 }
 
 fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {
