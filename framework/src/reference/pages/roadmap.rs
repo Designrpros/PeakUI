@@ -5,52 +5,56 @@ use crate::prelude::*;
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult {
     let items = vec![
         TimelineItem::new(
-            "Phase 1: Core Fundamentals",
+            "Phase 1: Foundation & Primaries",
             "Q4 2025",
             "completed",
-            "The foundation of PeakUI. Robust layout primitives and a unified messaging system.",
+            "Establishing the core render engine and semantic vision protocol.",
             vec![
-                "VStack, HStack, ZStack",
-                "Visual Primitives (Rectangle, Circle, Capsule)",
-                "Contextual Notch Protocol",
-                "Unified Message Bus"
-            ]
+                "Backend Abstraction (wGPU / Glow / TUI)",
+                "WASM & Native Build Pipelines established",
+                "Cupertino Design System (Glassmorphism)",
+                "Adaptive Layout: NavigationSplitView",
+                "Neural Vision: Base describe() protocol",
+            ],
         ),
         TimelineItem::new(
-            "Phase 2: Refined Controls",
+            "Phase 2: Neural Integration",
             "Q1 2026",
             "active",
-            "Polishing the developer experience with high-level components and deep system integration.",
+            "Deepening the bond between AI reasoning and UI execution.",
             vec![
-                "ThemeToken System",
-                "Form Sections & Pickers",
-                "Safe-Area Aware ScrollView",
-                "Navigation Split Views"
-            ]
+                "Intelligence Bridge: OS-wide Action Relay",
+                "PeakDB Router: Trait-based Data Providers",
+                "Neural Sudo: Protected AI Interaction logic",
+                "Interactive Component Labs (Button, Text)",
+                "Conflict-free State Management (CRDTs)",
+            ],
         ),
         TimelineItem::new(
-            "Phase 3: Ecosystem",
-            "Q2 2026",
+            "Phase 3: Swarm & Ubiquity",
+            "Q2 - Q3 2026",
             "future",
-            "Breaking out of the local environment with cloud connectivity and reactive data layers.",
+            "Distributed intelligence and peer-to-peer synchronization.",
             vec![
-                "PeakDB Sync Integration",
-                "Conflict-free State Management",
-                "Multi-Backend AI Abstraction",
-                "Unified Identity Protocol"
-            ]
+                "PeakCloud: mDNS Neighbor Discovery",
+                "P2P Data Mirroring via libp2p",
+                "Global Semantic Index (Vector Search)",
+                "Mobile Native Bridges (iOS/Android)",
+                "Enterprise Shell: TV & Spatial Modes",
+            ],
         ),
         TimelineItem::new(
-            "Phase 4: Universal App Engine",
-            "Q3 2026",
+            "Phase 4: Universal Ecosystem",
+            "Q4 2026+",
             "future",
-            "True cross-platform power. Deploying to Mobile and Desktop with native performance.",
+            "The final evolution into a self-sustaining AI-Native platform.",
             vec![
-                "iOS & Android Native Bridges",
-                "macOS & Windows Shell Integration",
-                "High-Density Grid Layout Engines",
-                "Real-time Layout Debugger"
-            ]
+                "Peak SDK: #[neural_view] for legacy apps",
+                "Private Brain: Local NPU Burn/Candle support",
+                "AI Sandboxing: Secure WASM Execution layer",
+                "Visual Layout Inspector (Pro Tooling)",
+                "Unified Identity & Sovereign Key Management",
+            ],
         ),
     ];
 

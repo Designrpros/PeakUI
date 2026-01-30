@@ -5,32 +5,52 @@ use crate::prelude::*;
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult {
     let items = vec![
         TimelineItem::new(
-            "Phase 1: Foundation",
+            "Phase 1: Foundation & Discovery",
             "Q1 2026",
             "active",
-            "The bedrock of PeakDB. A type-safe, async wrapper around SQLx that feels native to PeakOS.",
-            vec!["Async Pooling", "Migration System", "URL Resolution"]
+            "The bedrock of PeakDB. A type-safe, provider-agnostic wrapper around SQLx and local storage.",
+            vec![
+                "Async Pooling (Postgres/SQLite)",
+                "Trait-based DataRouter Implementation",
+                "Schema Discovery & Auto-Migration",
+                "Local-first FileProvider cache"
+            ]
         ),
         TimelineItem::new(
-            "Phase 2: Modeling",
+            "Phase 2: Semantic Resonance",
             "Q2 2026",
             "future",
-            "Declarative data modeling. Define your Rust structs, and PeakDB manages the schema automatically.",
-            vec!["#[derive(Model)]", "Auto-Migrations", "Relations"]
+            "Native AI integration through vector storage and RAG-optimized querying.",
+            vec![
+                "pgvector Native Support",
+                "Semantic Search API",
+                "Automatic Document Embedding",
+                "Memory Consolidation (Brain/Body split)"
+            ]
         ),
         TimelineItem::new(
-            "Phase 3: Reactivity",
+            "Phase 3: Reactive Swarm",
             "Q3 2026",
             "future",
-            "The 'Killer Feature'. Bind UI components directly to Database queries via Postgres LISTEN/NOTIFY.",
-            vec!["Live Queries", "Optimistic UI", "Filter Offloading"]
+            "Distributed reactivity. Syncing state across devices with conflict-free logic.",
+            vec![
+                "Live Queries (LISTEN/NOTIFY)",
+                "CRDT-based Conflict Resolution",
+                "P2P Event Streaming",
+                "Optimistic UI state synchronization"
+            ]
         ),
         TimelineItem::new(
-            "Phase 4: Intelligence",
-            "Q4 2026",
+            "Phase 4: Global Intelligence",
+            "Q4 2026+",
             "future",
-            "Native AI integration. Store vectors alongside data for instant semantic search.",
-            vec!["pgvector Native", "Semantic Search", "LLM Context"]
+            "The ultimate memory store for personalized AI agents.",
+            vec![
+                "Unified Identity Data Store",
+                "Cross-Device Semantic Search",
+                "Autonomous Migration logic",
+                "E2EE Sovereign Storage"
+            ]
         ),
     ];
 

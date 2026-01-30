@@ -2,43 +2,44 @@
 
 This roadmap outlines the evolution of the PeakUI framework, tracking the journey from prototype to production-grade UI system.
 
-## Phase 1: Foundation & Decoupling (Completed ✅)
+## Phase 1: Foundation & Primaries (Completed ✅)
 *Focus: Maturity, genericism, and stability.*
 
-### [PeakUI Core]
-- [x] **Backend Abstraction**: Generic `Backend` trait implemented (wGPU / Glow).
-- [x] **Web Support (WASM)**: Confirmed rendering via `trunk` and `glow`.
-- [x] **Cupertino Theme**: Glassmorphism, blurred backgrounds, and high-fidelity shadows.
-- [x] **Layout Engine**: `NavigationSplitView` with automatic mobile/desktop adaptation.
-- [x] **Showcase App**: A "Living Reference" application (`examples/showcase.rs`).
+- [x] **Backend Abstraction**: Generic `Backend` trait (wGPU / Glow / TUI).
+- [x] **Unified Pipelines**: WASM & Native builds verified and stable.
+- [x] **Cupertino Theme**: Glassmorphism and high-fidelity shadow engine.
+- [x] **Adaptive Layout**: `NavigationSplitView` with mobile/desktop parity.
+- [x] **Neural Vision**: Initial `describe()` semantic node implementation.
 
 ---
 
-## Phase 2: Intelligence & Ecosystem (In Progress 🚧)
-*Focus: Interactive tooling, AI integration, and developer adoption.*
+## Phase 2: Neural Integration (In Progress 🚧)
+*Focus: AI-native execution and structured data routing.*
 
-### [Component Labs]
-- [x] **Button Lab**: Live playground for testing button variants, sizes, and intents.
-- [ ] **Typography Lab**: Interactive type scale tester.
-- [ ] **Motion Lab**: Playground for testing spring animations and transitions.
-
-### [AI Integration]
-- [ ] **Semantic Description**: Implement `.describe()` on Views to output UI structure for LLMs.
-- [ ] **Voice Command Loop**: Connect `peak-intelligence` to UI actions (e.g., "Open Settings").
-
-### [Documentation]
-- [ ] **Standard Library**: Finalize API docs for `DatePicker`, `RichText`, and `Charts`.
-- [ ] **Developer Guide**: Expand `PEAKUI_GUIDE.md` with "Zero to App" tutorials.
+- [x] **Intelligence Bridge**: OS-wide action relay for AI-to-System communication.
+- [x] **PeakDB Router**: Provider-agnostic data scaling (Local / Remote / Swarm).
+- [x] **Neural Sudo**: Protective security modifiers for restricted AI actions.
+- [x] **Component Labs**: Interactive playgrounds for Buttons and Typography.
+- [ ] **State Management**: Implementation of conflict-free replicate data types (CRDTs).
 
 ---
 
-## Phase 3: Ubiquity (Future 🔮)
-*Focus: Mobile dominance and enterprise readiness.*
+## Phase 3: Swarm & Ubiquity (Future 🔮)
+*Focus: Peer-to-peer coordination and platform dominance.*
 
-### [Platform Expansion]
-- [ ] **Mobile Native**: Automated iOS/Android build pipelines (APK/IPA generation).
-- [ ] **Enterprise Shell**: Specialized modes for Kiosks and Smart Home displays.
+- [ ] **PeakCloud Mesh**: mDNS neighbor discovery and LAN-first synchronization.
+- [ ] **P2P Replication**: Highly secure data mirroring via `libp2p`.
+- [ ] **Global Semantic Index**: OS-wide vector search powered by PeakDB.
+- [ ] **Platform Expansion**: Native iOS/Android bridge and build pipelines.
+- [ ] **Enterprise Shell**: Optimization for TV, Spatial, and Kiosk modes.
 
-### [Tooling]
-- [ ] **Visual Inspector**: Real-time layout debugging tool (similar to Safari Web Inspector).
-- [ ] **Cloud Sync**: Seamless state synchronization across Desktop and Mobile instances.
+---
+
+## Phase 4: Universal Ecosystem (Long-term 🌌)
+*Focus: Enterprise-grade tooling and sovereign AI.*
+
+- [ ] **Peak SDK**: Automatic AI-readiness via `#[neural_view]` macro.
+- [ ] **Private Brain**: On-device LLM execution (Burn/Candle NPU acceleration).
+- [ ] **AI Sandboxing**: Isolated WASM runtime for untrusted agent execution.
+- [ ] **Pro Tooling**: Visual Layout Inspector and real-time state debugger.
+- [ ] **Sovereign Identity**: Decentralized key management and unified protocol.
