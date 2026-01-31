@@ -90,9 +90,9 @@ impl View<Message, IcedBackend> for RoadmapPage {
             .width(Length::Fill)
             .height(Length::Shrink)
             .padding(Padding {
-                top: context.safe_area.top.max(48.0),
+                top: context.safe_area.top,
                 right: if is_mobile { 24.0 } else { 48.0 },
-                bottom: context.safe_area.bottom.max(120.0),
+                bottom: context.safe_area.bottom,
                 left: if is_mobile { 24.0 } else { 48.0 },
             })
             .spacing(48.0);

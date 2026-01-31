@@ -9,9 +9,9 @@ pub fn view(context: &Context, is_mobile: bool) -> PageResult {
             .width(Length::Fill)
             .spacing(48.0)
             .padding(Padding {
-                top: 48.0,
+                top: context.safe_area.top,
                 right: if is_mobile { 24.0 } else { 48.0 },
-                bottom: 120.0,
+                bottom: context.safe_area.bottom,
                 left: if is_mobile { 24.0 } else { 48.0 },
             })
             .push(heading("Architecture", context))

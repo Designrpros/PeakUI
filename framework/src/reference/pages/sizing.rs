@@ -131,9 +131,9 @@ impl View<Message, IcedBackend> for SizingInspector {
             VStack::new_generic()
                 .spacing(24.0)
                 .padding(Padding {
-                    top: 96.0,
+                    top: context.safe_area.top,
                     right: 20.0,
-                    bottom: 24.0,
+                    bottom: context.safe_area.bottom,
                     left: 20.0,
                 })
                 .push(

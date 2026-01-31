@@ -2,7 +2,7 @@ use crate::prelude::*;
 use crate::reference::app::Message;
 use crate::reference::page::PageResult;
 
-pub fn view(context: &Context, is_mobile: bool) -> PageResult {
+pub fn view(context: &Context, _is_mobile: bool) -> PageResult {
     // 1. Pre-calculate the theme grid to avoid complex nested closures
     let mut theme_grid = VStack::<Message, IcedBackend>::new_generic()
         .width(Length::Fill)
@@ -27,10 +27,10 @@ pub fn view(context: &Context, is_mobile: bool) -> PageResult {
             .width(Length::Fill)
             .spacing(32.0)
             .padding(Padding {
-                top: 96.0,
-                right: if is_mobile { 20.0 } else { 64.0 },
-                bottom: 120.0,
-                left: if is_mobile { 20.0 } else { 64.0 },
+                top: context.safe_area.top,
+                right: 20.0,
+                bottom: context.safe_area.bottom,
+                left: 20.0,
             })
             // Hero Title
             .push(Text::<IcedBackend>::new("Settings").large_title().bold())

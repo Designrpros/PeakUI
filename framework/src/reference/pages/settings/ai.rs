@@ -4,7 +4,7 @@ use crate::reference::page::PageResult;
 
 pub fn view(
     _context: &Context,
-    is_mobile: bool,
+    _is_mobile: bool,
     api_key: String,
     ai_provider: AIProviderChoice,
 ) -> PageResult {
@@ -78,12 +78,12 @@ pub fn view(
     let main_view = VStack::<Message, IcedBackend>::new_generic()
         .width(Length::Fill)
         .spacing(32.0)
-        .padding(Padding {
-            top: 96.0,
-            right: if is_mobile { 20.0 } else { 64.0 },
-            bottom: 120.0,
-            left: if is_mobile { 20.0 } else { 64.0 },
-        })
+            .padding(Padding {
+                top: _context.safe_area.top,
+                right: 20.0,
+                bottom: _context.safe_area.bottom,
+                left: 20.0,
+            })
         // Header
         .push(
             VStack::<Message, IcedBackend>::new_generic()

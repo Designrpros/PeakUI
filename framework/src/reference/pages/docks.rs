@@ -2,14 +2,14 @@ use super::super::app::Message;
 use super::super::page::PageResult;
 use crate::prelude::*;
 
-pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
+pub fn view(_context: &Context, _is_mobile: bool) -> PageResult {
     VStack::new_generic()
         .spacing(24.0)
         .padding(Padding {
-            top: 96.0,
-            right: if is_mobile { 20.0 } else { 64.0 },
-            bottom: 120.0,
-            left: if is_mobile { 20.0 } else { 64.0 },
+            top: _context.safe_area.top,
+            right: 20.0,
+            bottom: _context.safe_area.bottom,
+            left: 20.0,
         })
         .push(Text::<IcedBackend>::new("Floating Docks").large_title().bold())
         .push(

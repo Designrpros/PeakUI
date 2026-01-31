@@ -366,6 +366,7 @@ pub struct ResponsiveGrid<Message: 'static, B: Backend = IcedBackend> {
     pub children: Vec<Box<dyn View<Message, B>>>,
     pub spacing: f32,
     pub items_per_row: usize,
+    pub mobile_items_per_row: usize,
 }
 
 impl<Message: 'static> ResponsiveGrid<Message, IcedBackend> {
@@ -374,6 +375,7 @@ impl<Message: 'static> ResponsiveGrid<Message, IcedBackend> {
             children: Vec::new(),
             spacing: 20.0,
             items_per_row: 2,
+            mobile_items_per_row: 1,
         }
     }
 }
@@ -390,11 +392,17 @@ impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
             children: Vec::new(),
             spacing: 20.0,
             items_per_row: 2,
+            mobile_items_per_row: 1,
         }
     }
 
     pub fn columns(mut self, count: usize) -> Self {
         self.items_per_row = count;
+        self
+    }
+
+    pub fn mobile_columns(mut self, count: usize) -> Self {
+        self.mobile_items_per_row = count;
         self
     }
 
@@ -412,7 +420,7 @@ impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
 impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let items_per_row = if context.size.width < 600.0 {
-            1
+            self.mobile_items_per_row
         } else {
             self.items_per_row
         };
@@ -423,7 +431,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let items_per_row = if context.size.width < 600.0 {
-            1
+            self.mobile_items_per_row
         } else {
             self.items_per_row
         };

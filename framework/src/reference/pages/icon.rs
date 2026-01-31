@@ -16,27 +16,28 @@ pub fn view(_context: &Context, search_query: String, icon_limit: usize) -> Page
     let total_count = filtered_icons.len();
     let display_icons = &filtered_icons[..std::cmp::min(icon_limit, total_count)];
 
-    let mut grid = ResponsiveGrid::<Message, IcedBackend>::new().spacing(12.0);
+    let mut grid = ResponsiveGrid::<Message, IcedBackend>::new()
+        .columns(5)
+        .mobile_columns(2)
+        .spacing(24.0);
 
     for name in display_icons {
         grid = grid.push(
             VStack::<Message, IcedBackend>::new_generic()
-                .spacing(8.0)
+                .spacing(4.0)
+                .padding(Padding::from([8, 4]))
                 .align_x(iced::Alignment::Center)
                 .push(
-                    Card::new(
-                        Icon::<IcedBackend>::new(*name)
-                            .size(24.0)
-                            .color(Color::from_rgb8(180, 140, 100)), // Explicitly use Peak primary color
-                    )
-                    .width(Length::Fixed(64.0))
-                    .height(Length::Fixed(64.0)),
+                    Icon::<IcedBackend>::new(*name)
+                        .size(32.0)
+                        .color(Color::from_rgb8(180, 140, 100)), // Explicitly use Peak primary color
                 )
                 .push(
                     Text::<IcedBackend>::new(*name)
                         .caption2()
                         .secondary()
-                        .width(Length::Shrink),
+                        .align_center()
+                        .width(Length::Fill),
                 ),
         );
     }

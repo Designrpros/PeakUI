@@ -11,29 +11,25 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
         // --- 1. Hero Section ---
         let hero = VStack::<Message, IcedBackend>::new_generic()
             .spacing(32.0)
-            .align_x(if is_narrow {
-                iced::Alignment::Center
-            } else {
-                iced::Alignment::Start
-            })
+            .align_x(iced::Alignment::Start) // Always align start to match back button
             .width(Length::Fill)
             .push(
                 VStack::new_generic()
                     .spacing(12.0)
-                    .align_x(if is_narrow {
-                        iced::Alignment::Center
-                    } else {
-                        iced::Alignment::Start
-                    })
+                    .align_x(iced::Alignment::Start)
                     .push(
                         Text::<IcedBackend>::new("Quick Start")
                             .size(if is_narrow { 32.0 } else { 48.0 })
                             .bold()
+                            .align_start()
+                            .width(Length::Fill)
                             .color(t.colors.text_primary),
                     )
                     .push(
                         Text::<IcedBackend>::new("Welcome to the PeakUI documentation! This page will give you an introduction to 80% of the PeakUI concepts that you will use on a daily basis.")
                             .size(20.0)
+                            .align_start()
+                            .width(Length::Fill)
                             .color(t.colors.text_secondary),
                     ),
             )
@@ -46,14 +42,14 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
                             .variant(Variant::Outline)
                             .on_press(Message::SetTab(Page::Architecture))
                             .size(ControlSize::Large)
-                            .width(Length::Fixed(180.0)),
+                            .width(Length::Fill),
                     )
                     .push(
                         Button::label("Browse Catalog")
                             .variant(Variant::Soft)
                             .on_press(Message::SetTab(Page::ShowcaseButtons))
                             .size(ControlSize::Large)
-                            .width(Length::Fixed(180.0)),
+                            .width(Length::Fill),
                     ),
             );
 
@@ -171,9 +167,9 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult {
             .width(Length::Fill)
             .spacing(64.0)
             .padding(Padding {
-                top: 48.0,
+                top: ctx.safe_area.top,
                 right: if is_narrow { 24.0 } else { 48.0 },
-                bottom: 120.0,
+                bottom: ctx.safe_area.bottom,
                 left: if is_narrow { 24.0 } else { 48.0 },
             })
             .align_x(iced::Alignment::Start)

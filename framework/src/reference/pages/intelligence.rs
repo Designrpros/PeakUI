@@ -46,9 +46,9 @@ pub fn view(context: &Context, _is_mobile: bool, _api_key: String) -> PageResult
         view: Box::new(ScrollView::new(
             VStack::new_generic()
                 .padding(Padding {
-                    top: 48.0,
+                    top: context.safe_area.top,
                     right: if context.is_slim() { 24.0 } else { 48.0 },
-                    bottom: 48.0,
+                    bottom: context.safe_area.bottom,
                     left: if context.is_slim() { 24.0 } else { 48.0 },
                 })
                 .push(MarkdownView::new(content)),

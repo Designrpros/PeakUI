@@ -8,6 +8,7 @@ pub struct ToolbarItem<Message: 'static> {
     icon: Option<String>,
     on_press: Option<Message>,
     active: bool,
+    icon_size: f32,
 }
 
 impl<Message: 'static> ToolbarItem<Message> {
@@ -17,7 +18,13 @@ impl<Message: 'static> ToolbarItem<Message> {
             icon: None,
             on_press: None,
             active: false,
+            icon_size: 20.0,
         }
+    }
+
+    pub fn icon_size(mut self, size: f32) -> Self {
+        self.icon_size = size;
+        self
     }
 
     pub fn label(mut self, label: impl Into<String>) -> Self {
@@ -62,7 +69,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ToolbarItem<Messag
             };
             content = content.push(
                 Icon::<IcedBackend>::new(icon_name.clone())
-                    .size(18.0)
+                    .size(self.icon_size)
                     .color(color),
             );
         }

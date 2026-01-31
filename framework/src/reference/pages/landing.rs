@@ -56,9 +56,9 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .padding(Padding {
-                    top: 16.0,
+                    top: context.safe_area.top + 24.0, // Added extra padding for "perfect" spacing
                     right: 20.0,
-                    bottom: 40.0,
+                    bottom: context.safe_area.bottom,
                     left: 20.0,
                 })
                 .align_x(Alignment::Center)

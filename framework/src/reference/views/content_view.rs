@@ -96,8 +96,8 @@ impl ContentView {
 
         // Define standard safe areas
         // Traffic lights are ~30px, plus we want space.
-        let top_safe = if is_mobile { 60.0 } else { 80.0 };
-        let bottom_safe = if is_mobile { 40.0 } else { 100.0 };
+        let top_safe = 120.0; // Boosted globally for maximum breathing room
+        let bottom_safe = 140.0; // Standardized for extra scrollspace below the dock
 
         content_context = content_context.with_safe_area(Padding {
             top: top_safe,       // Protect from the notch bar / top edge / traffic lights
@@ -173,7 +173,12 @@ impl ContentView {
                         .push(search_input),
                 )
                 .padding([6, 12])
-                .width(Length::Fixed(320.0)) // Compact fixed width
+                .width(if is_mobile {
+                    Length::Fill
+                } else {
+                    Length::Fixed(320.0)
+                })
+                .max_width(320.0)
                 .style(move |theme: &iced::Theme| {
                     let palette = theme.extended_palette();
                     container::Style {

@@ -17,12 +17,18 @@ impl View<Message, IcedBackend> for TabBarView {
 
         // Expanded Tab List for "Different Purposes"
         ToolbarGroup::new()
-            .padding(Padding::from([16, 24]))
-            .spacing(12.0)
+            .padding(Padding {
+                top: if context.is_slim() { 18.0 } else { 24.0 },
+                right: if context.is_slim() { 16.0 } else { 24.0 }, // Reduced sides
+                bottom: if context.is_slim() { 18.0 } else { 24.0 },
+                left: if context.is_slim() { 16.0 } else { 24.0 }, // Reduced sides
+            })
+            .spacing(if context.is_slim() { 32.0 } else { 40.0 }) // Increased spacing
             // 1. Start: The Narrative Book
             .push(
                 ToolbarItem::new()
                     .icon("sparkles")
+                    .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Start")
                     .on_press(Message::SetNavigationMode("Start".into())),
             )
@@ -30,6 +36,7 @@ impl View<Message, IcedBackend> for TabBarView {
             .push(
                 ToolbarItem::new()
                     .icon("layout-grid")
+                    .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Catalog")
                     .on_press(Message::SetNavigationMode("Catalog".into())),
             )
@@ -37,6 +44,7 @@ impl View<Message, IcedBackend> for TabBarView {
             .push(
                 ToolbarItem::new()
                     .icon("database")
+                    .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Data")
                     .on_press(Message::SetNavigationMode("Data".into())),
             )
@@ -44,6 +52,7 @@ impl View<Message, IcedBackend> for TabBarView {
             .push(
                 ToolbarItem::new()
                     .icon("settings-2")
+                    .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Settings")
                     .on_press(Message::SetNavigationMode("Settings".into())),
             )

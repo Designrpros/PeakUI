@@ -5,7 +5,12 @@ use crate::prelude::*;
 pub fn view(context: &Context, _is_mobile: bool) -> PageResult {
     let mut page_col = VStack::<Message, IcedBackend>::new_generic()
         .width(Length::Fill)
-        .padding(Padding::from(32.0))
+        .padding(Padding {
+            top: context.safe_area.top.max(32.0),
+            right: 32.0,
+            bottom: 32.0,
+            left: 32.0,
+        })
         .spacing(32.0);
 
     // Header
