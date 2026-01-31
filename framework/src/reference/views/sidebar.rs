@@ -362,14 +362,20 @@ impl View<Message, IcedBackend> for SidebarView {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let theme = context.theme;
 
-        let content = match self.navigation_mode.as_str() {
-            "Start" => self.view_guide_sidebar(context),
-            "Catalog" => self.view_components_sidebar(context),
-            "Data" | "Ecosystem" => self.view_ecosystem_sidebar(context),
-            "Settings" => self.view_settings_sidebar(context),
-            _ => self
-                .base_sidebar(context)
-                .push(Text::<IcedBackend>::new("Unknown Mode").secondary()),
+        let content = match self.navigation_mode.to_lowercase().trim() {
+            "start" | "guide" | "introduction" | "documentation" => {
+                self.view_guide_sidebar(context)
+            }
+            "catalog" | "components" | "labs" => self.view_components_sidebar(context),
+            "data" | "ecosystem" | "services" => self.view_ecosystem_sidebar(context),
+            "settings" | "preferences" => self.view_settings_sidebar(context),
+            _ => {
+                log::warn!(
+                    "SidebarView: Unknown mode '{}', falling back to guide",
+                    self.navigation_mode
+                );
+                self.view_guide_sidebar(context)
+            }
         };
 
         container(ScrollView::new(content.width(Length::Fill)).view(context))

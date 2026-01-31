@@ -1,7 +1,7 @@
 use super::model::Page;
-use crate::core::IntelligenceProvider;
+use crate::core::{DataProvider, IntelligenceProvider};
 use crate::prelude::*;
-use crate::reference::db_bridge::PeakDBBridge;
+use crate::reference::intelligence::Action;
 use crate::reference::intelligence_bridge::PeakIntelligenceBridge;
 use crate::views::chat::{ChatMessage, ChatRole, ChatViewMessage};
 use peak_core::registry::ShellMode;
@@ -319,6 +319,7 @@ pub enum Message {
     SudoRequest(SudoAction),
     SudoApprove,
     SudoDeny,
+    ExecuteShell(String), // New: Shell execution message
     ApplyNativeVibrancy,
     TypewriterTick(std::time::Instant),
     None,
@@ -443,15 +444,50 @@ impl Default for App {
             AIProviderChoice::OpenRouter => peak_os_intelligence::llm::ModelProvider::OpenRouter,
         };
 
+        let db = Arc::new(crate::reference::db_bridge::PeakDBBridge::new());
+
+        // Seed some initial data for RAG testing
+        let seed_records = vec![
+            ("System", "PeakOS is a decentralized, agent-native operating system designed for the next era of computing."),
+            ("Architecture", "PeakUI uses a multi-kernel bridge architecture, allowing AI agents to perceive and interact with UI elements semantically."),
+            ("Security", "Neural Sudo is a high-security interception layer that ensures no AI action of high privilege is executed without explicit user consent."),
+        ];
+
+        for (i, (collection, content)) in seed_records.into_iter().enumerate() {
+            let record = crate::core::SemanticRecord {
+                id: format!("seed-{}", i),
+                collection: collection.to_string(),
+                content: content.to_string(),
+                vector: None,
+                metadata: serde_json::json!({}),
+                timestamp: 0,
+            };
+            let _ = db.save(record);
+        }
+
+        let intelligence = Arc::new(PeakIntelligenceBridge::new(
+            provider,
+            match provider {
+                peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                _ => "google/gemini-3-flash-preview",
+            },
+            if settings.api_key.is_empty() {
+                None
+            } else {
+                Some(settings.api_key.clone())
+            },
+            db.clone(),
+        ));
+
         Self {
             active_tab: Page::Introduction,
             show_search: false,
             show_inspector: false,
             show_sidebar: true,
             show_user_profile: false,
-            navigation_mode: "Start".to_string(),
-            search_query: "".to_string(),
-            expanded_sections: ["COMPONENTS".to_string()].into_iter().collect(),
+            navigation_mode: "App".to_string(),
+            search_query: String::new(),
+            expanded_sections: std::collections::HashSet::new(),
             theme_tone: ThemeTone::Light,
             theme: PeakTheme::Mono,
             button_lab: ButtonLabState::default(),
@@ -460,34 +496,17 @@ impl Default for App {
             sizing_lab: SizingLabState::default(),
             render_mode: RenderMode::Canvas,
             show_landing: true,
-            sidebar_width: 240.0,
-            inspector_width: 300.0,
-            inspector_tab: InspectorTab::default(),
+            sidebar_width: 260.0,
+            inspector_width: 320.0,
+            inspector_tab: InspectorTab::App,
             is_resizing_sidebar: false,
             is_resizing_inspector: false,
             context_menu_pos: None,
             last_cursor_pos: iced::Point::ORIGIN,
-            intelligence: Arc::new(PeakIntelligenceBridge::new(
-                provider,
-                match provider {
-                    peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
-                    _ => "google/gemini-3-flash-preview",
-                },
-                if settings.api_key.is_empty() {
-                    None
-                } else {
-                    Some(settings.api_key.clone())
-                },
-            )),
-            db: Arc::new(PeakDBBridge::new()),
-            pending_sudo_action: None,
-            is_thinking: false,
             show_chat_overlay: false,
             chat_messages: vec![ChatMessage {
                 role: ChatRole::System,
-                content:
-                    "Hello! I am your AI Assistant. I can see the screen and help you navigate."
-                        .to_string(),
+                content: "Welcome to PeakUI. I am your autonomous interface agent.".to_string(),
             }],
             chat_input: String::new(),
             api_key: settings.api_key,
@@ -496,6 +515,10 @@ impl Default for App {
             icon_limit: 50,
             window_width: 1024.0, // Default assume desktop until resized
             localization: Localization::default(),
+            pending_sudo_action: None,
+            is_thinking: false,
+            intelligence,
+            db,
 
             // Typewriter defaults
             typewriter_text: "How do I use the layout lab?".to_string(),
@@ -616,7 +639,13 @@ impl App {
                     tab,
                     tab.navigation_mode()
                 );
-                self.navigation_mode = tab.navigation_mode();
+                self.navigation_mode = match tab.navigation_mode().to_lowercase().as_str() {
+                    "start" | "guide" => "Start".to_string(),
+                    "catalog" | "components" => "Catalog".to_string(),
+                    "data" | "ecosystem" => "Data".to_string(),
+                    "settings" | "preferences" => "Settings".to_string(),
+                    _ => tab.navigation_mode(),
+                };
                 self.active_tab = tab.clone();
                 self.show_search = false;
 
@@ -651,7 +680,10 @@ impl App {
                     }
                     _ => {
                         self.show_landing = false;
-                        self.show_sidebar = true;
+                        // Only auto-show sidebar on desktop; on mobile we want it closed after navigation
+                        if self.window_width >= 900.0 {
+                            self.show_sidebar = true;
+                        }
                     }
                 }
 
@@ -675,8 +707,14 @@ impl App {
                 Task::none()
             }
             Message::SetNavigationMode(mode) => {
-                self.navigation_mode = mode.clone();
-                self.active_tab = match mode.as_str() {
+                self.navigation_mode = match mode.to_lowercase().as_str() {
+                    "start" | "guide" | "documentation" => "Start".to_string(),
+                    "catalog" | "components" => "Catalog".to_string(),
+                    "data" | "ecosystem" => "Data".to_string(),
+                    "settings" | "preferences" => "Settings".to_string(),
+                    _ => mode.clone(),
+                };
+                self.active_tab = match self.navigation_mode.as_str() {
                     "Start" => Page::Introduction,
                     "Catalog" => Page::Button,
                     "Data" => Page::PeakDB,
@@ -880,6 +918,7 @@ impl App {
                         _ => "google/gemini-3-flash-preview",
                     },
                     if key.is_empty() { None } else { Some(key) },
+                    self.db.clone(),
                 ));
 
                 Task::none()
@@ -914,6 +953,7 @@ impl App {
                     } else {
                         Some(self.api_key.clone())
                     },
+                    self.db.clone(),
                 ));
 
                 Task::none()
@@ -960,6 +1000,16 @@ impl App {
             }
             Message::SudoDeny => {
                 self.pending_sudo_action = None;
+                Task::none()
+            }
+            Message::ExecuteShell(cmd) => {
+                log::info!("EXECUTING SHELL COMMAND: {}", cmd);
+                // For safety in this demo, we just log it.
+                // In a real PeakOS context, this would hit the syscall layer.
+                self.chat_messages.push(ChatMessage {
+                    role: ChatRole::System,
+                    content: format!("Shell command executed securely: `{}`", cmd),
+                });
                 Task::none()
             }
             Message::None => Task::none(),
@@ -1137,84 +1187,91 @@ impl App {
 
     pub fn process_assistant_actions(&mut self, text: &str) -> Task<Message> {
         let mut tasks = Vec::new();
-        let content = text.to_string();
-        let lower_content = content.to_lowercase();
+        let actions = crate::reference::intelligence::ActionParser::parse_text(text);
 
-        let action_marker = "[action: ";
-        let mut search_pos = 0;
+        for action in actions {
+            log::info!("AI Action Detected: {:?}", action);
 
-        while let Some(start_rel) = lower_content[search_pos..].find(action_marker) {
-            let start = search_pos + start_rel;
-            if let Some(open_paren_rel) = lower_content[start..].find('(') {
-                let open_paren = start + open_paren_rel;
-                if let Some(close_paren_rel) = lower_content[open_paren..].find(")]") {
-                    let close_paren = open_paren + close_paren_rel;
+            // NEURAL SUDO INTERCEPTION
+            if action.is_protected() {
+                log::warn!("Neural Sudo: Intercepting protected action: {:?}", action);
+                let reason = action
+                    .protection_reason()
+                    .unwrap_or_else(|| "Protected action requested".to_string());
 
-                    let action_name = lower_content[start + action_marker.len()..open_paren].trim();
-                    let params = &content[open_paren + 1..close_paren]; // Keep original casing for params
+                // Convert action to the message it WOULD have sent
+                let target_msg = match action {
+                    Action::Shell(cmd) => Message::ExecuteShell(cmd),
+                    Action::Navigate(page) => Message::SetTab(page.clone()),
+                    _ => Message::None,
+                };
 
-                    log::info!("AI Action Detected: {}({})", action_name, params);
-
-                    match action_name {
-                        "navigate" => {
-                            let page: crate::reference::model::Page = params.to_string().into();
-                            log::info!(" -> Navigating to: {:?}", page);
-                            tasks.push(Task::perform(async {}, move |_| {
-                                Message::SetTab(page.clone())
-                            }));
-                        }
-                        "setbuttonvariant" => match params.to_lowercase().trim() {
-                            "solid" => self.button_lab.variant = crate::prelude::Variant::Solid,
-                            "soft" => self.button_lab.variant = crate::prelude::Variant::Soft,
-                            "outline" => self.button_lab.variant = crate::prelude::Variant::Outline,
-                            "ghost" => self.button_lab.variant = crate::prelude::Variant::Ghost,
-                            _ => {}
-                        },
-                        "setbuttonintent" => match params.to_lowercase().trim() {
-                            "primary" => self.button_lab.intent = crate::prelude::Intent::Primary,
-                            "secondary" => {
-                                self.button_lab.intent = crate::prelude::Intent::Secondary
-                            }
-                            "success" => self.button_lab.intent = crate::prelude::Intent::Success,
-                            "warning" => self.button_lab.intent = crate::prelude::Intent::Warning,
-                            "danger" => self.button_lab.intent = crate::prelude::Intent::Danger,
-                            "info" => self.button_lab.intent = crate::prelude::Intent::Info,
-                            "neutral" => self.button_lab.intent = crate::prelude::Intent::Neutral,
-                            _ => {}
-                        },
-                        "setthemekind" => match params.to_lowercase().trim() {
-                            "peak" => self.theme = PeakTheme::Peak,
-                            "mountain" => self.theme = PeakTheme::Mountain,
-                            "cupertino" => self.theme = PeakTheme::Cupertino,
-                            "smart" => self.theme = PeakTheme::Smart,
-                            "material" => self.theme = PeakTheme::Material,
-                            "fluent" => self.theme = PeakTheme::Fluent,
-                            "highcontrast" => self.theme = PeakTheme::HighContrast,
-                            _ => {}
-                        },
-                        "setthemetone" => match params.to_lowercase().trim() {
-                            "light" | "lightmode" => self.theme_tone = ThemeTone::Light,
-                            "dark" | "darkmode" => self.theme_tone = ThemeTone::Dark,
-                            _ => {}
-                        },
-                        "setlabmode" => match params.to_lowercase().trim() {
-                            "canvas" => self.render_mode = RenderMode::Canvas,
-                            "terminal" => self.render_mode = RenderMode::Terminal,
-                            "neural" => self.render_mode = RenderMode::Neural,
-                            "spatial" => self.render_mode = RenderMode::Spatial,
-                            _ => {}
-                        },
-                        _ => {
-                            log::warn!("Unknown AI Action: {}", action_name);
-                        }
-                    }
-
-                    search_pos = close_paren + 2;
-                } else {
-                    break;
+                if !matches!(target_msg, Message::None) {
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::SudoRequest(SudoAction {
+                            message: Box::new(target_msg.clone()),
+                            reason: reason.clone(),
+                        })
+                    }));
                 }
-            } else {
-                break;
+                continue; // Skip normal execution
+            }
+
+            match action {
+                Action::Navigate(page) => {
+                    log::info!(" -> Navigating to: {:?}", page);
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::SetTab(page.clone())
+                    }));
+                }
+                Action::SetButtonVariant(variant) => {
+                    self.button_lab.variant = variant;
+                }
+                Action::SetButtonIntent(intent) => {
+                    self.button_lab.intent = intent;
+                }
+                Action::SetThemeKind(kind) => match kind.to_lowercase().trim() {
+                    "peak" => self.theme = PeakTheme::Peak,
+                    "mountain" => self.theme = PeakTheme::Mountain,
+                    "cupertino" => self.theme = PeakTheme::Cupertino,
+                    "smart" => self.theme = PeakTheme::Smart,
+                    "material" => self.theme = PeakTheme::Material,
+                    "fluent" => self.theme = PeakTheme::Fluent,
+                    "highcontrast" => self.theme = PeakTheme::HighContrast,
+                    "mono" => self.theme = PeakTheme::Mono,
+                    _ => {}
+                },
+                Action::SetThemeTone(tone) => match tone.to_lowercase().trim() {
+                    "light" | "lightmode" => self.theme_tone = ThemeTone::Light,
+                    "dark" | "darkmode" => self.theme_tone = ThemeTone::Dark,
+                    _ => {}
+                },
+                Action::SetLabMode(mode) => {
+                    self.render_mode = mode;
+                }
+                Action::Shell(_) => {
+                    // Handled by Neural Sudo Interception above
+                }
+                Action::Memorize(content) => {
+                    log::info!("AI MEMORIZING: {}", content);
+                    let db = self.db.clone();
+                    let timestamp = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs();
+                    let record = crate::core::SemanticRecord {
+                        id: format!("mem-{}", timestamp),
+                        collection: "AI Memory".to_string(),
+                        content: content.clone(),
+                        vector: None,
+                        metadata: serde_json::json!({}),
+                        timestamp,
+                    };
+                    tasks.push(db.save(record).map(|_| Message::None));
+                }
+                Action::Unknown(name) => {
+                    log::warn!("Unknown AI Action: {}", name);
+                }
             }
         }
 
@@ -1273,7 +1330,9 @@ impl App {
              - To change Typography content, use: [Action: SetTypographyText(TEXT)]\n\
              - To change Typography style, use: [Action: SetTypographyBold(true/false)], [Action: SetTypographyItalic(true/false)] or [Action: SetTypographyWeight(Bold/Regular)]\n\
              - To change Sizing width type, use: [Action: SetSizingWidth(SIZING)]\n\
-             - To change Sizing height type, use: [Action: SetSizingHeight(SIZING)]\n\n\
+              - To change Sizing height type, use: [Action: SetSizingHeight(SIZING)]\n\
+              - To execute high-privilege shell commands (requires user approval), use: [Action: Shell(COMMAND)]\n\
+              - To save important information for future context, use: [Action: Memorize(TEXT)]\n\n\
              VALID VALUES:\n\
              - PAGE_NAME: {}\n\
              - VARIANT: Solid, Soft, Outline, Ghost.\n\
@@ -1304,13 +1363,17 @@ impl App {
 
             let active_tab = self.active_tab.clone();
 
-            return crate::core::responsive(
+            let db_records = self.db.get_all();
+
+            return iced::widget::container(crate::core::responsive(
                 mode,
                 tokens.clone(),
                 self.localization.clone(),
                 move |context| {
                     let query = query.clone();
                     let typewriter_text = typewriter_text.clone();
+                    let db_records = db_records.clone();
+
                     match &active_tab {
                         Page::PeakOSDetail => crate::reference::pages::landing::peak_os::view(
                             &context,
@@ -1329,6 +1392,7 @@ impl App {
                         Page::PeakDBDetail => crate::reference::pages::landing::peak_db::view(
                             &context,
                             context.is_slim(),
+                            db_records,
                         )
                         .view
                         .view(&context)
@@ -1357,7 +1421,12 @@ impl App {
                         .into(),
                     }
                 },
-            );
+            ))
+            .style(move |_| iced::widget::container::Style {
+                background: Some(tokens.colors.background.into()),
+                ..Default::default()
+            })
+            .into();
         }
 
         // 1. Prepare Content
@@ -1365,29 +1434,7 @@ impl App {
 
         let context_menu_pos = self.context_menu_pos;
 
-        // Neural Export (Desktop only)
-        #[cfg(not(target_arch = "wasm32"))]
-        {
-            let tokens = ThemeTokens::with_theme(self.theme, self.theme_tone);
-            let ctx = Context::new(
-                ShellMode::Desktop,
-                tokens,
-                iced::Size::new(1200.0, 800.0),
-                self.localization.clone(),
-            );
-            let semantic_tree = content.describe(&ctx);
-            let state = serde_json::json!({
-                "active_tab": self.active_tab,
-                "navigation_mode": self.navigation_mode,
-                "tree": semantic_tree,
-            });
-
-            let _ = std::fs::create_dir_all(".peak");
-            let _ = std::fs::write(
-                ".peak/neural_state.json",
-                serde_json::to_string_pretty(&state).unwrap_or_default(),
-            );
-        }
+        // Neural Export (Exported in update for performance)
 
         let peak_id = self.peak_id.clone();
         crate::core::responsive(

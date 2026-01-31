@@ -1,8 +1,12 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
-pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
+pub fn view(
+    context: &Context,
+    is_mobile: bool,
+    records: Vec<crate::core::SemanticRecord>,
+) -> PageResult<Message> {
     let _ = context;
     PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
@@ -45,26 +49,76 @@ pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
                 }
             })
             .width(Length::Fill)
-            .background(Color::WHITE),
+            .background(t.colors.background),
         );
 
         // Content
+        let mut content = VStack::new()
+            .spacing(48.0)
+            .push(
+                VStack::new()
+                    .spacing(32.0)
+                    .push(Text::new("Local-First Intelligence").headline().bold())
+                    .push(Text::new("PeakDB provides a locally-encrypted, high-performance vector and relational storage engine. It is the foundation for on-device RAG (Retrieval-Augmented Generation), allowing intelligence agents to access personal or industrial history without ever uploading data to the cloud.").body().secondary())
+                    .push(
+                        ResponsiveGrid::new()
+                            .spacing(24.0)
+                            .push(feature_item("P2P Sync", "Decentralized state synchronization across the swarm.", "refresh-cw", ctx))
+                            .push(feature_item("Encrypted", "End-to-end encryption for all stored neural weights.", "lock", ctx))
+                            .push(feature_item("Vector-Native", "Built-in support for high-dimensional embeddings.", "trending-up", ctx))
+                    )
+            );
+
+        // Knowledge Store Section
+        if !records.is_empty() {
+            let mut records_col = VStack::new().spacing(16.0);
+            for record in &records {
+                records_col = records_col.push(
+                    Container::new(
+                        VStack::new()
+                            .spacing(8.0)
+                            .push(
+                                HStack::new()
+                                    .spacing(8.0)
+                                    .push(
+                                        Text::new(&record.collection)
+                                            .bold()
+                                            .color(t.colors.primary),
+                                    )
+                                    .push(Text::new("·").secondary())
+                                    .push(Text::new("Semantic Record").caption2().secondary()),
+                            )
+                            .push(Text::new(&record.content).body()),
+                    )
+                    .padding(20.0)
+                    .background(t.colors.surface_variant)
+                    .radius(12.0)
+                    .width(Length::Fill),
+                );
+            }
+
+            content = content.push(
+                VStack::new()
+                    .spacing(24.0)
+                    .push(Text::new("Knowledge Store").title3().bold())
+                    .push(records_col),
+            );
+        }
+
         root = root.push(
-        Container::new(
-            VStack::new()
-                .spacing(32.0)
-                .push(Text::new("Local-First Intelligence").headline().bold())
-                .push(Text::new("PeakDB provides a locally-encrypted, high-performance vector and relational storage engine. It is the foundation for on-device RAG (Retrieval-Augmented Generation), allowing intelligence agents to access personal or industrial history without ever uploading data to the cloud.").body().secondary())
-                .push(
-                    ResponsiveGrid::new()
-                        .spacing(24.0)
-                        .push(feature_item("P2P Sync", "Decentralized state synchronization across the swarm.", "refresh-cw", ctx))
-                        .push(feature_item("Encrypted", "End-to-end encryption for all stored neural weights.", "lock", ctx))
-                        .push(feature_item("Vector-Native", "Built-in support for high-dimensional embeddings.", "trending-up", ctx))
-                )
-        )
-        .padding(if is_mobile { Padding::from(24.0) } else { Padding { top: 40.0, right: 80.0, bottom: 80.0, left: 80.0 } })
-    );
+            Container::new(content)
+                .padding(if is_mobile {
+                    Padding::from(24.0)
+                } else {
+                    Padding {
+                        top: 40.0,
+                        right: 80.0,
+                        bottom: 80.0,
+                        left: 80.0,
+                    }
+                })
+                .width(Length::Fill),
+        );
 
         ScrollView::new(root).view(ctx)
     }))

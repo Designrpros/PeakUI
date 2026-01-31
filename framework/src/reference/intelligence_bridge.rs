@@ -2,15 +2,23 @@ use crate::core::IntelligenceProvider;
 use iced::Task;
 use peak_os_intelligence::llm::{LlmClient, Message, ModelProvider};
 use serde_json::Value;
+use std::sync::Arc;
 
 pub struct PeakIntelligenceBridge {
     client: LlmClient,
+    db: Arc<dyn crate::core::DataProvider>,
 }
 
 impl PeakIntelligenceBridge {
-    pub fn new(provider: ModelProvider, model: impl Into<String>, api_key: Option<String>) -> Self {
+    pub fn new(
+        provider: ModelProvider,
+        model: impl Into<String>,
+        api_key: Option<String>,
+        db: Arc<dyn crate::core::DataProvider>,
+    ) -> Self {
         Self {
             client: LlmClient::new(provider, model.into(), api_key),
+            db,
         }
     }
 }
@@ -20,16 +28,44 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         &self,
         messages: Vec<crate::core::ChatCompletionMessage>,
     ) -> Task<std::result::Result<String, String>> {
-        let llm_messages = messages
-            .into_iter()
-            .map(|m| Message {
-                role: m.role,
-                content: m.content,
-            })
-            .collect();
-
         let client = self.client.clone();
-        Task::perform(async move { client.chat(llm_messages).await }, |res| res)
+        let db = self.db.clone();
+        let messages_clone = messages.clone();
+
+        Task::perform(
+            async move {
+                let mut final_messages = Vec::new();
+
+                // 1. RAG: Search for context if we have a user message
+                if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
+                    if let Ok(records) = db.async_find(user_msg.content.clone()).await {
+                        if !records.is_empty() {
+                            let context = records
+                                .iter()
+                                .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
+                                .collect::<Vec<_>>()
+                                .join("\n");
+
+                            final_messages.push(Message {
+                                role: "system".to_string(),
+                                content: format!("Relevant context from PeakDB:\n{}", context),
+                            });
+                        }
+                    }
+                }
+
+                // 2. Append original messages
+                for m in messages_clone {
+                    final_messages.push(Message {
+                        role: m.role,
+                        content: m.content,
+                    });
+                }
+
+                client.chat(final_messages).await
+            },
+            |res| res,
+        )
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -39,19 +75,41 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
     ) -> iced::futures::stream::BoxStream<'static, std::result::Result<String, String>> {
         use iced::futures::StreamExt;
 
-        let llm_messages: Vec<Message> = messages
-            .into_iter()
-            .map(|m| Message {
-                role: m.role,
-                content: m.content,
-            })
-            .collect();
-
         let client = self.client.clone();
+        let db = self.db.clone();
+        let messages_clone = messages.clone();
         let mut full_text = String::new();
 
         async_stream::stream! {
-            let mut stream = Box::pin(client.chat_stream(llm_messages));
+            let mut final_messages = Vec::new();
+
+            // 1. RAG: Search for context if we have a user message
+            if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
+                if let Ok(records) = db.async_find(user_msg.content.clone()).await {
+                    if !records.is_empty() {
+                        let context = records
+                            .iter()
+                            .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+
+                        final_messages.push(Message {
+                            role: "system".to_string(),
+                            content: format!("Relevant context from PeakDB:\n{}", context),
+                        });
+                    }
+                }
+            }
+
+            // 2. Append original messages
+            for m in messages_clone {
+                final_messages.push(Message {
+                    role: m.role,
+                    content: m.content,
+                });
+            }
+
+            let mut stream = Box::pin(client.chat_stream(final_messages));
             while let Some(res) = stream.next().await {
                 match res {
                     Ok(chunk) => {
@@ -76,18 +134,40 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         use iced::futures::{SinkExt, StreamExt};
         let (mut sender, receiver) = iced::futures::channel::mpsc::channel(100);
 
-        let llm_messages: Vec<Message> = messages
-            .into_iter()
-            .map(|m| Message {
-                role: m.role,
-                content: m.content,
-            })
-            .collect();
-
         let client = self.client.clone();
+        let db = self.db.clone();
+        let messages_clone = messages.clone();
 
         wasm_bindgen_futures::spawn_local(async move {
-            let stream = client.chat_stream(llm_messages);
+            let mut final_messages = Vec::new();
+
+            // 1. RAG: Search for context if we have a user message
+            if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
+                if let Ok(records) = db.async_find(user_msg.content.clone()).await {
+                    if !records.is_empty() {
+                        let context = records
+                            .iter()
+                            .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+
+                        final_messages.push(Message {
+                            role: "system".to_string(),
+                            content: format!("Relevant context from PeakDB:\n{}", context),
+                        });
+                    }
+                }
+            }
+
+            // 2. Append original messages
+            for m in messages_clone {
+                final_messages.push(Message {
+                    role: m.role,
+                    content: m.content,
+                });
+            }
+
+            let stream = client.chat_stream(final_messages);
             let mut stream = Box::pin(stream);
             let mut full_text = String::new();
 

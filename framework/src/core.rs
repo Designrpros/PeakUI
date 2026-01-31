@@ -2273,6 +2273,12 @@ pub trait DataProvider: Send + Sync {
     fn save(&self, record: SemanticRecord) -> Task<std::result::Result<(), String>>;
     fn find(&self, query: String) -> Task<std::result::Result<Vec<SemanticRecord>, String>>;
     fn delete(&self, id: String) -> Task<std::result::Result<(), String>>;
+
+    /// Async version for internal use (e.g. by IntelligenceProvider)
+    fn async_find(
+        &self,
+        query: String,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>>;
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

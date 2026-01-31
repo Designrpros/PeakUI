@@ -15,6 +15,7 @@ pub struct CanvasView {
     pub ai_provider: super::super::app::AIProviderChoice,
     pub search_query: String,
     pub icon_limit: usize,
+    pub db_records: Vec<crate::core::SemanticRecord>,
 }
 
 use super::super::page::PageResult;
@@ -32,6 +33,7 @@ impl CanvasView {
         ai_provider: super::super::app::AIProviderChoice,
         search_query: String,
         icon_limit: usize,
+        db_records: Vec<crate::core::SemanticRecord>,
     ) -> Self {
         Self {
             active_tab,
@@ -45,6 +47,7 @@ impl CanvasView {
             ai_provider,
             search_query,
             icon_limit,
+            db_records,
         }
     }
 
@@ -159,7 +162,9 @@ impl CanvasView {
             // Details (from Landing)
             ReferencePage::PeakOSDetail => pages::landing::peak_os::view(context, is_mobile),
             ReferencePage::PeakUIDetail => pages::landing::peak_ui::view(context, is_mobile),
-            ReferencePage::PeakDBDetail => pages::landing::peak_db::view(context, is_mobile),
+            ReferencePage::PeakDBDetail => {
+                pages::landing::peak_db::view(context, is_mobile, self.db_records.clone())
+            }
             ReferencePage::PeakRelayDetail => pages::landing::peak_relay::view(context, is_mobile),
             ReferencePage::PeakHubDetail => pages::landing::peak_hub::view(context, is_mobile),
 

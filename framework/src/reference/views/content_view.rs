@@ -32,6 +32,7 @@ pub struct ContentView {
     pub ai_provider: super::super::app::AIProviderChoice,
     pub icon_limit: usize,
     pub pending_sudo_action: Option<super::super::app::SudoAction>,
+    pub db_records: Vec<crate::core::SemanticRecord>,
 }
 
 impl ContentView {
@@ -62,6 +63,7 @@ impl ContentView {
             ai_provider: app.ai_provider,
             icon_limit: app.icon_limit,
             pending_sudo_action: app.pending_sudo_action.clone(),
+            db_records: app.db.get_all(),
         }
     }
 
@@ -81,6 +83,7 @@ impl ContentView {
             self.ai_provider,
             self.search_query.clone(),
             self.icon_limit,
+            self.db_records.clone(),
         );
 
         let sidebar = SidebarView::new(
@@ -408,6 +411,7 @@ impl ContentView {
             self.ai_provider,
             self.search_query.clone(),
             self.icon_limit,
+            self.db_records.clone(),
         );
 
         let sidebar = SidebarView::new(

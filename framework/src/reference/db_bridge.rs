@@ -13,6 +13,10 @@ impl PeakDBBridge {
             storage: Arc::new(Mutex::new(Vec::new())),
         }
     }
+
+    pub fn get_all(&self) -> Vec<SemanticRecord> {
+        self.storage.lock().map(|db| db.clone()).unwrap_or_default()
+    }
 }
 
 impl DataProvider for PeakDBBridge {
@@ -60,5 +64,25 @@ impl DataProvider for PeakDBBridge {
             },
             |res| res,
         )
+    }
+
+    fn async_find(
+        &self,
+        query: String,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>>
+    {
+        let storage = self.storage.clone();
+        Box::pin(async move {
+            let db = storage.lock().map_err(|e| e.to_string())?;
+            let results = db
+                .iter()
+                .filter(|r| {
+                    r.content.to_lowercase().contains(&query.to_lowercase())
+                        || r.collection.to_lowercase().contains(&query.to_lowercase())
+                })
+                .cloned()
+                .collect();
+            Ok(results)
+        })
     }
 }

@@ -50,7 +50,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
             Container::new(Space::new(Length::Fill, Length::Fill))
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .background(Color::WHITE)
+                .background(t.colors.background)
         )
         .push(
             VStack::new()
