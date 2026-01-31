@@ -235,11 +235,11 @@ impl From<String> for Page {
             "updates" => Page::Updates,
             "ai" | "settingsai" | "settings_ai" => Page::SettingsAI,
 
-            "peakosdetail" | "peakos detail" => Page::PeakOSDetail,
-            "peakuidetail" | "peakui detail" => Page::PeakUIDetail,
-            "peakdbdetail" | "peakdb detail" => Page::PeakDBDetail,
-            "peakrelaydetail" | "peakrelay detail" => Page::PeakRelayDetail,
-            "peakhubdetail" | "peakhub detail" => Page::PeakHubDetail,
+            "peakosdetail" | "peakos detail" | "peakos-detail" => Page::PeakOSDetail,
+            "peakuidetail" | "peakui detail" | "peakui-detail" => Page::PeakUIDetail,
+            "peakdbdetail" | "peakdb detail" | "peakdb-detail" => Page::PeakDBDetail,
+            "peakrelaydetail" | "peakrelay detail" | "peakrelay-detail" => Page::PeakRelayDetail,
+            "peakhubdetail" | "peakhub detail" | "peakhub-detail" => Page::PeakHubDetail,
 
             _ => {
                 // Try to find if any of the to_string() matches (case insensitive)
@@ -423,6 +423,12 @@ impl Page {
             "/settings/updates" => Page::Updates,
             "/settings/ai" => Page::SettingsAI,
 
+            "/landing/peakos" => Page::PeakOSDetail,
+            "/landing/peakui" => Page::PeakUIDetail,
+            "/landing/peakdb" => Page::PeakDBDetail,
+            "/landing/peakrelay" => Page::PeakRelayDetail,
+            "/landing/peakhub" => Page::PeakHubDetail,
+
             _ => Page::Introduction,
         };
 
@@ -524,6 +530,12 @@ impl Page {
             Page::Appearance,
             Page::SettingsAI,
             Page::About,
+            Page::Updates,
+            Page::PeakOSDetail,
+            Page::PeakUIDetail,
+            Page::PeakDBDetail,
+            Page::PeakRelayDetail,
+            Page::PeakHubDetail,
         ]
     }
 }
