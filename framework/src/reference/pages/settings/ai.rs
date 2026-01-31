@@ -1,13 +1,13 @@
 use crate::prelude::*;
 use crate::reference::app::{AIProviderChoice, Message};
-use crate::reference::page::PageResult;
+use crate::navigation::PageResult;
 
 pub fn view(
     _context: &Context,
     _is_mobile: bool,
     api_key: String,
     ai_provider: AIProviderChoice,
-) -> PageResult {
+) -> PageResult<Message> {
     let mut provider_selection = HStack::<Message, IcedBackend>::new_generic()
         .spacing(16.0)
         .width(Length::Fill);

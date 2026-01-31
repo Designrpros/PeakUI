@@ -1,8 +1,8 @@
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::reference::page::PageResult;
+use crate::navigation::PageResult;
 
-pub fn view(context: &Context, _is_mobile: bool) -> PageResult {
+pub fn view(context: &Context, _is_mobile: bool) -> PageResult<Message> {
     // 1. Pre-calculate the theme grid to avoid complex nested closures
     let mut theme_grid = VStack::<Message, IcedBackend>::new_generic()
         .width(Length::Fill)

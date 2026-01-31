@@ -15,6 +15,7 @@ pub enum Variant {
     Outline, // Border only
     Ghost,   // No background until hover
     Compact, // No background, minimal spacing
+    Plain,   // No background, no padding, no styling (click-only)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]

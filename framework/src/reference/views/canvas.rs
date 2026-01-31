@@ -53,89 +53,93 @@ impl CanvasView {
 
         let page = match &self.active_tab {
             // Guide
-            ReferencePage::Introduction => pages::introduction::view(context, is_mobile),
-            ReferencePage::Architecture => pages::architecture::view(context, is_mobile),
-            ReferencePage::ProjectStructure => pages::project_structure::view(context, is_mobile),
+            ReferencePage::Introduction => pages::guide::introduction::view(context, is_mobile),
+            ReferencePage::Architecture => pages::docs::architecture::view(context, is_mobile),
+            ReferencePage::ProjectStructure => {
+                pages::docs::project_structure::view(context, is_mobile)
+            }
 
-            ReferencePage::Roadmap => pages::roadmap::view(context, is_mobile),
+            ReferencePage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             ReferencePage::Intelligence => {
-                pages::intelligence::view(context, is_mobile, self.api_key.clone())
+                pages::guide::intelligence::view(context, is_mobile, self.api_key.clone())
             }
 
             // Ecosystem
-            ReferencePage::PeakDB => pages::peak_db::view(context, is_mobile),
-            ReferencePage::PeakCloud => pages::peak_cloud::view(context, is_mobile),
-            ReferencePage::PeakHub => pages::peak_hub::view(context, is_mobile),
+            ReferencePage::PeakDB => pages::core::peak_db::view(context, is_mobile),
+            ReferencePage::PeakCloud => pages::core::peak_cloud::view(context, is_mobile),
+            ReferencePage::PeakHub => pages::core::peak_hub::view(context, is_mobile),
             ReferencePage::SwarmDashboard => {
                 let view = super::swarm_dashboard::SwarmDashboardView::new(context.peak_id.clone());
                 crate::navigation::PageResult::new(view)
             }
-            ReferencePage::PeakDesktop => pages::peak_desktop::view(context, is_mobile),
-            ReferencePage::PeakOSCore => pages::peak_os_core::view(context, is_mobile),
+            ReferencePage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
+            ReferencePage::PeakOSCore => pages::core::peak_os_core::view(context, is_mobile),
 
             // Legacy
-            ReferencePage::ApiSchema => pages::peak_os_core::view(context, is_mobile), // Redirect to new page
-            ReferencePage::Community => pages::community::view(context, is_mobile),
+            ReferencePage::ApiSchema => pages::core::peak_os_core::view(context, is_mobile), // Redirect to new page
+            ReferencePage::Community => pages::guide::community::view(context, is_mobile),
 
             // Concepts (Overview is legacy/fallback)
-            ReferencePage::Overview => pages::introduction::view(context, is_mobile),
+            ReferencePage::Overview => pages::guide::introduction::view(context, is_mobile),
             ReferencePage::Customizations => {
-                pages::customizations::view(context, is_mobile, self.render_mode)
+                pages::docs::customizations::view(context, is_mobile, self.render_mode)
             }
             ReferencePage::BasicSizing => {
-                pages::sizing::view(context, is_mobile, &self.sizing_lab, self.render_mode)
+                pages::docs::sizing::view(context, is_mobile, &self.sizing_lab, self.render_mode)
             }
-            ReferencePage::Colors => pages::colors::view(context, self.render_mode),
+            ReferencePage::Colors => pages::docs::colors::view(context, self.render_mode),
             ReferencePage::Typography => {
-                pages::typography::view(context, &self.typography_lab, self.render_mode)
+                pages::docs::typography::view(context, &self.typography_lab, self.render_mode)
             }
             ReferencePage::Layout => {
-                pages::layout::view(context, is_mobile, &self.layout_lab, self.render_mode)
+                pages::docs::layout::view(context, is_mobile, &self.layout_lab, self.render_mode)
             }
 
             // Atoms (Phase 3/4)
-            ReferencePage::Text => pages::text::view(context),
+            ReferencePage::Text => pages::components::text::view(context),
             ReferencePage::Icon => {
-                pages::icon::view(context, self.search_query.clone(), self.icon_limit)
+                pages::components::icon::view(context, self.search_query.clone(), self.icon_limit)
             }
             ReferencePage::Button => {
-                pages::button::view(context, &self.button_lab, self.render_mode)
+                pages::components::button::view(context, &self.button_lab, self.render_mode)
             }
-            ReferencePage::Shapes => pages::shapes::view(context, is_mobile),
-            ReferencePage::Image => pages::image::view(context),
-            ReferencePage::Video => pages::video::view(context),
-            ReferencePage::WebView => pages::web_view::view(context),
-            ReferencePage::Divider => pages::divider::view(context),
+            ReferencePage::Shapes => pages::components::shapes::view(context, is_mobile),
+            ReferencePage::Image => pages::components::image::view(context),
+            ReferencePage::Video => pages::components::video::view(context),
+            ReferencePage::WebView => pages::components::web_view::view(context),
+            ReferencePage::Divider => pages::components::divider::view(context),
 
             // Containers (Phase 4)
-            ReferencePage::VStack => pages::vstack::view(context),
-            ReferencePage::HStack => pages::hstack::view(context),
-            ReferencePage::ZStack => pages::zstack::view(context),
-            ReferencePage::Overlay => pages::overlay::view(context),
-            ReferencePage::ScrollView => pages::scroll_view::view(context),
-            ReferencePage::Card => pages::card::view(context),
+            ReferencePage::VStack => pages::components::vstack::view(context),
+            ReferencePage::HStack => pages::components::hstack::view(context),
+            ReferencePage::ZStack => pages::components::zstack::view(context),
+            ReferencePage::Overlay => pages::components::overlay::view(context),
+            ReferencePage::ScrollView => pages::components::scroll_view::view(context),
+            ReferencePage::Card => pages::components::card::view(context),
 
             // Navigation (Phase 4)
-            ReferencePage::Sidebar => pages::sidebar_doc::view(context),
-            ReferencePage::Tabbar => pages::tabbar_doc::view(context),
-            ReferencePage::Modal => pages::modal_doc::view(context),
-            ReferencePage::NavigationSplit => pages::navigation_split::view(context),
-            ReferencePage::Section => pages::section::view(context),
+            ReferencePage::Sidebar => pages::components::sidebar_doc::view(context),
+            ReferencePage::Tabbar => pages::components::tabbar_doc::view(context),
+            ReferencePage::Modal => pages::components::modal_doc::view(context),
+            ReferencePage::NavigationSplit => pages::components::navigation_split::view(context),
+            ReferencePage::Section => pages::components::section::view(context),
 
             // Showcase Gallery (Deprecated / Redirects)
             ReferencePage::ShowcaseButtons => {
-                pages::button::view(context, &self.button_lab, self.render_mode)
+                pages::components::button::view(context, &self.button_lab, self.render_mode)
             }
             ReferencePage::ShowcaseInputs
             | ReferencePage::ShowcaseToggles
             | ReferencePage::ShowcaseSliders
-            | ReferencePage::ShowcasePickers => pages::introduction::view(context, is_mobile),
+            | ReferencePage::ShowcasePickers => {
+                pages::guide::introduction::view(context, is_mobile)
+            }
 
             // Hooks Gallery
-            ReferencePage::UseState => pages::hooks::view(context, is_mobile),
-            ReferencePage::UseEffect => pages::side_effects::view(context, is_mobile),
+            ReferencePage::UseState => pages::hooks::overview::view(context, is_mobile),
+            ReferencePage::UseEffect => pages::docs::side_effects::view(context, is_mobile),
             ReferencePage::UseMemo | ReferencePage::UseCallback => {
-                pages::performance::view(context, is_mobile)
+                pages::docs::performance::view(context, is_mobile)
             }
 
             // Settings Gallery
@@ -152,9 +156,16 @@ impl CanvasView {
                 self.ai_provider,
             ),
 
+            // Details (from Landing)
+            ReferencePage::PeakOSDetail => pages::landing::peak_os::view(context, is_mobile),
+            ReferencePage::PeakUIDetail => pages::landing::peak_ui::view(context, is_mobile),
+            ReferencePage::PeakDBDetail => pages::landing::peak_db::view(context, is_mobile),
+            ReferencePage::PeakRelayDetail => pages::landing::peak_relay::view(context, is_mobile),
+            ReferencePage::PeakHubDetail => pages::landing::peak_hub::view(context, is_mobile),
+
             // Fallback
             ReferencePage::Landing | ReferencePage::Unknown(_) => {
-                pages::introduction::view(context, is_mobile)
+                pages::guide::introduction::view(context, is_mobile)
             }
         };
 

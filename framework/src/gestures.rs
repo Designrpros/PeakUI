@@ -48,3 +48,40 @@ where
         }
     }
 }
+pub struct TapGesture<Message: 'static, B: crate::core::Backend, V: View<Message, B>> {
+    content: V,
+    on_tap: Message,
+    _phantom: std::marker::PhantomData<(Message, B)>,
+}
+
+impl<Message: 'static, B: crate::core::Backend, V: View<Message, B>> TapGesture<Message, B, V> {
+    pub fn new(content: V, on_tap: Message) -> Self {
+        Self {
+            content,
+            on_tap,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<Message: Clone + 'static, B: crate::core::Backend, V: View<Message, B>> View<Message, B>
+    for TapGesture<Message, B, V>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::button(
+            self.content.view(context),
+            Some(self.on_tap.clone()),
+            crate::modifiers::Variant::Plain,
+            crate::modifiers::Intent::Neutral,
+            iced::Length::Shrink,
+            false,
+            context,
+        )
+    }
+
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let mut node = self.content.describe(context);
+        node.role = "tap_gesture".to_string();
+        node
+    }
+}

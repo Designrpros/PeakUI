@@ -639,6 +639,22 @@ impl App {
                     self.show_sidebar = false;
                 }
 
+                // Landing/Details visibility logic
+                match tab {
+                    Page::Landing
+                    | Page::PeakOSDetail
+                    | Page::PeakUIDetail
+                    | Page::PeakDBDetail
+                    | Page::PeakRelayDetail
+                    | Page::PeakHubDetail => {
+                        self.show_landing = true;
+                    }
+                    _ => {
+                        self.show_landing = false;
+                        self.show_sidebar = true;
+                    }
+                }
+
                 Task::none()
             }
             Message::ToggleSearch => {
@@ -1286,14 +1302,60 @@ impl App {
             let query = self.search_query.clone();
             let typewriter_text = self.typewriter_text.clone();
 
+            let active_tab = self.active_tab.clone();
+
             return crate::core::responsive(
                 mode,
                 tokens.clone(),
                 self.localization.clone(),
                 move |context| {
-                    // Pass 'query' to the view function
-                    crate::reference::pages::landing::view(&context, &query, &typewriter_text)
-                        .into()
+                    let query = query.clone();
+                    let typewriter_text = typewriter_text.clone();
+                    match &active_tab {
+                        Page::PeakOSDetail => crate::reference::pages::landing::peak_os::view(
+                            &context,
+                            context.is_slim(),
+                        )
+                        .view
+                        .view(&context)
+                        .into(),
+                        Page::PeakUIDetail => crate::reference::pages::landing::peak_ui::view(
+                            &context,
+                            context.is_slim(),
+                        )
+                        .view
+                        .view(&context)
+                        .into(),
+                        Page::PeakDBDetail => crate::reference::pages::landing::peak_db::view(
+                            &context,
+                            context.is_slim(),
+                        )
+                        .view
+                        .view(&context)
+                        .into(),
+                        Page::PeakRelayDetail => {
+                            crate::reference::pages::landing::peak_relay::view(
+                                &context,
+                                context.is_slim(),
+                            )
+                            .view
+                            .view(&context)
+                            .into()
+                        }
+                        Page::PeakHubDetail => crate::reference::pages::landing::peak_hub::view(
+                            &context,
+                            context.is_slim(),
+                        )
+                        .view
+                        .view(&context)
+                        .into(),
+                        _ => crate::reference::pages::landing::view(
+                            &context,
+                            &query,
+                            &typewriter_text,
+                        )
+                        .into(),
+                    }
                 },
             );
         }

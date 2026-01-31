@@ -80,6 +80,13 @@ pub enum Page {
     Updates,
     SettingsAI,
 
+    // Detail Pages (Landing Extras)
+    PeakOSDetail,
+    PeakUIDetail,
+    PeakDBDetail,
+    PeakRelayDetail,
+    PeakHubDetail,
+
     // Fallback
     Unknown(String),
 }
@@ -147,6 +154,12 @@ impl ToString for Page {
             Page::About => "About".to_string(),
             Page::Updates => "Updates".to_string(),
             Page::SettingsAI => "AI".to_string(),
+
+            Page::PeakOSDetail => "PeakOS Detail".to_string(),
+            Page::PeakUIDetail => "PeakUI Detail".to_string(),
+            Page::PeakDBDetail => "PeakDB Detail".to_string(),
+            Page::PeakRelayDetail => "PeakRelay Detail".to_string(),
+            Page::PeakHubDetail => "PeakHub Detail".to_string(),
 
             Page::Unknown(s) => s.clone(),
         }
@@ -221,6 +234,12 @@ impl From<String> for Page {
             "about" => Page::About,
             "updates" => Page::Updates,
             "ai" | "settingsai" | "settings_ai" => Page::SettingsAI,
+
+            "peakosdetail" | "peakos detail" => Page::PeakOSDetail,
+            "peakuidetail" | "peakui detail" => Page::PeakUIDetail,
+            "peakdbdetail" | "peakdb detail" => Page::PeakDBDetail,
+            "peakrelaydetail" | "peakrelay detail" => Page::PeakRelayDetail,
+            "peakhubdetail" | "peakhub detail" => Page::PeakHubDetail,
 
             _ => {
                 // Try to find if any of the to_string() matches (case insensitive)
@@ -311,6 +330,13 @@ impl Page {
             Page::About => "/settings/about".to_string(),
             Page::Updates => "/settings/updates".to_string(),
             Page::SettingsAI => "/settings/ai".to_string(),
+
+            // Details
+            Page::PeakOSDetail => "/landing/peakos".to_string(),
+            Page::PeakUIDetail => "/landing/peakui".to_string(),
+            Page::PeakDBDetail => "/landing/peakdb".to_string(),
+            Page::PeakRelayDetail => "/landing/peakrelay".to_string(),
+            Page::PeakHubDetail => "/landing/peakhub".to_string(),
 
             // Fallback
             Page::Unknown(_) => "/".to_string(),
@@ -422,7 +448,12 @@ impl Page {
             | Page::BasicSizing
             | Page::Colors
             | Page::Layout
-            | Page::Intelligence => "Start".to_string(),
+            | Page::Intelligence
+            | Page::PeakOSDetail
+            | Page::PeakUIDetail
+            | Page::PeakDBDetail
+            | Page::PeakRelayDetail
+            | Page::PeakHubDetail => "Start".to_string(),
             Page::SettingsAI => "Settings".to_string(),
 
             Page::Text

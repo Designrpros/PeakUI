@@ -449,3 +449,124 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
         }
     }
 }
+
+/// A wrap layout that arranges children horizontally and wraps them to the next line when they run out of space.
+pub struct Wrap<Message: 'static, B: Backend = IcedBackend> {
+    children: Vec<Box<dyn View<Message, B>>>,
+    spacing: f32,
+    run_spacing: f32,
+    padding: iced::Padding,
+    width: Length,
+    height: Length,
+    align_x: iced::Alignment,
+    align_y: iced::Alignment,
+}
+
+impl<Message: 'static> Wrap<Message, IcedBackend> {
+    pub fn new() -> Self {
+        Self::new_generic()
+    }
+}
+
+impl<Message: 'static> Wrap<Message, TermBackend> {
+    pub fn new_tui() -> Self {
+        Self::new_generic()
+    }
+}
+
+impl<Message: 'static, B: Backend> Wrap<Message, B> {
+    pub fn new_generic() -> Self {
+        Self {
+            children: Vec::new(),
+            spacing: 0.0,
+            run_spacing: 0.0,
+            padding: iced::Padding::from(0.0),
+            width: Length::Fill,
+            height: Length::Shrink,
+            align_x: iced::Alignment::Start,
+            align_y: iced::Alignment::Start,
+        }
+    }
+
+    pub fn align_x(mut self, align: iced::Alignment) -> Self {
+        self.align_x = align;
+        self
+    }
+
+    pub fn align_y(mut self, align: iced::Alignment) -> Self {
+        self.align_y = align;
+        self
+    }
+
+    pub fn spacing(mut self, spacing: f32) -> Self {
+        self.spacing = spacing;
+        self
+    }
+
+    pub fn run_spacing(mut self, spacing: f32) -> Self {
+        self.run_spacing = spacing;
+        self
+    }
+
+    pub fn padding(mut self, padding: impl Into<iced::Padding>) -> Self {
+        self.padding = padding.into();
+        self
+    }
+
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+        self.children.push(Box::new(view));
+        self
+    }
+
+    pub fn extend<I, V>(mut self, iter: I) -> Self
+    where
+        I: IntoIterator<Item = V>,
+        V: View<Message, B> + 'static,
+    {
+        for child in iter {
+            self.children.push(Box::new(child));
+        }
+        self
+    }
+}
+
+impl<Message: 'static, B: Backend> View<Message, B> for Wrap<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let child_views = self.children.iter().map(|c| c.view(context)).collect();
+        B::wrap(
+            child_views,
+            self.spacing,
+            self.run_spacing,
+            self.padding,
+            self.width,
+            self.height,
+            self.align_x,
+            self.align_y,
+            context.theme.scaling,
+        )
+    }
+
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let children = self.children.iter().map(|c| c.describe(context)).collect();
+        crate::core::SemanticNode {
+            accessibility: None,
+            role: "wrap".to_string(),
+            label: None,
+            content: None,
+            children,
+            neural_tag: None,
+            documentation: None,
+            ..Default::default()
+        }
+    }
+}

@@ -1,10 +1,10 @@
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::reference::page::PageResult;
+use crate::navigation::PageResult;
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult {
+pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
     let preview = VStack::<Message, IcedBackend>::new_generic()
         .spacing(24.0)
         .align_x(Alignment::Center)

@@ -304,6 +304,18 @@ pub trait Backend: Sized + Clone + 'static {
         scale: f32,
     ) -> Self::AnyView<Message>;
 
+    fn wrap<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        spacing: f32,
+        run_spacing: f32,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        align_x: Alignment,
+        align_y: Alignment,
+        scale: f32,
+    ) -> Self::AnyView<Message>;
+
     fn text<Message: Clone + 'static>(
         content: String,
         size: f32,
@@ -513,6 +525,46 @@ impl Backend for SpatialBackend {
         SpatialNode {
             role: "hstack".to_string(),
             width: x_offset,
+            height: 0.0,
+            depth: 0.0,
+            transform: Transform3D::default(),
+            is_focused: false,
+            children: nodes,
+        }
+    }
+
+    fn wrap<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        spacing: f32,
+        run_spacing: f32,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _align_x: Alignment,
+        _align_y: Alignment,
+        _scale: f32,
+    ) -> Self::AnyView<Message> {
+        // Simple mock implementation for SpatialBackend
+        let mut nodes = Vec::new();
+        let mut x = 0.0;
+        let mut y = 0.0;
+        // This is inaccurate but sufficient for spatial representation logic placeholder
+        for mut child in children {
+            child.transform.x = x;
+            child.transform.y = y;
+            x += child.width + spacing;
+            // Simple wrap logic simulation could go here if needed
+            if x > 500.0 {
+                // arbitrary width
+                x = 0.0;
+                y += child.height + run_spacing;
+            }
+            nodes.push(child);
+        }
+
+        SpatialNode {
+            role: "wrap".to_string(),
+            width: 0.0,
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
@@ -968,6 +1020,44 @@ impl Backend for IcedBackend {
             .into()
     }
 
+    fn wrap<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        spacing: f32,
+        _run_spacing: f32,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        align_x: Alignment,
+        align_y: Alignment,
+        scale: f32,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::{container, row};
+
+        let w = row(children)
+            .spacing(spacing * scale)
+            .width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .align_y(align_y)
+            .wrap();
+
+        let mut c = container(w).padding(Padding {
+            top: padding.top * scale,
+            right: padding.right * scale,
+            bottom: padding.bottom * scale,
+            left: padding.left * scale,
+        });
+
+        if align_x == Alignment::Center && width != Length::Shrink {
+            c = c.center_x(scale_length(width, scale));
+        } else if align_x == Alignment::End && width != Length::Shrink {
+            c = c.align_x(iced::alignment::Horizontal::Right);
+        }
+
+        c.width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .into()
+    }
+
     fn text<Message: Clone + 'static>(
         content: String,
         size: f32,
@@ -1204,6 +1294,19 @@ impl Backend for IcedBackend {
         use iced::widget::button;
         let theme = context.theme;
 
+        if variant == Variant::Plain {
+            return button(content)
+                .on_press_maybe(on_press)
+                .padding(Padding::ZERO)
+                .style(move |_, _| button::Style {
+                    background: None,
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    ..Default::default()
+                })
+                .into();
+        }
+
         button(
             iced::widget::container(content)
                 .width(width)
@@ -1315,6 +1418,11 @@ impl Backend for IcedBackend {
                         radius: 0.0.into(),
                         color: iced::Color::TRANSPARENT,
                     },
+                    ..Default::default()
+                },
+                Variant::Plain => button::Style {
+                    background: None,
+                    border: iced::Border::default(),
                     ..Default::default()
                 },
             }
@@ -1794,6 +1902,20 @@ impl Backend for TermBackend {
         children.join(" ")
     }
 
+    fn wrap<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        _spacing: f32,
+        _run_spacing: f32,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _align_x: Alignment,
+        _align_y: Alignment,
+        _scale: f32,
+    ) -> Self::AnyView<Message> {
+        children.join(" ")
+    }
+
     fn text<Message: Clone + 'static>(
         content: String,
         _size: f32,
@@ -2082,6 +2204,13 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     {
         Box::new(self)
     }
+
+    fn on_tap_gesture(self, msg: Message) -> crate::gestures::TapGesture<Message, B, Self>
+    where
+        Self: Sized + 'static,
+    {
+        crate::gestures::TapGesture::new(self, msg)
+    }
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>> {
@@ -2257,6 +2386,29 @@ impl Backend for AIBackend {
         SemanticNode {
             accessibility: None,
             role: "hstack".to_string(),
+            label: None,
+            content: None,
+            children,
+            neural_tag: None,
+            documentation: None,
+            ..Default::default()
+        }
+    }
+
+    fn wrap<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        _spacing: f32,
+        _run_spacing: f32,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _align_x: Alignment,
+        _align_y: Alignment,
+        _scale: f32,
+    ) -> Self::AnyView<Message> {
+        SemanticNode {
+            accessibility: None,
+            role: "wrap".to_string(),
             label: None,
             content: None,
             children,
