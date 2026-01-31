@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Basic Metadata -->
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.peak-ui.$(PRODUCT_NAME:rfc1034identifier)</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2024 PeakSuite. All rights reserved.</string>
+
+    <!-- Display -->
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSUIElement</key>
+    <false/> <!-- Set to true for agent/tray-only apps -->
+    
+    <!-- Privacy Keys (Commented Out by Default) -->
+    <!--
+    <key>NSCameraUsageDescription</key>
+    <string>This app requires camera access to...</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app requires microphone access to...</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app requires location access to...</string>
+    -->
+    
+    <!-- Security -->
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+</dict>
+</plist>

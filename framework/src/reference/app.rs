@@ -310,6 +310,7 @@ pub enum Message {
     SudoRequest(SudoAction),
     SudoApprove,
     SudoDeny,
+    ApplyNativeVibrancy,
     None,
 }
 
@@ -357,6 +358,7 @@ pub enum Command {
     UpdateSizingFixedWidth(f32),
     UpdateSizingFixedHeight(f32),
 
+    ApplyNativeVibrancy,
     None,
 }
 
@@ -413,6 +415,8 @@ impl Command {
             Command::SetInspectorTab(tab) => Message::SetInspectorTab(tab),
             Command::SetApiKey(key) => Message::SetApiKey(key),
             Command::SetAIProvider(provider) => Message::SetAIProvider(provider),
+
+            Command::ApplyNativeVibrancy => Message::ApplyNativeVibrancy,
             Command::None => Message::None,
         }
     }
@@ -489,6 +493,56 @@ pub use crate::core::{Context, DeviceType};
 impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::ApplyNativeVibrancy => {
+                #[cfg(target_os = "macos")]
+                {
+                    use objc2_app_kit::{
+                        NSApplication, NSAutoresizingMaskOptions, NSVisualEffectBlendingMode,
+                        NSVisualEffectMaterial, NSVisualEffectState, NSVisualEffectView,
+                        NSWindowOrderingMode,
+                    };
+                    use objc2_foundation::{MainThreadMarker, NSRect};
+
+                    log::info!("Applying native vibrancy...");
+                    if let Some(mtm) = MainThreadMarker::new() {
+                        let app = NSApplication::sharedApplication(mtm);
+                        if let Some(window) = unsafe { app.windows().lastObject() } {
+                            unsafe {
+                                let frame =
+                                    window
+                                        .contentView()
+                                        .map(|v| v.frame())
+                                        .unwrap_or(NSRect::new(
+                                            objc2_foundation::CGPoint::new(0.0, 0.0),
+                                            objc2_foundation::CGSize::new(1000.0, 1000.0),
+                                        ));
+                                let effect_view = NSVisualEffectView::initWithFrame(
+                                    mtm.alloc::<NSVisualEffectView>(),
+                                    frame,
+                                );
+
+                                effect_view.setMaterial(NSVisualEffectMaterial::HUDWindow);
+                                effect_view
+                                    .setBlendingMode(NSVisualEffectBlendingMode::BehindWindow);
+                                effect_view.setState(NSVisualEffectState::Active);
+                                effect_view.setAutoresizingMask(
+                                    NSAutoresizingMaskOptions::from_bits_truncate(18),
+                                );
+
+                                if let Some(content_view) = window.contentView() {
+                                    content_view.addSubview_positioned_relativeTo(
+                                        &effect_view,
+                                        NSWindowOrderingMode::NSWindowBelow,
+                                        None,
+                                    );
+                                    log::info!("Vibrancy effect view added.");
+                                }
+                            }
+                        }
+                    }
+                }
+                Task::none()
+            }
             Message::EnterApp => {
                 self.show_landing = false;
                 self.show_sidebar = true;

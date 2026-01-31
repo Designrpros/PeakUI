@@ -8,4 +8,4 @@ pub mod page;
 pub mod pages;
 pub mod views;
 
-pub use app::App;
+pub use app::{App, Message};

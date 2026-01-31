@@ -15,6 +15,7 @@ fn main() -> Result {
 
         #[cfg(target_os = "macos")]
         {
+            use muda::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
             use objc2::ClassType;
             use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSImage};
             use objc2_foundation::{MainThreadMarker, NSData};
@@ -27,6 +28,82 @@ fn main() -> Result {
                 let data = NSData::with_bytes(icon_bytes);
                 if let Some(image) = NSImage::initWithData(NSImage::alloc(), &data) {
                     unsafe { app.setApplicationIconImage(Some(&image)) };
+                }
+
+                // Initialize Native Menu
+                let app_menu = Submenu::new("PeakUI", true);
+                let _ = app_menu.append_items(&[
+                    &PredefinedMenuItem::about(
+                        Some("About PeakUI"),
+                        Some(AboutMetadata::default()),
+                    ),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::services(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::hide(None),
+                    &PredefinedMenuItem::hide_others(None),
+                    &PredefinedMenuItem::show_all(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::quit(None),
+                ]);
+
+                let file_menu = Submenu::new("File", true);
+                let _ = file_menu
+                    .append_items(&[&PredefinedMenuItem::close_window(Some("Close Window"))]);
+
+                let edit_menu = Submenu::new("Edit", true);
+                let _ = edit_menu.append_items(&[
+                    &PredefinedMenuItem::undo(None),
+                    &PredefinedMenuItem::redo(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::cut(None),
+                    &PredefinedMenuItem::copy(None),
+                    &PredefinedMenuItem::paste(None),
+                    &PredefinedMenuItem::select_all(None),
+                ]);
+
+                let view_menu = Submenu::new("View", true);
+                let _ = view_menu.append_items(&[&PredefinedMenuItem::fullscreen(None)]);
+
+                let window_menu = Submenu::new("Window", true);
+                let _ = window_menu.append_items(&[
+                    &PredefinedMenuItem::minimize(None),
+                    &PredefinedMenuItem::separator(),
+                    &PredefinedMenuItem::bring_all_to_front(None),
+                ]);
+
+                let help_menu = Submenu::new("Help", true);
+                let _ = help_menu.append_items(&[&MenuItem::new("Documentation", true, None)]);
+
+                let menu = Menu::new();
+                let _ = menu.append_items(&[
+                    &app_menu,
+                    &file_menu,
+                    &edit_menu,
+                    &view_menu,
+                    &window_menu,
+                    &help_menu,
+                ]);
+
+                let _ = menu.init_for_nsapp();
+
+                // Initialize Tray Icon
+                use tray_icon::{Icon, TrayIconBuilder};
+                let tray_icon_img = image::load_from_memory(icon_bytes).ok().and_then(|img| {
+                    let img = img.to_rgba8();
+                    let (width, height) = img.dimensions();
+                    let rgba = img.into_raw();
+                    Icon::from_rgba(rgba, width, height).ok()
+                });
+
+                if let Some(icon) = tray_icon_img {
+                    let _tray_icon = TrayIconBuilder::new()
+                        .with_tooltip("PeakUI Showcase")
+                        .with_icon(icon)
+                        .build()
+                        .unwrap();
+                    // Leak it to keep it alive
+                    Box::leak(Box::new(_tray_icon));
                 }
             }
         }
@@ -44,7 +121,12 @@ fn main() -> Result {
                 let ftl = include_str!("../assets/locales/en-US/main.ftl");
                 app.localization =
                     peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
-                (app, Task::none())
+                (
+                    app,
+                    Task::perform(async {}, |_| {
+                        peak_ui::reference::Message::ApplyNativeVibrancy
+                    }),
+                )
             },
             reference::App::update,
             reference::App::view,
@@ -52,6 +134,12 @@ fn main() -> Result {
         .title("PeakUI Showcase")
         .window(iced::window::Settings {
             icon,
+            transparent: true,
+            platform_specific: iced::window::settings::PlatformSpecific {
+                title_hidden: true,
+                titlebar_transparent: true,
+                fullsize_content_view: true,
+            },
             ..Default::default()
         })
         .subscription(reference::App::subscription)
