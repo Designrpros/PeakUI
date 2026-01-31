@@ -2,6 +2,5 @@
 members = [
     "framework",
     "apps/showcase",
-    "apps/hub",
 ]
 resolver = "2"

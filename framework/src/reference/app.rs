@@ -137,6 +137,12 @@ pub struct App {
     pub intelligence: Arc<crate::reference::intelligence_bridge::PeakIntelligenceBridge>,
     pub db: Arc<crate::reference::db_bridge::PeakDBBridge>,
     pub peak_id: String,
+
+    // Typewriter Effect
+    pub typewriter_text: String,
+    pub typewriter_index: usize,
+    pub typewriter_phrase_index: usize,
+    pub is_deleting: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -184,6 +190,7 @@ pub struct LayoutLabState {
     pub inner_spacing: f32,
     pub child_count: usize,
     pub alignment: Alignment,
+    pub item_sizing: SizingType,
 }
 
 #[derive(Debug, Clone)]
@@ -219,6 +226,7 @@ impl Default for LayoutLabState {
             inner_spacing: 24.0,
             child_count: 3,
             alignment: Alignment::Start,
+            item_sizing: SizingType::Fixed,
         }
     }
 }
@@ -288,6 +296,7 @@ pub enum Message {
     UpdateLayoutInnerSpacing(f32),
     UpdateLayoutChildCount(usize),
     UpdateLayoutAlignment(Alignment),
+    UpdateLayoutItemSizing(SizingType),
 
     // Sizing Lab Messages
     UpdateSizingWidthType(SizingType),
@@ -311,6 +320,7 @@ pub enum Message {
     SudoApprove,
     SudoDeny,
     ApplyNativeVibrancy,
+    TypewriterTick(std::time::Instant),
     None,
 }
 
@@ -351,6 +361,7 @@ pub enum Command {
     UpdateLayoutInnerSpacing(f32),
     UpdateLayoutChildCount(usize),
     UpdateLayoutAlignment(String),
+    UpdateLayoutItemSizing(SizingType),
 
     // Sizing Lab
     UpdateSizingWidthType(SizingType),
@@ -405,6 +416,7 @@ impl Command {
                 };
                 Message::UpdateLayoutAlignment(alignment)
             }
+            Command::UpdateLayoutItemSizing(sizing) => Message::UpdateLayoutItemSizing(sizing),
 
             // Sizing Lab
             Command::UpdateSizingWidthType(t) => Message::UpdateSizingWidthType(t),
@@ -484,6 +496,12 @@ impl Default for App {
             icon_limit: 50,
             window_width: 1024.0, // Default assume desktop until resized
             localization: Localization::default(),
+
+            // Typewriter defaults
+            typewriter_text: "How do I use the layout lab?".to_string(),
+            typewriter_index: 0,
+            typewriter_phrase_index: 0,
+            is_deleting: false,
         }
     }
 }
@@ -493,6 +511,46 @@ pub use crate::core::{Context, DeviceType};
 impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::TypewriterTick(_) => {
+                if !self.show_landing {
+                    return Task::none();
+                }
+
+                let phrases = [
+                    "How do I use the layout lab?",
+                    "Try 'change theme to dark matrix'...",
+                    "Try 'navigate to button lab'...",
+                    "Try 'set button variant to compact'...",
+                ];
+
+                let current_phrase = phrases[self.typewriter_phrase_index % phrases.len()];
+
+                if self.is_deleting {
+                    if self.typewriter_index > 0 {
+                        self.typewriter_index = self.typewriter_index.saturating_sub(1);
+                        self.typewriter_text =
+                            current_phrase.chars().take(self.typewriter_index).collect();
+                    } else {
+                        self.is_deleting = false;
+                        self.typewriter_phrase_index =
+                            (self.typewriter_phrase_index + 1) % phrases.len();
+                    }
+                } else {
+                    let target_len = current_phrase.chars().count();
+                    // Add a pause at the end by counting past length
+                    if self.typewriter_index < target_len + 15 {
+                        self.typewriter_index += 1;
+                        if self.typewriter_index <= target_len {
+                            self.typewriter_text =
+                                current_phrase.chars().take(self.typewriter_index).collect();
+                        }
+                    } else {
+                        self.is_deleting = true;
+                        self.typewriter_index = target_len;
+                    }
+                }
+                Task::none()
+            }
             Message::ApplyNativeVibrancy => {
                 #[cfg(target_os = "macos")]
                 {
@@ -717,6 +775,10 @@ impl App {
             }
             Message::UpdateLayoutAlignment(alignment) => {
                 self.layout_lab.alignment = alignment;
+                Task::none()
+            }
+            Message::UpdateLayoutItemSizing(sizing) => {
+                self.layout_lab.item_sizing = sizing;
                 Task::none()
             }
 
@@ -1222,6 +1284,7 @@ impl App {
         if self.show_landing {
             // Capture the search query state
             let query = self.search_query.clone();
+            let typewriter_text = self.typewriter_text.clone();
 
             return crate::core::responsive(
                 mode,
@@ -1229,10 +1292,7 @@ impl App {
                 self.localization.clone(),
                 move |context| {
                     // Pass 'query' to the view function
-                    iced::widget::container(super::pages::landing::view(&context, &query))
-                        .width(Length::Fill)
-                        .height(Length::Fill)
-                        // ... styles ...
+                    crate::reference::pages::landing::view(&context, &query, &typewriter_text)
                         .into()
                 },
             );
@@ -1519,6 +1579,8 @@ impl App {
                 window_events,
                 iced::time::every(std::time::Duration::from_millis(100))
                     .map(|_| Message::Heartbeat),
+                iced::time::every(std::time::Duration::from_millis(100))
+                    .map(Message::TypewriterTick),
             ])
         }
     }

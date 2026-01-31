@@ -134,11 +134,15 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
 
         children.push(self.content.view(&child_context));
 
-        let padding = match size {
-            ControlSize::Small => iced::Padding::from([2, 6]),
-            ControlSize::Medium => iced::Padding::from([6, 12]),
-            ControlSize::Large => iced::Padding::from([10, 20]),
-            ControlSize::XLarge => iced::Padding::from([14, 28]),
+        let padding = if variant == Variant::Compact {
+            iced::Padding::ZERO
+        } else {
+            match size {
+                ControlSize::Small => iced::Padding::from([2, 6]),
+                ControlSize::Medium => iced::Padding::from([6, 12]),
+                ControlSize::Large => iced::Padding::from([10, 20]),
+                ControlSize::XLarge => iced::Padding::from([14, 28]),
+            }
         };
 
         let inner = B::hstack(

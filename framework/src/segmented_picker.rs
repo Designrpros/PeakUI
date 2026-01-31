@@ -65,9 +65,9 @@ where
             button_padding: 6.0,
             text_size: 13.0,
             border_radius: 24.0,
-            background_color: iced::Color::from_rgba(0.0, 0.0, 0.0, 0.1),
-            active_bg_color: iced::Color::from_rgba(1.0, 1.0, 1.0, 0.3),
-            text_color: iced::Color::WHITE,
+            background_color: iced::Color::TRANSPARENT,
+            active_bg_color: iced::Color::from_rgba(0.5, 0.5, 0.5, 0.2), // Default safe grey
+            text_color: iced::Color::BLACK, // Default to black text for visibility
             _phantom: std::marker::PhantomData,
         }
     }

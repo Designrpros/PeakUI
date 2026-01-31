@@ -2,7 +2,7 @@ use super::super::app::Message;
 use crate::prelude::*;
 use crate::controls::TextInput;
 
-pub fn view(context: &Context, query: &str) -> Element<'static, Message, Theme, Renderer> {
+pub fn view(context: &Context, query: &str, placeholder: &str) -> Element<'static, Message, Theme, Renderer> {
     log::info!("RENDER: LANDING PAGE");
     let is_mobile = context.is_slim();
     let _t = context.theme; // Fixed unused variable warning
@@ -19,7 +19,7 @@ pub fn view(context: &Context, query: &str) -> Element<'static, Message, Theme, 
         .width(Length::Fill)
         .spacing(if is_mobile { 80.0 } else { 120.0 });
 
-    root = root.push(hero_section(context, core_asset, is_mobile, query));
+    root = root.push(hero_section(context, core_asset, is_mobile, query, placeholder));
     
     // --- NEW SECTION ---
     root = root.push(about_section(context, is_mobile));
@@ -34,7 +34,7 @@ pub fn view(context: &Context, query: &str) -> Element<'static, Message, Theme, 
     ScrollView::new(root).view(context)
 }
 
-fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -> ZStack<Message, IcedBackend> {
+fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, placeholder: &str) -> ZStack<Message, IcedBackend> {
     let t = context.theme;
     
     // 1. Viewport Height
@@ -109,7 +109,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -
                                     .push(
                                         TextInput::new(
                                             query.to_string(), 
-                                            "Ask PeakOS to build a swarm...", 
+                                            placeholder, 
                                             Message::Search
                                         )
                                         .variant(Variant::Ghost)
@@ -124,7 +124,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -
                                                 .radius(100.0)
                                         )
                                         .on_press(Message::EnterApp)
-                                        .variant(Variant::Ghost)
+                                        .variant(Variant::Compact)
                                         .padding(0.0)
                                     )
                             )
@@ -134,7 +134,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -
                             .width(Length::Fixed(if is_mobile { 320.0 } else { 560.0 }))
                         )
                         .push(
-                            Text::new("try \"change theme\", or modify the button, or how do you experience the framework")
+                            Text::new("try \"change theme\", \"modify the button\", or \"how do you experience the framework\"")
                                 .caption1()
                                 .secondary()
                                 .align_center()
@@ -145,7 +145,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str) -
                 .push(
                     VStack::new()
                         .spacing(8.0)
-                        .align_x(Alignment::Center)
+                        .align_x(Alignment::Center) // Footer always centered? User said "align all pages to the left". Let's center footer still as it's usually detached.
                         .push(Text::new("SCROLL TO EXPLORE").caption2().secondary())
                         .push(Icon::new("chevron-down").size(24.0).secondary())
                 )
@@ -184,10 +184,9 @@ fn nav_bar(_context: &Context, is_mobile: bool) -> Container<Message, IcedBacken
             ))
             .push(
                 Button::label("Launch")
-                    .variant(Variant::Outline)
+                    .variant(Variant::Compact)
                     .intent(Intent::Primary)
                     .width(Length::Shrink)
-                    .compact()
                     .on_press(Message::EnterApp),
             ),
     )

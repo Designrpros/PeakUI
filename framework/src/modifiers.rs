@@ -14,6 +14,7 @@ pub enum Variant {
     Soft,    // Light background, dark text
     Outline, // Border only
     Ghost,   // No background until hover
+    Compact, // No background, minimal spacing
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]

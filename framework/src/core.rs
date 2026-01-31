@@ -1212,12 +1212,20 @@ impl Backend for IcedBackend {
                 .center_y(Length::Fill),
         )
         .on_press_maybe(on_press)
-        .padding(Padding::from([0, 16]))
-        .height(Length::Fixed(if is_compact {
-            32.0 * theme.scaling
+        .padding(if variant == Variant::Compact {
+            Padding::ZERO
         } else {
-            44.0 * theme.scaling
-        }))
+            Padding::from([0, 16])
+        })
+        .height(if variant == Variant::Compact {
+            Length::Shrink
+        } else {
+            Length::Fixed(if is_compact {
+                32.0 * theme.scaling
+            } else {
+                44.0 * theme.scaling
+            })
+        })
         .style(move |_, status| {
             let color = match intent {
                 Intent::Primary => theme.colors.primary,
@@ -1296,6 +1304,16 @@ impl Backend for IcedBackend {
                     border: iced::Border {
                         radius: 32.0.into(),
                         ..Default::default()
+                    },
+                    ..Default::default()
+                },
+                Variant::Compact => button::Style {
+                    background: None,
+                    text_color: color,
+                    border: iced::Border {
+                        width: 0.0,
+                        radius: 0.0.into(),
+                        color: iced::Color::TRANSPARENT,
                     },
                     ..Default::default()
                 },

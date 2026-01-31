@@ -80,7 +80,11 @@ fn create_preview<B: Backend>(lab: &LayoutLabState) -> VStack<Message, B> {
         children.push(
             Container::<Message, B>::new(Text::<B>::new(format!("{}", i + 1)).title3().bold())
                 .padding(20)
-                .width(Length::Fixed(60.0))
+                .width(match lab.item_sizing {
+                    super::super::app::SizingType::Fixed => Length::Fixed(60.0),
+                    super::super::app::SizingType::Fill => Length::Fill,
+                    super::super::app::SizingType::Shrink => Length::Shrink,
+                })
                 .height(Length::Fixed(60.0))
                 .background(color)
                 .radius(12.0),
@@ -89,16 +93,16 @@ fn create_preview<B: Backend>(lab: &LayoutLabState) -> VStack<Message, B> {
 
     VStack::new_generic()
         .spacing(lab.outer_spacing)
-        .width(Length::Shrink)
+        .width(Length::Fill)
         .push(
             VStack::new_generic()
                 .spacing(12.0)
-                .width(Length::Shrink)
+                .width(Length::Fill)
                 .push(Text::<B>::new("HStack (Horizontal)").caption2().secondary())
                 .push(
                     HStack::new_generic()
                         .spacing(lab.inner_spacing)
-                        .align_y(lab.alignment)
+                        .align_x(lab.alignment)
                         .extend(children.clone()),
                 ),
         )
@@ -106,7 +110,7 @@ fn create_preview<B: Backend>(lab: &LayoutLabState) -> VStack<Message, B> {
         .push(
             VStack::new_generic()
                 .spacing(12.0)
-                .width(Length::Shrink)
+                .width(Length::Fill)
                 .push(Text::<B>::new("VStack (Vertical)").caption2().secondary())
                 .push(
                     VStack::new_generic()
@@ -119,7 +123,7 @@ fn create_preview<B: Backend>(lab: &LayoutLabState) -> VStack<Message, B> {
 
 fn generate_code(lab: &LayoutLabState) -> String {
     format!(
-        "HStack::new()\n    .spacing({:.1})\n    .align_y(Alignment::{:?})\n    .push(...) // x{}",
+        "HStack::new()\n    .spacing({:.1})\n    .align_x(Alignment::{:?})\n    .push(...) // x{}",
         lab.inner_spacing, lab.alignment, lab.child_count
     )
 }
@@ -234,6 +238,42 @@ impl View<Message, IcedBackend> for LayoutInspector {
                                     Alignment::Start => 0,
                                     Alignment::Center => 1,
                                     Alignment::End => 2,
+                                },
+                            )
+                            .background_color(
+                                context.theme.colors.surface_variant.scale_alpha(0.5),
+                            ),
+                        ),
+                )
+                .push(
+                    VStack::new_generic()
+                        .spacing(12.0)
+                        .push(
+                            Text::<IcedBackend>::new("Item Sizing")
+                                .caption2()
+                                .bold()
+                                .secondary(),
+                        )
+                        .push(
+                            SegmentedPicker::<Message, Theme>::new(
+                                vec![
+                                    (
+                                        "Fixed".to_string(),
+                                        Message::UpdateLayoutItemSizing(
+                                            super::super::app::SizingType::Fixed,
+                                        ),
+                                    ),
+                                    (
+                                        "Fill".to_string(),
+                                        Message::UpdateLayoutItemSizing(
+                                            super::super::app::SizingType::Fill,
+                                        ),
+                                    ),
+                                ],
+                                match self.lab.item_sizing {
+                                    super::super::app::SizingType::Fixed => 0,
+                                    super::super::app::SizingType::Fill => 1,
+                                    _ => 0,
                                 },
                             )
                             .background_color(

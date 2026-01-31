@@ -187,15 +187,20 @@ impl View<Message, IcedBackend> for ButtonInspector {
                                         "Ghst".to_string(),
                                         Message::UpdateButtonVariant(Variant::Ghost),
                                     ),
+                                    (
+                                        "Cmpct".to_string(),
+                                        Message::UpdateButtonVariant(Variant::Compact),
+                                    ),
                                 ],
                                 match self.lab.variant {
                                     Variant::Solid => 0,
                                     Variant::Soft => 1,
                                     Variant::Outline => 2,
                                     Variant::Ghost => 3,
+                                    Variant::Compact => 4,
                                 },
                             )
-                            .background_color(theme.colors.surface_variant.scale_alpha(0.5))
+                            .background_color(theme.colors.surface_variant)
                             .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
                         ),
                 )
@@ -236,7 +241,7 @@ impl View<Message, IcedBackend> for ButtonInspector {
                                     _ => 0,
                                 },
                             )
-                            .background_color(theme.colors.surface_variant.scale_alpha(0.5))
+                            .background_color(theme.colors.surface_variant)
                             .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
                         ),
                 )

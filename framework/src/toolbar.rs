@@ -81,7 +81,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ToolbarItem<Messag
         }
 
         crate::controls::Button::new(content)
-            .variant(Variant::Ghost)
+            .variant(Variant::Compact)
             .on_press_maybe(self.on_press.clone())
             .view(context)
     }
@@ -90,6 +90,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ToolbarItem<Messag
 pub struct ToolbarGroup<Message: 'static> {
     items: Vec<Box<dyn View<Message, IcedBackend>>>,
     padding: Padding,
+    spacing: f32,
 }
 
 impl<Message: 'static> ToolbarGroup<Message> {
@@ -102,6 +103,7 @@ impl<Message: 'static> ToolbarGroup<Message> {
                 bottom: 8.0,
                 left: 16.0,
             },
+            spacing: 8.0,
         }
     }
 
@@ -112,6 +114,11 @@ impl<Message: 'static> ToolbarGroup<Message> {
 
     pub fn padding(mut self, padding: impl Into<Padding>) -> Self {
         self.padding = padding.into();
+        self
+    }
+
+    pub fn spacing(mut self, spacing: f32) -> Self {
+        self.spacing = spacing;
         self
     }
 }
@@ -127,7 +134,7 @@ impl<Message: 'static> View<Message, IcedBackend> for ToolbarGroup<Message> {
         let items: Vec<_> = self.items.iter().map(|item| item.view(context)).collect();
         let row = IcedBackend::hstack(
             items,
-            8.0,
+            self.spacing,
             self.padding,
             Length::Shrink,
             Length::Shrink,

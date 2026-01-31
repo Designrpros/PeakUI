@@ -95,11 +95,12 @@ impl ContentView {
         let mut content_context = context.clone();
 
         // Define standard safe areas
-        let top_safe = if is_mobile { 40.0 } else { 80.0 };
+        // Traffic lights are ~30px, plus we want space.
+        let top_safe = if is_mobile { 60.0 } else { 80.0 };
         let bottom_safe = if is_mobile { 40.0 } else { 100.0 };
 
         content_context = content_context.with_safe_area(Padding {
-            top: top_safe,       // Protect from the notch bar / top edge
+            top: top_safe,       // Protect from the notch bar / top edge / traffic lights
             bottom: bottom_safe, // Protect from the floating dock / bottom edge
             ..context.safe_area
         });
@@ -123,8 +124,15 @@ impl ContentView {
             let query = query.clone();
 
             // Main Header Row (Single Row for Left Alignment)
+            // Mobile: Add extra top padding to clear traffic lights (approx 20px extra)
+            let top_pad = if is_mobile { 32.0 } else { 12.0 };
             let mut header_row = iced::widget::row!()
-                .padding([12, 24])
+                .padding(Padding {
+                    top: top_pad,
+                    right: 24.0,
+                    bottom: 12.0,
+                    left: 24.0,
+                })
                 .spacing(16)
                 .align_y(Alignment::Center)
                 .width(Length::Fill);

@@ -89,8 +89,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for AICha
             .push(
                 Button::<Message, crate::core::IcedBackend>::label("")
                     .icon("arrow-up")
-                    .variant(Variant::Solid)
-                    .compact()
+                    .variant(Variant::Compact)
                     .on_press((on_action)(ChatViewMessage::SendPressed)),
             );
 

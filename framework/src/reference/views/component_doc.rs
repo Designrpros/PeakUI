@@ -4,7 +4,7 @@ use crate::core::{Backend, Context, IcedBackend, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::Variant;
 use crate::views::{CodeBlock, MarkdownView};
-use iced::{Length, Padding};
+use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -108,15 +108,19 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         let header = VStack::<Message, IcedBackend>::new_generic()
             .spacing(12.0)
             .width(Length::Fill)
+            .align_x(Alignment::Start)
             .push(
                 Text::<IcedBackend>::new(self.title.clone())
                     .large_title()
                     .bold()
+                    .align_start()
+                    .width(Length::Fill)
                     .color(theme.colors.text_primary),
             )
             .push(
                 Text::<IcedBackend>::new(self.description.clone())
                     .body()
+                    .align_start()
                     .color(theme.colors.text_secondary)
                     .width(Length::Fill),
             );
@@ -207,19 +211,10 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                                 crate::core::ProxyView::new(move |ctx| {
                                     let preview_view = preview.view(ctx);
                                     crate::scroll_view::ScrollView::apply_style(
-                                        iced::widget::scrollable(
-                                            iced::widget::container(preview_view)
-                                                .width(Length::Shrink),
-                                        ),
+                                        iced::widget::scrollable(preview_view),
                                         &ctx.theme,
                                         true,
                                     )
-                                    .direction(iced::widget::scrollable::Direction::Horizontal(
-                                        iced::widget::scrollable::Scrollbar::new()
-                                            .width(4)
-                                            .scroller_width(4)
-                                            .margin(2),
-                                    ))
                                     .width(Length::Fill)
                                     .into()
                                 }),

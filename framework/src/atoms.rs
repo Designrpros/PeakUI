@@ -74,6 +74,11 @@ impl<B: Backend> Text<B> {
         self
     }
 
+    pub fn align(mut self, alignment: Alignment) -> Self {
+        self.alignment = alignment;
+        self
+    }
+
     pub fn align_start(mut self) -> Self {
         self.alignment = Alignment::Start;
         self

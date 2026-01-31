@@ -17,7 +17,8 @@ impl View<Message, IcedBackend> for TabBarView {
 
         // Expanded Tab List for "Different Purposes"
         ToolbarGroup::new()
-            .padding(Padding::from([12, 16]))
+            .padding(Padding::from([16, 24]))
+            .spacing(12.0)
             // 1. Start: The Narrative Book
             .push(
                 ToolbarItem::new()
