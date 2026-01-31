@@ -276,6 +276,188 @@ pub struct Transform3D {
 #[derive(Clone, Copy, Debug, Default)]
 pub struct SpatialBackend;
 
+// Redundant SpatialBackend implementation removed
+
+/// A Backend defines the output type and composition logic for a View.
+pub trait Backend: Sized + Clone + 'static {
+    type AnyView<Message: 'static>: 'static;
+
+    fn vstack<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        spacing: f32,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        align_x: Alignment,
+        align_y: Alignment,
+        scale: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn hstack<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        spacing: f32,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        align_x: Alignment,
+        align_y: Alignment,
+        scale: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn text<Message: Clone + 'static>(
+        content: String,
+        size: f32,
+        color: Option<Color>,
+        is_bold: bool,
+        is_dim: bool,
+        intent: Option<Intent>,
+        font: Option<iced::Font>,
+        width: Length,
+        alignment: Alignment,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn icon<Message: Clone + 'static>(
+        name: String,
+        size: f32,
+        color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message>;
+
+    fn space<Message: 'static>(width: Length, height: Length) -> Self::AnyView<Message>;
+
+    fn circle<Message: 'static>(radius: f32, color: Option<Color>) -> Self::AnyView<Message>;
+
+    fn capsule<Message: 'static>(
+        width: Length,
+        height: Length,
+        color: Option<Color>,
+    ) -> Self::AnyView<Message>;
+
+    fn rectangle<Message: 'static>(
+        width: Length,
+        height: Length,
+        color: Option<Color>,
+        radius: f32,
+        border_width: f32,
+        border_color: Option<Color>,
+    ) -> Self::AnyView<Message>;
+
+    fn button<Message: Clone + 'static>(
+        content: Self::AnyView<Message>,
+        on_press: Option<Message>,
+        variant: Variant,
+        intent: Intent,
+        width: Length,
+        is_compact: bool,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn sidebar_item<Message: Clone + 'static>(
+        title: String,
+        icon: String,
+        is_selected: bool,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn text_input<Message: Clone + 'static>(
+        value: String,
+        placeholder: String,
+        on_change: impl Fn(String) -> Message + 'static,
+        on_submit: Option<Message>,
+        font: Option<iced::Font>,
+        is_secure: bool,
+        variant: Variant,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn slider<Message: Clone + 'static>(
+        range: std::ops::RangeInclusive<f32>,
+        value: f32,
+        on_change: impl Fn(f32) -> Message + 'static,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn toggle<Message: Clone + 'static>(
+        label: String,
+        is_active: bool,
+        on_toggle: impl Fn(bool) -> Message + 'static,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn zstack<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        width: Length,
+        height: Length,
+        alignment: Alignment,
+    ) -> Self::AnyView<Message>;
+
+    fn grid<Message: 'static>(
+        children: Vec<Self::AnyView<Message>>,
+        columns: usize,
+        spacing: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn image<Message: 'static>(
+        path: impl Into<String>,
+        width: Length,
+        height: Length,
+        radius: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn video<Message: 'static>(
+        path: impl Into<String>,
+        width: Length,
+        height: Length,
+        radius: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn web_view<Message: 'static>(
+        url: String,
+        width: Length,
+        height: Length,
+        radius: f32,
+    ) -> Self::AnyView<Message>;
+
+    fn container<Message: 'static>(
+        content: Self::AnyView<Message>,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        background: Option<Color>,
+        radius: f32,
+        border_width: f32,
+        border_color: Option<Color>,
+        shadow: Option<iced::Shadow>,
+        align_x: Alignment,
+        align_y: Alignment,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn scroll_view<Message: 'static>(
+        content: Self::AnyView<Message>,
+        width: Length,
+        height: Length,
+        id: Option<&'static str>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn mouse_area<Message: Clone + 'static>(
+        content: Self::AnyView<Message>,
+        on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
+        on_press: Option<Message>,
+        on_release: Option<Message>,
+    ) -> Self::AnyView<Message>;
+
+    fn with_tooltip<Message: 'static>(
+        content: Self::AnyView<Message>,
+        tooltip: String,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+}
+
 impl Backend for SpatialBackend {
     type AnyView<Message: 'static> = SpatialNode;
 
@@ -457,32 +639,30 @@ impl Backend for SpatialBackend {
         _intent: Intent,
         _width: Length,
         _is_compact: bool,
-        context: &Context,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
-        let is_focused = context.is_focused("button");
-
         SpatialNode {
             role: "button".to_string(),
-            width: content.width + 16.0,
+            width: content.width + 32.0,
             height: content.height + 16.0,
-            depth: if is_focused { 20.0 } else { 5.0 },
+            depth: 1.0,
             transform: Transform3D::default(),
-            is_focused,
+            is_focused: false,
             children: vec![content],
         }
     }
 
     fn sidebar_item<Message: Clone + 'static>(
         title: String,
-        icon: String,
-        is_selected: bool,
+        _icon: String,
+        _is_selected: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("sidebar_item:{}:{}:{}", title, icon, is_selected),
+            role: format!("sidebar_item:{}", title),
             width: 200.0,
             height: 40.0,
-            depth: 2.0,
+            depth: 1.0,
             transform: Transform3D::default(),
             is_focused: false,
             children: vec![],
@@ -490,20 +670,20 @@ impl Backend for SpatialBackend {
     }
 
     fn text_input<Message: Clone + 'static>(
-        value: String,
+        _value: String,
         placeholder: String,
         _on_change: impl Fn(String) -> Message + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
-        is_secure: bool,
+        _is_secure: bool,
         _variant: Variant,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("input:{}:{}:{}", value, placeholder, is_secure),
-            width: 200.0,
+            role: format!("text_input:{}", placeholder),
+            width: 300.0,
             height: 40.0,
-            depth: 2.0,
+            depth: 1.0,
             transform: Transform3D::default(),
             is_focused: false,
             children: vec![],
@@ -512,15 +692,15 @@ impl Backend for SpatialBackend {
 
     fn slider<Message: Clone + 'static>(
         _range: std::ops::RangeInclusive<f32>,
-        value: f32,
+        _value: f32,
         _on_change: impl Fn(f32) -> Message + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("slider:{}", value),
+            role: "slider".to_string(),
             width: 200.0,
             height: 20.0,
-            depth: 2.0,
+            depth: 1.0,
             transform: Transform3D::default(),
             is_focused: false,
             children: vec![],
@@ -529,15 +709,15 @@ impl Backend for SpatialBackend {
 
     fn toggle<Message: Clone + 'static>(
         label: String,
-        is_active: bool,
+        _is_active: bool,
         _on_toggle: impl Fn(bool) -> Message + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("toggle:{}:{}", label, is_active),
-            width: 200.0,
+            role: format!("toggle:{}", label),
+            width: 100.0,
             height: 40.0,
-            depth: 2.0,
+            depth: 1.0,
             transform: Transform3D::default(),
             is_focused: false,
             children: vec![],
@@ -546,27 +726,24 @@ impl Backend for SpatialBackend {
 
     fn zstack<Message: 'static>(
         children: Vec<Self::AnyView<Message>>,
-        _width: Length,
-        _height: Length,
+        width: Length,
+        height: Length,
         _alignment: Alignment,
     ) -> Self::AnyView<Message> {
-        let mut z_offset = 0.0;
-        let mut nodes = Vec::new();
-
-        for mut child in children {
-            child.transform.z = z_offset;
-            z_offset += child.depth + 1.0;
-            nodes.push(child);
-        }
-
         SpatialNode {
             role: "zstack".to_string(),
-            width: 0.0,
-            height: 0.0,
-            depth: z_offset,
+            width: match width {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            height: match height {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            depth: 1.0,
             transform: Transform3D::default(),
             is_focused: false,
-            children: nodes,
+            children,
         }
     }
 
@@ -587,20 +764,71 @@ impl Backend for SpatialBackend {
     }
 
     fn image<Message: 'static>(
-        path: impl Into<String>,
-        _width: Length,
-        _height: Length,
+        _path: impl Into<String>,
+        width: Length,
+        height: Length,
         _radius: f32,
     ) -> Self::AnyView<Message> {
-        let p = path.into();
         SpatialNode {
-            role: format!("image:{}", p),
-            width: 100.0,
-            height: 100.0,
-            depth: 1.0,
+            role: "image".to_string(),
+            width: match width {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            height: match height {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            depth: 0.1,
             transform: Transform3D::default(),
             is_focused: false,
-            children: vec![],
+            children: Vec::new(),
+        }
+    }
+
+    fn video<Message: 'static>(
+        _path: impl Into<String>,
+        width: Length,
+        height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        SpatialNode {
+            role: "video".to_string(),
+            width: match width {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            height: match height {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            depth: 0.1,
+            transform: Transform3D::default(),
+            is_focused: false,
+            children: Vec::new(),
+        }
+    }
+
+    fn web_view<Message: 'static>(
+        url: String,
+        width: Length,
+        height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        SpatialNode {
+            role: format!("web_view:{}", url),
+            width: match width {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            height: match height {
+                Length::Fixed(f) => f,
+                _ => 100.0,
+            },
+            depth: 0.1,
+            transform: Transform3D::default(),
+            is_focused: false,
+            children: Vec::new(),
         }
     }
 
@@ -618,15 +846,7 @@ impl Backend for SpatialBackend {
         _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SpatialNode {
-            role: "container".to_string(),
-            width: content.width,
-            height: content.height,
-            depth: content.depth,
-            transform: Transform3D::default(),
-            is_focused: false,
-            children: vec![content],
-        }
+        content
     }
 
     fn scroll_view<Message: 'static>(
@@ -636,15 +856,7 @@ impl Backend for SpatialBackend {
         _id: Option<&'static str>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SpatialNode {
-            role: "scroll_view".to_string(),
-            width: content.width,
-            height: content.height,
-            depth: content.depth,
-            transform: Transform3D::default(),
-            is_focused: false,
-            children: vec![content],
-        }
+        content
     }
 
     fn mouse_area<Message: Clone + 'static>(
@@ -663,172 +875,6 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         content
     }
-}
-
-/// A Backend defines the output type and composition logic for a View.
-pub trait Backend: Sized + Clone + 'static {
-    type AnyView<Message: 'static>: 'static;
-
-    fn vstack<Message: 'static>(
-        children: Vec<Self::AnyView<Message>>,
-        spacing: f32,
-        padding: Padding,
-        width: Length,
-        height: Length,
-        align_x: Alignment,
-        align_y: Alignment,
-        scale: f32,
-    ) -> Self::AnyView<Message>;
-
-    fn hstack<Message: 'static>(
-        children: Vec<Self::AnyView<Message>>,
-        spacing: f32,
-        padding: Padding,
-        width: Length,
-        height: Length,
-        align_x: Alignment,
-        align_y: Alignment,
-        scale: f32,
-    ) -> Self::AnyView<Message>;
-
-    fn text<Message: Clone + 'static>(
-        content: String,
-        size: f32,
-        color: Option<Color>,
-        is_bold: bool,
-        is_dim: bool,
-        intent: Option<Intent>,
-        font: Option<iced::Font>,
-        width: Length,
-        alignment: Alignment,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn icon<Message: Clone + 'static>(
-        name: String,
-        size: f32,
-        color: Option<Color>,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message>;
-
-    fn space<Message: 'static>(width: Length, height: Length) -> Self::AnyView<Message>;
-
-    fn circle<Message: 'static>(radius: f32, color: Option<Color>) -> Self::AnyView<Message>;
-
-    fn capsule<Message: 'static>(
-        width: Length,
-        height: Length,
-        color: Option<Color>,
-    ) -> Self::AnyView<Message>;
-
-    fn rectangle<Message: 'static>(
-        width: Length,
-        height: Length,
-        color: Option<Color>,
-        radius: f32,
-        border_width: f32,
-        border_color: Option<Color>,
-    ) -> Self::AnyView<Message>;
-
-    fn button<Message: Clone + 'static>(
-        content: Self::AnyView<Message>,
-        on_press: Option<Message>,
-        variant: Variant,
-        intent: Intent,
-        width: Length,
-        is_compact: bool,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn sidebar_item<Message: Clone + 'static>(
-        title: String,
-        icon: String,
-        is_selected: bool,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn text_input<Message: Clone + 'static>(
-        value: String,
-        placeholder: String,
-        on_change: impl Fn(String) -> Message + 'static,
-        on_submit: Option<Message>,
-        font: Option<iced::Font>,
-        is_secure: bool,
-        variant: Variant,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn slider<Message: Clone + 'static>(
-        range: std::ops::RangeInclusive<f32>,
-        value: f32,
-        on_change: impl Fn(f32) -> Message + 'static,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn toggle<Message: Clone + 'static>(
-        label: String,
-        is_active: bool,
-        on_toggle: impl Fn(bool) -> Message + 'static,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn zstack<Message: 'static>(
-        children: Vec<Self::AnyView<Message>>,
-        width: Length,
-        height: Length,
-        alignment: Alignment,
-    ) -> Self::AnyView<Message>;
-
-    fn grid<Message: 'static>(
-        children: Vec<Self::AnyView<Message>>,
-        columns: usize,
-        spacing: f32,
-    ) -> Self::AnyView<Message>;
-
-    fn image<Message: 'static>(
-        path: impl Into<String>,
-        width: Length,
-        height: Length,
-        radius: f32,
-    ) -> Self::AnyView<Message>;
-
-    fn container<Message: 'static>(
-        content: Self::AnyView<Message>,
-        padding: Padding,
-        width: Length,
-        height: Length,
-        background: Option<Color>,
-        radius: f32,
-        border_width: f32,
-        border_color: Option<Color>,
-        shadow: Option<iced::Shadow>,
-        align_x: Alignment,
-        align_y: Alignment,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn scroll_view<Message: 'static>(
-        content: Self::AnyView<Message>,
-        width: Length,
-        height: Length,
-        id: Option<&'static str>,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
-
-    fn mouse_area<Message: Clone + 'static>(
-        content: Self::AnyView<Message>,
-        on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
-        on_press: Option<Message>,
-        on_release: Option<Message>,
-    ) -> Self::AnyView<Message>;
-
-    fn with_tooltip<Message: 'static>(
-        content: Self::AnyView<Message>,
-        tooltip: String,
-        context: &Context,
-    ) -> Self::AnyView<Message>;
 }
 
 /// The default Iced-based GUI backend.
@@ -1412,26 +1458,163 @@ impl Backend for IcedBackend {
         height: Length,
         radius: f32,
     ) -> Self::AnyView<Message> {
-        use iced::widget::container;
         let p: String = path.into();
 
-        // 2. Asset Pipeline: No more magic path hacking.
-        // The Asset type already provides the correct path.
+        #[cfg(target_arch = "wasm32")]
+        {
+            use iced::widget::container;
+            use iced::widget::image as iced_image;
+            use iced::Color;
 
-        container(
-            iced::widget::image(p)
-                .width(width)
-                .height(height)
-                .content_fit(iced::ContentFit::Cover),
-        )
-        .style(move |_| container::Style {
-            border: iced::Border {
-                radius: radius.into(),
+            match wasm_portal::get_image(p) {
+                wasm_portal::ImageState::Loaded(handle) => container(
+                    iced_image(handle)
+                        .width(width)
+                        .height(height)
+                        .content_fit(iced::ContentFit::Cover),
+                )
+                .style(move |_| container::Style {
+                    border: iced::Border {
+                        radius: radius.into(),
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                })
+                .into(),
+                wasm_portal::ImageState::Loading => {
+                    container(iced::widget::Space::new().width(width).height(height))
+                        .style(move |_| container::Style {
+                            background: Some(iced::Background::Color(Color::from_rgba(
+                                1.0, 1.0, 1.0, 0.1,
+                            ))),
+                            border: iced::Border {
+                                radius: radius.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .into()
+                }
+                wasm_portal::ImageState::Error => {
+                    container(iced::widget::Space::new().width(width).height(height))
+                        .style(move |_| container::Style {
+                            background: Some(iced::Background::Color(Color::from_rgb(
+                                1.0, 0.0, 0.0,
+                            ))),
+                            border: iced::Border {
+                                radius: radius.into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .into()
+                }
+            }
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use iced::widget::container;
+
+            // On native, we want relative paths from the current working directory
+            let path_str = if p.starts_with('/') {
+                p[1..].to_string()
+            } else {
+                p
+            };
+
+            let handle = iced::widget::image::Handle::from_path(path_str);
+
+            container(
+                iced::widget::image(handle)
+                    .width(width)
+                    .height(height)
+                    .content_fit(iced::ContentFit::Cover),
+            )
+            .style(move |_| container::Style {
+                border: iced::Border {
+                    radius: radius.into(),
+                    ..Default::default()
+                },
                 ..Default::default()
-            },
-            ..Default::default()
+            })
+            .into()
+        }
+    }
+
+    fn video<Message: 'static>(
+        _path: impl Into<String>,
+        width: Length,
+        height: Length,
+        radius: f32,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::{container, text};
+
+        // Pending Implementation Message
+        container(
+            text("Video support is currently pending implementation in the PeakUI framework.")
+                .size(14.0)
+                .color(Color::WHITE.scale_alpha(0.6)),
+        )
+        .width(width)
+        .height(height)
+        .center_x(width)
+        .center_y(height)
+        .style(move |theme: &Theme| {
+            let palette = theme.extended_palette();
+            container::Style {
+                background: Some(palette.background.weak.color.into()),
+                border: iced::Border {
+                    radius: radius.into(),
+                    color: Color::WHITE.scale_alpha(0.1),
+                    width: 1.0,
+                },
+                ..Default::default()
+            }
         })
         .into()
+    }
+
+    fn web_view<Message: 'static>(
+        url: String,
+        width: Length,
+        height: Length,
+        radius: f32,
+    ) -> Self::AnyView<Message> {
+        #[cfg(target_arch = "wasm32")]
+        {
+            return wasm_portal::WebView::new(url, width, height, radius).into();
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use iced::widget::{column, container, text};
+            use iced::Alignment;
+
+            container(
+                column![
+                    text("Native Web Support Not Supported")
+                        .size(16.0)
+                        .color(Color::WHITE),
+                    text(url).size(12.0).color(Color::WHITE.scale_alpha(0.5))
+                ]
+                .spacing(8)
+                .align_x(Alignment::Center),
+            )
+            .width(width)
+            .height(height)
+            .center_x(width)
+            .center_y(height)
+            .style(move |_| container::Style {
+                background: Some(Color::BLACK.into()),
+                border: iced::Border {
+                    radius: radius.into(),
+                    ..Default::default()
+                },
+                ..Default::default()
+            })
+            .into()
+        }
     }
 
     fn container<Message: 'static>(
@@ -1763,6 +1946,24 @@ impl Backend for TermBackend {
         _radius: f32,
     ) -> Self::AnyView<Message> {
         format!("[IMG: {}]", path.into())
+    }
+
+    fn video<Message: 'static>(
+        path: impl Into<String>,
+        _width: Length,
+        _height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        format!("[VIDEO: {}]", path.into())
+    }
+
+    fn web_view<Message: 'static>(
+        url: String,
+        _width: Length,
+        _height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        format!("[WEB: {}]", url)
     }
 
     fn container<Message: 'static>(
@@ -2315,6 +2516,32 @@ impl Backend for AIBackend {
         }
     }
 
+    fn video<Message: 'static>(
+        path: impl Into<String>,
+        _width: Length,
+        _height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        SemanticNode {
+            role: "video".to_string(),
+            label: Some(path.into()),
+            ..Default::default()
+        }
+    }
+
+    fn web_view<Message: 'static>(
+        url: String,
+        _width: Length,
+        _height: Length,
+        _radius: f32,
+    ) -> Self::AnyView<Message> {
+        SemanticNode {
+            role: "web_view".to_string(),
+            label: Some(url),
+            ..Default::default()
+        }
+    }
+
     fn container<Message: 'static>(
         content: Self::AnyView<Message>,
         _padding: Padding,
@@ -2387,5 +2614,209 @@ impl<Message: Clone + 'static, B: Backend> ProxyView<Message, B> {
 impl<Message: Clone + 'static, B: Backend> View<Message, B> for ProxyView<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         (self.view_fn)(context)
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+mod wasm_portal {
+    use iced::advanced::layout::{self, Layout};
+    use iced::advanced::renderer;
+    use iced::advanced::widget::{self, Widget};
+    use iced::widget::image::Handle;
+    use iced::{Element, Length, Rectangle, Size, Theme};
+    use once_cell::sync::Lazy;
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+
+    pub struct WebView {
+        url: String,
+        width: Length,
+        height: Length,
+        radius: f32,
+        id: u64,
+    }
+
+    impl WebView {
+        pub fn new(url: String, width: Length, height: Length, radius: f32) -> Self {
+            use std::collections::hash_map::DefaultHasher;
+            use std::hash::{Hash, Hasher};
+            let mut hasher = DefaultHasher::new();
+            url.hash(&mut hasher);
+            let id = hasher.finish();
+
+            Self {
+                url,
+                width,
+                height,
+                radius,
+                id,
+            }
+        }
+    }
+
+    impl<Message, Renderer> Widget<Message, Theme, Renderer> for WebView
+    where
+        Renderer: renderer::Renderer,
+    {
+        fn size(&self) -> Size<Length> {
+            Size::new(self.width, self.height)
+        }
+
+        fn layout(
+            &mut self,
+            _tree: &mut widget::Tree,
+            _renderer: &Renderer,
+            limits: &layout::Limits,
+        ) -> layout::Node {
+            layout::Node::new(limits.resolve(self.width, self.height, Size::ZERO))
+        }
+
+        fn draw(
+            &self,
+            _tree: &widget::Tree,
+            _renderer: &mut Renderer,
+            _theme: &Theme,
+            _style: &renderer::Style,
+            layout: Layout<'_>,
+            _cursor: iced::mouse::Cursor,
+            _viewport: &Rectangle,
+        ) {
+            use wasm_bindgen::JsCast;
+            use web_sys::{window, HtmlIFrameElement};
+
+            let bounds = layout.bounds();
+            let element_id = format!("peakui-webview-{}", self.id);
+
+            let window = window().unwrap();
+            let document = window.document().unwrap();
+
+            // Try to find existing iframe
+            let element = document.get_element_by_id(&element_id);
+
+            let iframe = if let Some(el) = element {
+                el.dyn_into::<HtmlIFrameElement>().unwrap()
+            } else {
+                // Create new iframe
+                let iframe = document
+                    .create_element("iframe")
+                    .unwrap()
+                    .dyn_into::<HtmlIFrameElement>()
+                    .unwrap();
+
+                iframe.set_id(&element_id);
+                iframe.set_src(&self.url);
+                iframe.set_attribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture").unwrap();
+                iframe.set_attribute("allowfullscreen", "true").unwrap();
+                iframe.set_attribute("frameborder", "0").unwrap();
+
+                // Base styles
+                let style = iframe.style();
+                style.set_property("position", "absolute").unwrap();
+                style.set_property("border", "none").unwrap();
+                style.set_property("z-index", "1000").unwrap(); // Ensure it's on top
+                style.set_property("pointer-events", "auto").unwrap();
+                style.set_property("visibility", "visible").unwrap();
+                style.set_property("opacity", "1").unwrap();
+
+                document.body().unwrap().append_child(&iframe).unwrap();
+                iframe
+            };
+
+            // Update heartbeat
+            iframe
+                .set_attribute("data-last-updated", &js_sys::Date::now().to_string())
+                .unwrap();
+
+            // Update position and size
+            let style = iframe.style();
+            style
+                .set_property("left", &format!("{}px", bounds.x))
+                .unwrap();
+            style
+                .set_property("top", &format!("{}px", bounds.y))
+                .unwrap();
+            style
+                .set_property("width", &format!("{}px", bounds.width))
+                .unwrap();
+            style
+                .set_property("height", &format!("{}px", bounds.height))
+                .unwrap();
+            style
+                .set_property("border-radius", &format!("{}px", self.radius))
+                .unwrap();
+
+            // Handle visibility (if bounds are zero or outside viewport, we could hide it)
+            if bounds.width <= 0.0 || bounds.height <= 0.0 {
+                style.set_property("display", "none").unwrap();
+            } else {
+                style.set_property("display", "block").unwrap();
+            }
+        }
+    }
+
+    impl<'a, Message, Renderer> From<WebView> for Element<'a, Message, Theme, Renderer>
+    where
+        Renderer: renderer::Renderer,
+    {
+        fn from(webview: WebView) -> Self {
+            Self::new(webview)
+        }
+    }
+
+    #[derive(Clone)]
+    pub enum ImageState {
+        Loading,
+        Loaded(Handle),
+        Error,
+    }
+
+    static IMAGE_CACHE: Lazy<Arc<Mutex<HashMap<String, ImageState>>>> =
+        Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+
+    pub fn get_image(path: String) -> ImageState {
+        let mut cache = IMAGE_CACHE.lock().unwrap();
+
+        if let Some(state) = cache.get(&path) {
+            return state.clone();
+        }
+
+        // Not in cache, start loading
+        cache.insert(path.clone(), ImageState::Loading);
+
+        let path_clone = path.clone();
+        use wasm_bindgen_futures::spawn_local;
+        spawn_local(async move {
+            let url = if path_clone.starts_with("http") {
+                path_clone.clone()
+            } else {
+                let win = web_sys::window().unwrap();
+                let origin = win.location().origin().unwrap_or_default();
+                let clean = if path_clone.starts_with('/') {
+                    &path_clone[1..]
+                } else {
+                    &path_clone
+                };
+                format!("{}/{}", origin, clean)
+            };
+
+            match reqwest::get(&url).await {
+                Ok(resp) => {
+                    if let Ok(bytes) = resp.bytes().await {
+                        let handle = Handle::from_bytes(bytes);
+                        let mut cache = IMAGE_CACHE.lock().unwrap();
+                        cache.insert(path_clone, ImageState::Loaded(handle));
+                    } else {
+                        let mut cache = IMAGE_CACHE.lock().unwrap();
+                        cache.insert(path_clone, ImageState::Error);
+                    }
+                }
+                Err(_) => {
+                    let mut cache = IMAGE_CACHE.lock().unwrap();
+                    cache.insert(path_clone, ImageState::Error);
+                }
+            }
+        });
+
+        ImageState::Loading
     }
 }

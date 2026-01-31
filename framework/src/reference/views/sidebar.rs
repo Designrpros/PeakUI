@@ -49,11 +49,11 @@ impl SidebarView {
             .align_y(iced::Alignment::Center)
             .push(
                 Image::<IcedBackend>::new(logo_path)
-                    .width(Length::Fixed(24.0))
+                    .width(Length::Fixed(48.0))
                     .height(Length::Fixed(24.0)),
             )
             .push(
-                Text::<IcedBackend>::new(self.active_tab.to_string())
+                Text::<IcedBackend>::new("PeakUI")
                     .headline()
                     .bold()
                     .color(context.theme.colors.text_primary),
@@ -183,6 +183,18 @@ impl SidebarView {
                 Page::Image,
                 *active_tab == Page::Image,
             ))
+            .push(sidebar_item(
+                "Video",
+                "video",
+                Page::Video,
+                *active_tab == Page::Video,
+            ))
+            .push(sidebar_item(
+                "WebView",
+                "globe",
+                Page::WebView,
+                *active_tab == Page::WebView,
+            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("CONTAINERS"))
             .push(sidebar_item(
@@ -272,6 +284,8 @@ impl SidebarView {
     fn view_ecosystem_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
         self.base_sidebar(context)
+            .push(self.branding_section(context))
+            .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("PEAKDB"))
             .push(sidebar_item(
                 "PeakDB",
@@ -306,6 +320,8 @@ impl SidebarView {
     fn view_settings_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
         self.base_sidebar(context)
+            .push(self.branding_section(context))
+            .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("USER PREFERENCES"))
             .push(sidebar_item(
                 "Appearance",

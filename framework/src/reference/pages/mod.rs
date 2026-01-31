@@ -39,5 +39,7 @@ pub mod sizing;
 pub mod tabbar_doc;
 pub mod text;
 pub mod typography;
+pub mod video;
 pub mod vstack;
+pub mod web_view;
 pub mod zstack;

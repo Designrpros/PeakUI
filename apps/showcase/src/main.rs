@@ -11,6 +11,33 @@ fn main() -> Result {
         env_logger::try_init().ok();
         log::info!("PeakUI Showcase Native started");
 
+        let icon_bytes = include_bytes!("../assets/app_logo.png");
+
+        #[cfg(target_os = "macos")]
+        {
+            use objc2::ClassType;
+            use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSImage};
+            use objc2_foundation::{MainThreadMarker, NSData};
+
+            if let Some(mtm) = MainThreadMarker::new() {
+                let app = NSApplication::sharedApplication(mtm);
+                // Force regular activation policy to ensure dock presence
+                app.setActivationPolicy(NSApplicationActivationPolicy::Regular);
+
+                let data = NSData::with_bytes(icon_bytes);
+                if let Some(image) = NSImage::initWithData(NSImage::alloc(), &data) {
+                    unsafe { app.setApplicationIconImage(Some(&image)) };
+                }
+            }
+        }
+
+        let icon = image::load_from_memory(icon_bytes).ok().and_then(|img| {
+            let img = img.to_rgba8();
+            let (width, height) = img.dimensions();
+            let rgba = img.into_raw();
+            iced::window::icon::from_rgba(rgba, width, height).ok()
+        });
+
         iced::application(
             || {
                 let mut app = reference::App::default();
@@ -23,6 +50,10 @@ fn main() -> Result {
             reference::App::view,
         )
         .title("PeakUI Showcase")
+        .window(iced::window::Settings {
+            icon,
+            ..Default::default()
+        })
         .subscription(reference::App::subscription)
         .run()
     }

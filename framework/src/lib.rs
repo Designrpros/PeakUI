@@ -25,7 +25,7 @@ pub mod views;
 
 pub mod prelude {
     pub use crate::atoms::{
-        Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text,
+        Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text, Video, WebView,
     };
     pub use crate::catalog::{Catalog, CatalogItem, CatalogMessage};
     pub use crate::console::Console;

@@ -22,7 +22,7 @@ pub fn view(_context: &Context) -> PageResult {
                             .subheadline()
                     )
                     .push(
-                        Image::<IcedBackend>::new("/assets/mountain_sunset_warm.jpg")
+                        Image::<IcedBackend>::new("assets/mountain_sunset_warm.jpg")
                             .width(Length::Fill)
                             .height(Length::Fixed(200.0))
                             .radius(12.0)
@@ -38,7 +38,7 @@ pub fn view(_context: &Context) -> PageResult {
                             .spacing(10.0)
                             .push(Text::<IcedBackend>::new("Rounded Corners").caption1())
                             .push(
-                                Image::<IcedBackend>::new("/assets/poolsuite_luxury-kopi.jpg")
+                                Image::<IcedBackend>::new("assets/poolsuite_luxury-kopi.jpg")
                                     .width(Length::Fill)
                                     .height(Length::Fixed(150.0))
                                     .radius(24.0)
@@ -49,7 +49,7 @@ pub fn view(_context: &Context) -> PageResult {
                             .spacing(10.0)
                             .push(Text::<IcedBackend>::new("Fixed Size").caption1())
                             .push(
-                                Image::<IcedBackend>::new("/assets/poolsuite_luxury-kopi.jpg")
+                                Image::<IcedBackend>::new("assets/poolsuite_luxury-kopi.jpg")
                                     .width(Length::Fixed(150.0))
                                     .height(Length::Fixed(150.0))
                                     .radius(8.0)
@@ -66,7 +66,7 @@ pub fn view(_context: &Context) -> PageResult {
                             .subheadline()
                     )
                     .push(
-                        Image::<IcedBackend>::new("/assets/mountain_sunset_warm.jpg")
+                        Image::<IcedBackend>::new("assets/mountain_sunset_warm.jpg")
                             .width(Length::Fill)
                             .height(Length::Fixed(300.0))
                             .radius(16.0)

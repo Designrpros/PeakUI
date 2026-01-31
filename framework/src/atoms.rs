@@ -562,6 +562,114 @@ impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
     }
 }
 
+pub struct Video<B: Backend = IcedBackend> {
+    path: String,
+    width: Length,
+    height: Length,
+    radius: f32,
+    _phantom: PhantomData<B>,
+}
+
+impl<B: Backend> Video<B> {
+    pub fn new(path: impl Into<String>) -> Self {
+        Self {
+            path: path.into(),
+            width: Length::Shrink,
+            height: Length::Shrink,
+            radius: 0.0,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
+        self
+    }
+}
+
+impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
+    fn view(&self, _context: &Context) -> B::AnyView<Message> {
+        B::video(self.path.clone(), self.width, self.height, self.radius)
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            accessibility: None,
+            role: "video".to_string(),
+            label: Some(self.path.clone()),
+            content: None,
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+            ..Default::default()
+        }
+    }
+}
+
+pub struct WebView<B: Backend = IcedBackend> {
+    url: String,
+    width: Length,
+    height: Length,
+    radius: f32,
+    _phantom: PhantomData<B>,
+}
+
+impl<B: Backend> WebView<B> {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self {
+            url: url.into(),
+            width: Length::Fill,
+            height: Length::Fill,
+            radius: 0.0,
+            _phantom: PhantomData,
+        }
+    }
+
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
+        self
+    }
+}
+
+impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
+    fn view(&self, _context: &Context) -> B::AnyView<Message> {
+        B::web_view(self.url.clone(), self.width, self.height, self.radius)
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode {
+            accessibility: None,
+            role: "web_view".to_string(),
+            label: Some(self.url.clone()),
+            content: None,
+            children: Vec::new(),
+            neural_tag: None,
+            documentation: None,
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Container<Message: 'static, B: Backend = IcedBackend> {
     content: Arc<dyn View<Message, B>>,

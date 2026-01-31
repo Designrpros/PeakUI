@@ -27,6 +27,8 @@ pub enum Page {
     Button,
     Shapes,
     Image,
+    Video,
+    WebView,
 
     // Components -> Containers
     VStack,
@@ -105,6 +107,8 @@ impl ToString for Page {
             Page::Button => "Button".to_string(),
             Page::Shapes => "Shapes".to_string(),
             Page::Image => "Image".to_string(),
+            Page::Video => "Video".to_string(),
+            Page::WebView => "WebView".to_string(),
             Page::VStack => "VStack".to_string(),
             Page::HStack => "HStack".to_string(),
             Page::ZStack => "ZStack".to_string(),
@@ -175,6 +179,8 @@ impl From<String> for Page {
             "button" => Page::Button,
             "shapes" => Page::Shapes,
             "image" => Page::Image,
+            "video" => Page::Video,
+            "webview" | "web_view" => Page::WebView,
 
             "vstack" => Page::VStack,
             "hstack" => Page::HStack,
@@ -257,6 +263,8 @@ impl Page {
             Page::Button => "/components/button".to_string(),
             Page::Shapes => "/components/shapes".to_string(),
             Page::Image => "/components/image".to_string(),
+            Page::Video => "/components/video".to_string(),
+            Page::WebView => "/components/webview".to_string(),
 
             // Components (Containers)
             Page::VStack => "/components/vstack".to_string(),
@@ -346,6 +354,8 @@ impl Page {
             "/components/button" => Page::Button,
             "/components/shapes" => Page::Shapes,
             "/components/image" => Page::Image,
+            "/components/video" => Page::Video,
+            "/components/webview" => Page::WebView,
 
             "/components/vstack" => Page::VStack,
             "/components/hstack" => Page::HStack,
@@ -421,6 +431,8 @@ impl Page {
             | Page::Button
             | Page::Shapes
             | Page::Image
+            | Page::Video
+            | Page::WebView
             | Page::VStack
             | Page::HStack
             | Page::ZStack
@@ -472,6 +484,7 @@ impl Page {
             Page::Layout,
             Page::Text,
             Page::Icon,
+            Page::WebView,
             Page::Button,
             Page::Shapes,
             Page::PeakDB,
