@@ -19,6 +19,7 @@ peak-db = { path = "../../PeakOS/crates/peak-db", optional = true }
 iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+schemars = "0.8"
 reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
 fluent = "0.17.0"
 fluent-bundle = "0.16.0"

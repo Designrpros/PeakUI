@@ -1,5 +1,6 @@
 use crate::core::{Backend, Context, SemanticNode, View};
 use crate::modifiers::{Intent, Variant};
+use crate::reference::intelligence::{Action, ActionParser, ContentPart};
 use crate::views::MarkdownView;
 use iced::{Length, Padding};
 use std::sync::Arc;
@@ -288,51 +289,14 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Messa
                 context,
             )
         } else {
-            // AI Message: Parse for Actions
-            let raw_content = self.message.content.clone();
-            let mut text_parts = Vec::new();
-            let mut actions = Vec::new();
-
-            let mut last_idx = 0;
-            let action_pattern = "[Action: ";
-            let action_end = ")]";
-
-            let mut search_str = &raw_content[..];
-            let mut current_pos = 0;
-
-            while let Some(start_rel) = search_str.find(action_pattern) {
-                let start = current_pos + start_rel;
-                if let Some(end_rel) = search_str[start_rel..].find(action_end) {
-                    let end = start + end_rel + action_end.len();
-                    if start > last_idx {
-                        text_parts.push(raw_content[last_idx..start].to_string());
-                    }
-                    actions.push(raw_content[start..end].to_string());
-                    last_idx = end;
-                    search_str = &raw_content[last_idx..];
-                    current_pos = last_idx;
-                } else {
-                    break;
-                }
-            }
-
-            if last_idx < raw_content.len() {
-                text_parts.push(raw_content[last_idx..].to_string());
-            }
-
+            // AI Message: Parse for Actions using the new Protocol
+            let parts = ActionParser::split_text_and_actions(&self.message.content);
             let mut assistant_children = Vec::new();
             let on_act = self.on_action.clone();
 
-            if actions.is_empty() {
-                let on_act_inner = on_act.clone();
-                let content = MarkdownView::new(raw_content)
-                    .size(12.0)
-                    .padding(Padding::ZERO)
-                    .on_copy(move |code| (on_act_inner)(ChatViewMessage::CopyCode(code)));
-                assistant_children.push(View::<Message, B>::view(&content, context));
-            } else {
-                for text in text_parts {
-                    if !text.trim().is_empty() {
+            for part in parts {
+                match part {
+                    ContentPart::Text(text) => {
                         let on_act_inner = on_act.clone();
                         let content = MarkdownView::new(text)
                             .size(12.0)
@@ -340,11 +304,10 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Messa
                             .on_copy(move |code| (on_act_inner)(ChatViewMessage::CopyCode(code)));
                         assistant_children.push(View::<Message, B>::view(&content, context));
                     }
-                }
-
-                for action in actions {
-                    assistant_children
-                        .push(View::<Message, B>::view(&ToolCard::new(action), context));
+                    ContentPart::Action(action) => {
+                        assistant_children
+                            .push(View::<Message, B>::view(&ToolCard::new(action), context));
+                    }
                 }
             }
 
@@ -391,14 +354,12 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Messa
 }
 
 pub struct ToolCard {
-    action_tag: String,
+    action: Action,
 }
 
 impl ToolCard {
-    pub fn new(action_tag: impl Into<String>) -> Self {
-        Self {
-            action_tag: action_tag.into(),
-        }
+    pub fn new(action: Action) -> Self {
+        Self { action }
     }
 }
 
@@ -406,35 +367,26 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
 
-        // Parse: [Action: Name(Params)]
-        let inner = self
-            .action_tag
-            .trim_start_matches("[Action: ")
-            .trim_end_matches(")]");
-        let (name, params) = if let Some(idx) = inner.find('(') {
-            (&inner[..idx], &inner[idx + 1..])
-        } else {
-            (inner, "")
+        let icon_name = match &self.action {
+            Action::Navigate(_) => "navigation",
+            Action::SetThemeKind(_) | Action::SetThemeTone(_) => "palette",
+            Action::SetButtonVariant(_) | Action::SetButtonIntent(_) => "mouse-pointer",
+            Action::SetLabMode(_) => "flask-conical",
+            Action::Shell(_) => "terminal",
+            Action::Memorize(_) => "database",
+            Action::Unknown(_) => "help-circle",
         };
 
-        let icon_name = match name.to_lowercase().as_str() {
-            "navigate" => "navigation",
-            "setthemekind" | "setthemetone" => "palette",
-            "setbuttonvariant" | "setbuttonintent" => "mouse-pointer",
-            "setlabmode" => "flask-conical",
-            _ => "terminal",
-        };
-
-        let display_name = match name.to_lowercase().as_str() {
-            "navigate" => "Navigate",
-            "setthemekind" => "Change Theme",
-            "setthemetone" => "Switch Tone",
-            "setbuttonvariant" => "Update Button Style",
-            "setbuttonintent" => "Update Button Intent",
-            "setlabmode" => "Switch Mode",
-            "setspacing" => "Adjust Spacing",
-            "setalignment" => "Set Alignment",
-            _ => name,
+        let (display_name, params) = match &self.action {
+            Action::Navigate(page) => ("Navigate", format!("{:?}", page)),
+            Action::SetThemeKind(kind) => ("Change Theme", format!("{:?}", kind)),
+            Action::SetThemeTone(tone) => ("Switch Tone", format!("{:?}", tone)),
+            Action::SetButtonVariant(v) => ("Update Button Style", format!("{:?}", v)),
+            Action::SetButtonIntent(i) => ("Update Button Intent", format!("{:?}", i)),
+            Action::SetLabMode(m) => ("Switch Mode", format!("{:?}", m)),
+            Action::Shell(cmd) => ("Execute Shell", cmd.clone()),
+            Action::Memorize(content) => ("Memorize", content.clone()),
+            Action::Unknown(raw) => ("Action", raw.clone()),
         };
 
         let card_content = B::hstack(
@@ -455,7 +407,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
                             context,
                         ),
                         B::text(
-                            params.to_string(),
+                            params,
                             10.0,
                             Some(t.colors.text_secondary),
                             false,
@@ -504,7 +456,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
     fn describe(&self, _context: &Context) -> SemanticNode {
         SemanticNode {
             role: "tool_card".to_string(),
-            label: Some(self.action_tag.clone()),
+            label: Some(format!("{:?}", self.action)),
             ..Default::default()
         }
     }

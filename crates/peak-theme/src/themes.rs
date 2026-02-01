@@ -7,23 +7,45 @@ use peak_core::registry::ShellMode;
 ///
 /// Each theme provides a complete visual identity with semantic colors
 /// that can be applied to any OS mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
 pub enum PeakTheme {
     /// macOS-inspired clean design (current Desktop theme)
+    #[serde(alias = "cupertino", alias = "Cupertino")]
     Cupertino,
     /// Modern control interface (SmartHome mode)
+    #[serde(alias = "smart", alias = "Smart")]
     Smart,
     /// Google Material Design
+    #[serde(alias = "material", alias = "Material")]
     Material,
     /// Microsoft Fluent Design
+    #[serde(alias = "fluent", alias = "Fluent")]
     Fluent,
     /// High contrast for accessibility
+    #[serde(
+        alias = "highcontrast",
+        alias = "HighContrast",
+        alias = "high_contrast"
+    )]
     HighContrast,
     /// Cinematic mountain aesthetic
+    #[serde(alias = "mountain", alias = "Mountain")]
     Mountain,
     /// Warm, beige/stone aesthetic
+    #[serde(alias = "peak", alias = "Peak")]
     Peak,
     /// Monochrome black and white aesthetic
+    #[serde(alias = "mono", alias = "Mono")]
     Mono,
 }
 

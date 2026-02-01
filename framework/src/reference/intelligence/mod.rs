@@ -1,2 +1,2 @@
 pub mod protocol;
-pub use protocol::{Action, ActionParser};
+pub use protocol::{Action, ActionParser, ContentPart};

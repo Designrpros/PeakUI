@@ -7,9 +7,18 @@ pub use themes::PeakTheme;
 use iced::Color;
 use peak_core::registry::ShellMode;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
 pub enum ThemeTone {
+    #[serde(
+        alias = "light",
+        alias = "Light",
+        alias = "LightMode",
+        alias = "lightmode"
+    )]
     Light,
+    #[serde(alias = "dark", alias = "Dark", alias = "DarkMode", alias = "darkmode")]
     Dark,
 }
 

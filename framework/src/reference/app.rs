@@ -15,7 +15,17 @@ pub enum InspectorTab {
     Feature,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
 pub enum RenderMode {
     #[default]
     Canvas,
@@ -1153,21 +1163,24 @@ impl App {
                         let task = self.process_assistant_actions(&content);
 
                         if !content.is_empty() {
-                            // Check if last message is already this content from streaming
-                            let already_pushed = self
-                                .chat_messages
-                                .last()
-                                .map(|m| m.role == ChatRole::Assistant && m.content == content)
-                                .unwrap_or(false);
-
-                            if !already_pushed {
+                            // Sync with streaming message or push new
+                            if let Some(last) = self.chat_messages.last_mut() {
+                                if last.role == ChatRole::Assistant {
+                                    last.content = content.clone();
+                                } else {
+                                    self.chat_messages.push(ChatMessage {
+                                        role: ChatRole::Assistant,
+                                        content: content.clone(),
+                                    });
+                                }
+                            } else {
                                 self.chat_messages.push(ChatMessage {
                                     role: ChatRole::Assistant,
-                                    content,
+                                    content: content.clone(),
                                 });
                             }
                         }
-                        task
+                        return task;
                     }
                     Err(err) => {
                         self.chat_messages.push(ChatMessage {
@@ -1230,22 +1243,12 @@ impl App {
                 Action::SetButtonIntent(intent) => {
                     self.button_lab.intent = intent;
                 }
-                Action::SetThemeKind(kind) => match kind.to_lowercase().trim() {
-                    "peak" => self.theme = PeakTheme::Peak,
-                    "mountain" => self.theme = PeakTheme::Mountain,
-                    "cupertino" => self.theme = PeakTheme::Cupertino,
-                    "smart" => self.theme = PeakTheme::Smart,
-                    "material" => self.theme = PeakTheme::Material,
-                    "fluent" => self.theme = PeakTheme::Fluent,
-                    "highcontrast" => self.theme = PeakTheme::HighContrast,
-                    "mono" => self.theme = PeakTheme::Mono,
-                    _ => {}
-                },
-                Action::SetThemeTone(tone) => match tone.to_lowercase().trim() {
-                    "light" | "lightmode" => self.theme_tone = ThemeTone::Light,
-                    "dark" | "darkmode" => self.theme_tone = ThemeTone::Dark,
-                    _ => {}
-                },
+                Action::SetThemeKind(kind) => {
+                    self.theme = kind;
+                }
+                Action::SetThemeTone(tone) => {
+                    self.theme_tone = tone;
+                }
                 Action::SetLabMode(mode) => {
                     self.render_mode = mode;
                 }
@@ -1295,58 +1298,14 @@ impl App {
         // MINIFICATION: Use to_string instead of to_string_pretty
         let ui_json = serde_json::to_string(&tree).unwrap_or_default();
 
-        let valid_pages = Page::all()
-            .iter()
-            .map(|p| p.to_string())
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        let valid_themes = PeakTheme::all()
-            .iter()
-            .map(|t| t.display_name())
-            .collect::<Vec<_>>()
-            .join(", ");
-
         format!(
             "You are the PeakUI AI Assistant. You are a helpful companion for the user.\n\n\
              UI CONTEXT:\n\
              - Provider: {}\n\
              - Viewport: 1280x800 (Desktop)\n\
-             - Current UI Structure (JSON):\n{}\n\n\
-             GOAL: Help the user explore the PeakUI framework. \n\
-             1. If the user wants to talk, respond conversationally. \n\
-             2. If the user explicitly asks to navigate, change themes, or modify components, use the [Action: ...] tags.\n\n\
-             PROTOCOL for ACTIONS:\n\
-             - To navigate, use: [Action: Navigate(PAGE_NAME)]\n\
-             - To change Button variant, use: [Action: SetButtonVariant(VARIANT)]\n\
-             - To change Button intent, use: [Action: SetButtonIntent(INTENT)]\n\
-             - To change Theme Kind, use: [Action: SetThemeKind(THEME)]\n\
-             - To change Theme Tone, use: [Action: SetThemeTone(TONE)]\n\
-             - To switch documentation tabs (Canvas/Terminal/Neural/Spatial), use: [Action: SetLabMode(MODE)]\n\
-             - To change Layout child count, use: [Action: SetChildCount(NUMBER)]\n\
-             - To change Layout spacing, use: [Action: SetSpacing(NUMBER)]\n\
-             - To change Layout alignment, use: [Action: SetAlignment(ALIGNMENT)]\n\
-             - To change Typography size, use: [Action: SetTypographySize(NUMBER)]\n\
-             - To change Typography content, use: [Action: SetTypographyText(TEXT)]\n\
-             - To change Typography style, use: [Action: SetTypographyBold(true/false)], [Action: SetTypographyItalic(true/false)] or [Action: SetTypographyWeight(Bold/Regular)]\n\
-             - To change Sizing width type, use: [Action: SetSizingWidth(SIZING)]\n\
-              - To change Sizing height type, use: [Action: SetSizingHeight(SIZING)]\n\
-              - To execute high-privilege shell commands (requires user approval), use: [Action: Shell(COMMAND)]\n\
-              - To save important information for future context, use: [Action: Memorize(TEXT)]\n\n\
-             VALID VALUES:\n\
-             - PAGE_NAME: {}\n\
-             - VARIANT: Solid, Soft, Outline, Ghost.\n\
-             - INTENT: Primary, Secondary, Success, Warning, Danger, Info, Neutral.\n\
-             - THEME: {}\n\
-             - TONE: Light, Dark.\n\
-             - MODE: Canvas, Terminal, Neural, Spatial.\n\
-             - ALIGNMENT: Start, Center, End.\n\
-             - SIZING: Fixed, Fill, Shrink.\n\n\
-             Always maintain a conversational tone. Only use action tags when an explicit change is requested.",
-            self.intelligence.get_system_context(),
-            ui_json,
-            valid_pages,
-            valid_themes,
+             - Current UI Structure (Dense JSON):\n{}\n\n\
+             GOAL: Help the user explore the PeakUI framework. Respond conversationally and use actions when needed.",
+            self.peak_id, ui_json
         )
     }
 

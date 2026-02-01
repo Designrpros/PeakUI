@@ -1,13 +1,27 @@
 use percent_encoding;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
 pub enum Page {
     Landing,
     // Guide ("Guide" mode)
     #[default]
+    #[serde(alias = "introduction", alias = "Introduction")]
     Introduction,
+    #[serde(alias = "roadmap", alias = "Roadmap")]
     Roadmap,
+    #[serde(alias = "community", alias = "Community")]
     Community,
+    #[serde(alias = "intelligence", alias = "Intelligence")]
     Intelligence,
 
     // Documentation ("Documentation" mode)
@@ -78,6 +92,7 @@ pub enum Page {
     Shortcuts,
     About,
     Updates,
+    #[serde(alias = "settingsai", alias = "SettingsAI", alias = "settings_ai")]
     SettingsAI,
 
     // Detail Pages (Landing Extras)

@@ -36,6 +36,24 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
             async move {
                 let mut final_messages = Vec::new();
 
+                // Generate Action Schema
+                let schema = schemars::schema_for!(crate::reference::intelligence::Action);
+                let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
+
+                let system_instruction = format!(
+                    "You are the PeakOS Intelligence Bridge. You perceive the UI as a Dense JSON tree (r=role, c=content, ch=children, l=label, t=tag).\n\n\
+                     You can trigger UI actions by including valid JSON in your response using the EXACT format [action: {{...}})].\n\n\
+                     REQUIRED ACTION SCHEMA:\n{}\n\n\
+                     CRITICAL: You MUST terminate actions with ')]'. \n\
+                     Example: To navigate to introduction, output: [action: {{\"Navigate\": \"Introduction\"}})]",
+                    schema_json
+                );
+
+                final_messages.push(Message {
+                    role: "system".to_string(),
+                    content: system_instruction,
+                });
+
                 // 1. RAG: Search for context if we have a user message
                 if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
                     if let Ok(records) = db.async_find(user_msg.content.clone()).await {
@@ -82,6 +100,20 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
 
         async_stream::stream! {
             let mut final_messages = Vec::new();
+
+            // Generate Action Schema
+            let schema = schemars::schema_for!(crate::reference::intelligence::Action);
+            let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
+
+            let system_instruction = format!(
+                "You are the PeakOS Intelligence Bridge. You can trigger UI actions by including valid JSON in your response using the format [action: {{...}})].\n\nREQUIRED ACTION SCHEMA:\n{}\n\nExample: To navigate to settings, output: [action: {{\"Navigate\": \"SettingsAI\"}})]",
+                schema_json
+            );
+
+            final_messages.push(Message {
+                role: "system".to_string(),
+                content: system_instruction,
+            });
 
             // 1. RAG: Search for context if we have a user message
             if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
@@ -140,6 +172,20 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
 
         wasm_bindgen_futures::spawn_local(async move {
             let mut final_messages = Vec::new();
+
+            // Generate Action Schema
+            let schema = schemars::schema_for!(crate::reference::intelligence::Action);
+            let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
+
+            let system_instruction = format!(
+                "You are the PeakOS Intelligence Bridge. You can trigger UI actions by including valid JSON in your response using the format [action: {{...}})].\n\nREQUIRED ACTION SCHEMA:\n{}\n\nExample: To navigate to settings, output: [action: {{\"Navigate\": \"SettingsAI\"}})]",
+                schema_json
+            );
+
+            final_messages.push(Message {
+                role: "system".to_string(),
+                content: system_instruction,
+            });
 
             // 1. RAG: Search for context if we have a user message
             if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {

@@ -2617,15 +2617,28 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
 /// A semantic representation of a UI component for AI agents.
 #[derive(Debug, Clone, serde::Serialize, Default)]
 pub struct SemanticNode {
+    #[serde(rename = "r")]
     pub role: String,
+    #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
+    #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    #[serde(rename = "ch", skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<SemanticNode>,
+    #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
     pub neural_tag: Option<String>,
+    #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub documentation: Option<String>,
+    #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<AccessibilityNode>,
+    #[serde(rename = "p", skip_serializing_if = "is_false")]
     pub is_protected: bool,
+    #[serde(rename = "pr", skip_serializing_if = "Option::is_none")]
     pub protection_reason: Option<String>,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
 }
 
 impl SemanticNode {
@@ -2720,10 +2733,15 @@ pub trait IntelligenceProvider: Send + Sync {
 
 #[derive(Debug, Clone, serde::Serialize, Default)]
 pub struct AccessibilityNode {
+    #[serde(rename = "r")]
     pub role: String,
+    #[serde(rename = "l")]
     pub label: String,
+    #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
     pub hint: Option<String>,
+    #[serde(rename = "v", skip_serializing_if = "Option::is_none")]
     pub value: Option<String>,
+    #[serde(rename = "s", skip_serializing_if = "Vec::is_empty")]
     pub states: Vec<String>,
 }
 
