@@ -395,10 +395,10 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             Length::Shrink,
             Alignment::Start,
             Alignment::Start,
-            context.theme.scaling,
+            context,
         );
 
-        B::scroll_view(inner, Length::Fill, Length::Fill, None, context)
+        B::scroll_view(inner, Length::Fill, Length::Fill, None, false, context)
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {

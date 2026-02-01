@@ -1,7 +1,7 @@
-use crate::reference::views::ComponentDoc;
+use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
+use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
 pub fn view(_context: &Context) -> PageResult<Message> {
@@ -19,20 +19,21 @@ Text::new("Error Message")
     .caption1()
     .intent(Intent::Danger)
 "#,
-            Arc::new(VStack::<Message, IcedBackend>::new_generic()
-                .spacing(16.0)
-                .push(Text::<IcedBackend>::new("Large Title").large_title())
-                .push(Text::<IcedBackend>::new("Title 1").title1())
-                .push(Text::<IcedBackend>::new("Headline").headline())
-                .push(Text::<IcedBackend>::new("Body text with default styling.").body())
-                .push(Text::<IcedBackend>::new("Caption text is smaller and often dimmer.").caption1())
-                .push(
-                    HStack::<Message, IcedBackend>::new_generic()
-                        .spacing(16.0)
-                        .push(Text::<IcedBackend>::new("Primary").body().primary())
-                        .push(Text::<IcedBackend>::new("Secondary").body().secondary())
-                        .push(Text::<IcedBackend>::new("Danger").body().intent(crate::modifiers::Intent::Danger))
-                )
+            Arc::new(
+                vstack![
+                    text("Large Title").large_title(),
+                    text("Title 1").title1(),
+                    text("Headline").headline(),
+                    text("Body text with default styling.").body(),
+                    text("Caption text is smaller and often dimmer.").caption1(),
+                    hstack![
+                        text("Primary").body().primary(),
+                        text("Secondary").body().secondary(),
+                        text("Danger").body().intent(crate::modifiers::Intent::Danger)
+                    ]
+                    .spacing(16.0)
+                ]
+                .spacing(16.0),
             )
         )
     )

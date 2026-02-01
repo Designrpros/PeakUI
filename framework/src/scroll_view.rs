@@ -1,5 +1,5 @@
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
-use iced::{widget::Id, Element, Length, Renderer, Theme};
+use iced::Length;
 
 /// A scrollable container that wraps content and provides styled scrollbars.
 pub struct ScrollView<Message: 'static, B: Backend = IcedBackend> {
@@ -77,135 +77,15 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
     }
 }
 
-impl<Message: 'static> View<Message, IcedBackend> for ScrollView<Message, IcedBackend> {
-    fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
-        let content = iced::widget::container(self.content.view(context)).width(Length::Fill);
-
-        let mut s = Self::apply_style(
-            iced::widget::scrollable(content),
-            &context.theme,
+impl<Message: 'static, B: Backend> View<Message, B> for ScrollView<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::scroll_view(
+            self.content.view(context),
+            self.width,
+            self.height,
+            self.id,
             self.show_indicators,
+            context,
         )
-        .width(self.width)
-        .height(self.height);
-
-        if let Some(id) = self.id {
-            s = s.id(Id::new(id));
-        }
-
-        s.into()
-    }
-}
-
-impl<Message: 'static> View<Message, TermBackend> for ScrollView<Message, TermBackend> {
-    fn view(&self, context: &Context) -> String {
-        self.content.view(context)
-    }
-}
-
-impl<Message: 'static> ScrollView<Message, IcedBackend> {
-    /// Applies custom styling to the Iced scrollable widget.
-    pub fn apply_style<'a>(
-        s: iced::widget::Scrollable<'a, Message, Theme, Renderer>,
-        theme: &peak_theme::ThemeTokens,
-        show_indicators: bool,
-    ) -> iced::widget::Scrollable<'a, Message, Theme, Renderer> {
-        let text_color = theme.colors.text_primary;
-
-        if !show_indicators {
-            return s.style(|_, _| iced::widget::scrollable::Style {
-                container: iced::widget::container::Style::default(),
-                vertical_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                horizontal_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                gap: None,
-                auto_scroll: iced::widget::scrollable::AutoScroll {
-                    background: iced::Background::Color(iced::Color::TRANSPARENT),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    icon: iced::Color::TRANSPARENT,
-                },
-            });
-        }
-
-        s.style(move |_, status| {
-            let scroller_alpha = match status {
-                iced::widget::scrollable::Status::Hovered { .. } => 0.3,
-                iced::widget::scrollable::Status::Dragged { .. } => 0.5,
-                _ => 0.05, // Very faint when idle
-            };
-
-            let _rail_width = match status {
-                iced::widget::scrollable::Status::Hovered { .. }
-                | iced::widget::scrollable::Status::Dragged { .. } => 6.0,
-                _ => 3.0, // Thinner when idle
-            };
-
-            iced::widget::scrollable::Style {
-                container: iced::widget::container::Style::default(),
-                vertical_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color {
-                            a: scroller_alpha,
-                            ..text_color
-                        }
-                        .into(),
-                        border: iced::Border {
-                            radius: if cfg!(target_arch = "wasm32") {
-                                0.0
-                            } else {
-                                2.0 // Even tighter radius for thinner look
-                            }
-                            .into(),
-                            width: 0.0,
-                            ..Default::default()
-                        },
-                    },
-                },
-                horizontal_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color {
-                            a: scroller_alpha,
-                            ..text_color
-                        }
-                        .into(),
-                        border: iced::Border {
-                            radius: if cfg!(target_arch = "wasm32") {
-                                0.0
-                            } else {
-                                2.0
-                            }
-                            .into(),
-                            width: 0.0,
-                            ..Default::default()
-                        },
-                    },
-                },
-                gap: None,
-                auto_scroll: iced::widget::scrollable::AutoScroll {
-                    background: iced::Background::Color(iced::Color::TRANSPARENT),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    icon: iced::Color::TRANSPARENT,
-                },
-            }
-        })
     }
 }

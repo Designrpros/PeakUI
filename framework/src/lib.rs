@@ -7,6 +7,31 @@ pub mod segmented_picker;
 pub mod toolbar;
 pub mod window_chrome;
 
+pub mod dsl;
+#[macro_export]
+macro_rules! vstack {
+    ($($child:expr),* $(,)?) => {
+        $crate::layout::VStack::new()
+            $(.push($child))*
+    };
+}
+
+#[macro_export]
+macro_rules! hstack {
+    ($($child:expr),* $(,)?) => {
+        $crate::layout::HStack::new()
+            $(.push($child))*
+    };
+}
+
+#[macro_export]
+macro_rules! zstack {
+    ($($child:expr),* $(,)?) => {
+        $crate::layout::ZStack::new()
+            $(.push($child))*
+    };
+}
+
 pub mod assets;
 pub mod atoms;
 pub mod catalog;
@@ -35,8 +60,9 @@ pub mod prelude {
         responsive, AIBackend, Backend, ChatCompletionMessage, Context, DeviceType, IcedBackend,
         ProxyView, SemanticNode, ShellMode, TermBackend, ThemeTokens, View,
     };
+    pub use crate::dsl::*;
     pub use crate::forms::{Form, FormStyle};
-    pub use crate::gestures::{Gesture, GestureDetector};
+    pub use crate::gestures::{Gesture, GestureDetector, TapGesture};
     pub use crate::layout::{HStack, LayoutExt, ResponsiveGrid, VStack, ZStack};
     pub use crate::localization::Localization;
     pub use crate::modifiers::{ControlSize, Intent, Variant};
@@ -51,6 +77,7 @@ pub mod prelude {
     pub use crate::toolbar::{ToolbarGroup, ToolbarItem};
     pub use crate::views::code_block::CodeBlock;
     pub use crate::views::markdown::MarkdownView;
+    pub use crate::{hstack, vstack, zstack};
     pub use peak_theme::ThemeTone;
 
     // Re-export core UI types so showcase doesn't need direct iced imports

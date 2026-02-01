@@ -247,6 +247,13 @@ impl Context {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+pub enum Layout {
+    Vertical,
+    Horizontal,
+    Wrap,
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct SpatialNode {
     pub role: String,
@@ -254,6 +261,7 @@ pub struct SpatialNode {
     pub height: f32,
     pub depth: f32,
     pub transform: Transform3D,
+    pub layout: Layout,
     pub is_focused: bool,
     pub children: Vec<SpatialNode>,
 }
@@ -278,6 +286,14 @@ pub struct SpatialBackend;
 
 // Redundant SpatialBackend implementation removed
 
+#[derive(Debug, Clone)]
+pub struct TextSpan {
+    pub content: String,
+    pub color: Option<Color>,
+    pub font: Option<iced::Font>,
+    pub size: Option<f32>,
+}
+
 /// A Backend defines the output type and composition logic for a View.
 pub trait Backend: Sized + Clone + 'static {
     type AnyView<Message: 'static>: 'static;
@@ -290,7 +306,7 @@ pub trait Backend: Sized + Clone + 'static {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn hstack<Message: 'static>(
@@ -301,7 +317,7 @@ pub trait Backend: Sized + Clone + 'static {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn wrap<Message: 'static>(
@@ -313,7 +329,15 @@ pub trait Backend: Sized + Clone + 'static {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn rich_text<Message: Clone + 'static>(
+        spans: Vec<TextSpan>,
+        size: f32,
+        width: Length,
+        alignment: Alignment,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn text<Message: Clone + 'static>(
@@ -382,6 +406,7 @@ pub trait Backend: Sized + Clone + 'static {
         font: Option<iced::Font>,
         is_secure: bool,
         variant: Variant,
+        id: Option<iced::widget::Id>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -453,6 +478,7 @@ pub trait Backend: Sized + Clone + 'static {
         width: Length,
         height: Length,
         id: Option<&'static str>,
+        show_indicators: bool,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -468,6 +494,22 @@ pub trait Backend: Sized + Clone + 'static {
         tooltip: String,
         context: &Context,
     ) -> Self::AnyView<Message>;
+
+    fn glass_card<Message: 'static>(
+        content: Self::AnyView<Message>,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn section<Message: 'static>(
+        title: String,
+        content: Self::AnyView<Message>,
+        width: Length,
+        height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
 }
 
 impl Backend for SpatialBackend {
@@ -481,7 +523,7 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let mut y_offset = 0.0;
         let mut nodes = Vec::new();
@@ -498,6 +540,7 @@ impl Backend for SpatialBackend {
             height: y_offset,
             depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: nodes,
         }
@@ -511,7 +554,7 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let mut x_offset = 0.0;
         let mut nodes = Vec::new();
@@ -528,6 +571,7 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Horizontal,
             is_focused: false,
             children: nodes,
         }
@@ -535,47 +579,49 @@ impl Backend for SpatialBackend {
 
     fn wrap<Message: 'static>(
         children: Vec<Self::AnyView<Message>>,
-        spacing: f32,
-        run_spacing: f32,
+        _spacing: f32,
+        _run_spacing: f32,
         _padding: Padding,
         _width: Length,
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
-        // Simple mock implementation for SpatialBackend
-        let mut nodes = Vec::new();
-        let mut x = 0.0;
-        let mut y = 0.0;
-        // This is inaccurate but sufficient for spatial representation logic placeholder
-        for mut child in children {
-            child.transform.x = x;
-            child.transform.y = y;
-            x += child.width + spacing;
-            // Simple wrap logic simulation could go here if needed
-            if x > 500.0 {
-                // arbitrary width
-                x = 0.0;
-                y += child.height + run_spacing;
-            }
-            nodes.push(child);
-        }
-
         SpatialNode {
             role: "wrap".to_string(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Wrap,
             is_focused: false,
-            children: nodes,
+            children,
+        }
+    }
+
+    fn rich_text<Message: Clone + 'static>(
+        _spans: Vec<TextSpan>,
+        _size: f32,
+        _width: Length,
+        _alignment: Alignment,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SpatialNode {
+            role: "rich_text".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
+            transform: Transform3D::default(),
+            layout: Layout::Vertical,
+            is_focused: false,
+            children: vec![],
         }
     }
 
     fn text<Message: Clone + 'static>(
-        content: String,
-        size: f32,
+        _content: String,
+        _size: f32,
         _color: Option<Color>,
         _is_bold: bool,
         _is_dim: bool,
@@ -587,27 +633,29 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "text".to_string(),
-            width: content.len() as f32 * 10.0,
-            height: size,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
-            children: vec![],
+            children: vec![], // SpatialBackend doesn't store text content in children
         }
     }
 
     fn icon<Message: Clone + 'static>(
-        name: String,
-        size: f32,
+        _name: String,
+        _size: f32,
         _color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("icon:{}", name),
-            width: size,
-            height: size,
-            depth: 1.0,
+            role: "icon".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -616,10 +664,11 @@ impl Backend for SpatialBackend {
     fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
         SpatialNode {
             role: "divider".to_string(),
-            width: 100.0,
-            height: 1.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -632,18 +681,20 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
     }
 
-    fn circle<Message: 'static>(radius: f32, _color: Option<Color>) -> Self::AnyView<Message> {
+    fn circle<Message: 'static>(_radius: f32, _color: Option<Color>) -> Self::AnyView<Message> {
         SpatialNode {
             role: "circle".to_string(),
-            width: radius * 2.0,
-            height: radius * 2.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -656,10 +707,11 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "capsule".to_string(),
-            width: 100.0,
-            height: 40.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -675,10 +727,11 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "rectangle".to_string(),
-            width: 100.0,
-            height: 100.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -695,27 +748,29 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "button".to_string(),
-            width: content.width + 32.0,
-            height: content.height + 16.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![content],
         }
     }
 
     fn sidebar_item<Message: Clone + 'static>(
-        title: String,
+        _title: String,
         _icon: String,
         _is_selected: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("sidebar_item:{}", title),
-            width: 200.0,
-            height: 40.0,
-            depth: 1.0,
+            role: "sidebar_item".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Horizontal,
             is_focused: false,
             children: vec![],
         }
@@ -723,21 +778,23 @@ impl Backend for SpatialBackend {
 
     fn text_input<Message: Clone + 'static>(
         _value: String,
-        placeholder: String,
+        _placeholder: String,
         _on_change: impl Fn(String) -> Message + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
         _is_secure: bool,
         _variant: Variant,
+        _id: Option<iced::widget::Id>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("text_input:{}", placeholder),
-            width: 300.0,
-            height: 40.0,
-            depth: 1.0,
+            role: "text_input".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
-            is_focused: false,
+            layout: Layout::Vertical,
+            is_focused: true,
             children: vec![],
         }
     }
@@ -750,27 +807,29 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "slider".to_string(),
-            width: 200.0,
-            height: 20.0,
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
     }
 
     fn toggle<Message: Clone + 'static>(
-        label: String,
+        _label: String,
         _is_active: bool,
         _on_toggle: impl Fn(bool) -> Message + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("toggle:{}", label),
-            width: 100.0,
-            height: 40.0,
-            depth: 1.0,
+            role: "toggle".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children: vec![],
         }
@@ -778,22 +837,17 @@ impl Backend for SpatialBackend {
 
     fn zstack<Message: 'static>(
         children: Vec<Self::AnyView<Message>>,
-        width: Length,
-        height: Length,
+        _width: Length,
+        _height: Length,
         _alignment: Alignment,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "zstack".to_string(),
-            width: match width {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            height: match height {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            depth: 1.0,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children,
         }
@@ -810,6 +864,7 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
             children,
         }
@@ -817,70 +872,55 @@ impl Backend for SpatialBackend {
 
     fn image<Message: 'static>(
         _path: impl Into<String>,
-        width: Length,
-        height: Length,
+        _width: Length,
+        _height: Length,
         _radius: f32,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "image".to_string(),
-            width: match width {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            height: match height {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            depth: 0.1,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
-            children: Vec::new(),
+            children: vec![],
         }
     }
 
     fn video<Message: 'static>(
         _path: impl Into<String>,
-        width: Length,
-        height: Length,
+        _width: Length,
+        _height: Length,
         _radius: f32,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "video".to_string(),
-            width: match width {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            height: match height {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            depth: 0.1,
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
-            children: Vec::new(),
+            children: vec![],
         }
     }
 
     fn web_view<Message: 'static>(
-        url: String,
-        width: Length,
-        height: Length,
+        _url: String,
+        _width: Length,
+        _height: Length,
         _radius: f32,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: format!("web_view:{}", url),
-            width: match width {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            height: match height {
-                Length::Fixed(f) => f,
-                _ => 100.0,
-            },
-            depth: 0.1,
+            role: "web_view".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
             transform: Transform3D::default(),
+            layout: Layout::Vertical,
             is_focused: false,
-            children: Vec::new(),
+            children: vec![],
         }
     }
 
@@ -898,7 +938,16 @@ impl Backend for SpatialBackend {
         _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        content
+        SpatialNode {
+            role: "container".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
+            transform: Transform3D::default(),
+            layout: Layout::Vertical,
+            is_focused: false,
+            children: vec![content],
+        }
     }
 
     fn scroll_view<Message: 'static>(
@@ -906,9 +955,19 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _id: Option<&'static str>,
+        _show_indicators: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        content
+        SpatialNode {
+            role: "scroll_view".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
+            transform: Transform3D::default(),
+            layout: Layout::Vertical,
+            is_focused: false,
+            children: vec![content],
+        }
     }
 
     fn mouse_area<Message: Clone + 'static>(
@@ -917,12 +976,41 @@ impl Backend for SpatialBackend {
         _on_press: Option<Message>,
         _on_release: Option<Message>,
     ) -> Self::AnyView<Message> {
-        content
+        SpatialNode {
+            role: "mouse_area".to_string(),
+            width: 0.0,
+            height: 0.0,
+            depth: 0.0,
+            transform: Transform3D::default(),
+            layout: Layout::Vertical,
+            is_focused: false,
+            children: vec![content],
+        }
     }
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
         _tooltip: String,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn glass_card<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn section<Message: 'static>(
+        _title: String,
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -944,9 +1032,10 @@ impl Backend for IcedBackend {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::{column, container};
+        let scale = context.theme.scaling;
 
         let col = column(children)
             .spacing(spacing * scale)
@@ -986,9 +1075,10 @@ impl Backend for IcedBackend {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::{container, row};
+        let scale = context.theme.scaling;
 
         let r = row(children)
             .spacing(spacing * scale)
@@ -1029,9 +1119,10 @@ impl Backend for IcedBackend {
         height: Length,
         align_x: Alignment,
         align_y: Alignment,
-        scale: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::{container, row};
+        let scale = context.theme.scaling;
 
         let w = row(children)
             .spacing(spacing * scale)
@@ -1055,6 +1146,45 @@ impl Backend for IcedBackend {
 
         c.width(scale_length(width, scale))
             .height(scale_length(height, scale))
+            .into()
+    }
+
+    fn rich_text<Message: Clone + 'static>(
+        spans: Vec<TextSpan>,
+        size: f32,
+        width: Length,
+        alignment: Alignment,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::rich_text;
+        // iced re-exports Span in advanced::text usually, or just import from where used.
+        // check imports in MarkdownView: iced::advanced::text::Span
+        use iced::advanced::text::Span;
+
+        let scale = context.theme.scaling;
+        let scaled_size = size * scale;
+
+        let iced_spans: Vec<Span<'static, ()>> = spans
+            .into_iter()
+            .map(|s| {
+                let mut span = Span::new(s.content);
+                if let Some(c) = s.color {
+                    span = span.color(c);
+                }
+                if let Some(f) = s.font {
+                    span = span.font(f);
+                }
+                if let Some(sz) = s.size {
+                    span = span.size(sz * scale);
+                }
+                span
+            })
+            .collect();
+
+        rich_text(iced_spans)
+            .size(scaled_size)
+            .width(width)
+            .align_x(alignment)
             .into()
     }
 
@@ -1487,11 +1617,16 @@ impl Backend for IcedBackend {
         font: Option<iced::Font>,
         is_secure: bool,
         variant: Variant,
+        id: Option<iced::widget::Id>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
             .on_input(on_change)
             .secure(is_secure);
+
+        if let Some(id) = id {
+            input = input.id(id);
+        }
 
         if let Some(msg) = on_submit {
             input = input.on_submit(msg);
@@ -1800,11 +1935,174 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         id: Option<&'static str>,
-        _context: &Context,
+        show_indicators: bool,
+        context: &Context,
     ) -> Self::AnyView<Message> {
+        let text_color = context.theme.colors.text_primary;
         let mut scroll = iced::widget::scrollable(content)
             .width(width)
             .height(height);
+
+        if !show_indicators {
+            scroll = scroll.style(|_, _| iced::widget::scrollable::Style {
+                container: iced::widget::container::Style::default(),
+                vertical_rail: iced::widget::scrollable::Rail {
+                    background: None,
+                    border: iced::Border::default(),
+                    scroller: iced::widget::scrollable::Scroller {
+                        background: iced::Color::TRANSPARENT.into(),
+                        border: iced::Border::default(),
+                    },
+                },
+                horizontal_rail: iced::widget::scrollable::Rail {
+                    background: None,
+                    border: iced::Border::default(),
+                    scroller: iced::widget::scrollable::Scroller {
+                        background: iced::Color::TRANSPARENT.into(),
+                        border: iced::Border::default(),
+                    },
+                },
+                gap: None,
+                auto_scroll: iced::widget::scrollable::AutoScroll {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    icon: iced::Color::TRANSPARENT,
+                },
+            });
+        } else {
+            scroll = scroll.style(move |_, status| {
+                let scroller_alpha = match status {
+                    iced::widget::scrollable::Status::Hovered { .. } => 0.3,
+                    iced::widget::scrollable::Status::Dragged { .. } => 0.5,
+                    _ => 0.05,
+                };
+
+                iced::widget::scrollable::Style {
+                    container: iced::widget::container::Style::default(),
+                    vertical_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color {
+                                a: scroller_alpha,
+                                ..text_color
+                            }
+                            .into(),
+                            border: iced::Border {
+                                radius: 2.0.into(),
+                                width: 0.0,
+                                ..Default::default()
+                            },
+                        },
+                    },
+                    horizontal_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color {
+                                a: scroller_alpha,
+                                ..text_color
+                            }
+                            .into(),
+                            border: iced::Border {
+                                radius: 2.0.into(),
+                                width: 0.0,
+                                ..Default::default()
+                            },
+                        },
+                    },
+                    gap: None,
+                    auto_scroll: iced::widget::scrollable::AutoScroll {
+                        background: iced::Background::Color(iced::Color::TRANSPARENT),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        icon: iced::Color::TRANSPARENT,
+                    },
+                }
+            });
+        }
+
+        if !show_indicators {
+            scroll = scroll.style(|_, _| iced::widget::scrollable::Style {
+                container: iced::widget::container::Style::default(),
+                vertical_rail: iced::widget::scrollable::Rail {
+                    background: None,
+                    border: iced::Border::default(),
+                    scroller: iced::widget::scrollable::Scroller {
+                        background: iced::Color::TRANSPARENT.into(),
+                        border: iced::Border::default(),
+                    },
+                },
+                horizontal_rail: iced::widget::scrollable::Rail {
+                    background: None,
+                    border: iced::Border::default(),
+                    scroller: iced::widget::scrollable::Scroller {
+                        background: iced::Color::TRANSPARENT.into(),
+                        border: iced::Border::default(),
+                    },
+                },
+                gap: None,
+                auto_scroll: iced::widget::scrollable::AutoScroll {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    shadow: iced::Shadow::default(),
+                    icon: iced::Color::TRANSPARENT,
+                },
+            });
+        } else {
+            scroll = scroll.style(move |_, status| {
+                let scroller_alpha = match status {
+                    iced::widget::scrollable::Status::Hovered { .. } => 0.3,
+                    iced::widget::scrollable::Status::Dragged { .. } => 0.5,
+                    _ => 0.05,
+                };
+
+                iced::widget::scrollable::Style {
+                    container: iced::widget::container::Style::default(),
+                    vertical_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color {
+                                a: scroller_alpha,
+                                ..text_color
+                            }
+                            .into(),
+                            border: iced::Border {
+                                radius: 2.0.into(),
+                                width: 0.0,
+                                ..Default::default()
+                            },
+                        },
+                    },
+                    horizontal_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color {
+                                a: scroller_alpha,
+                                ..text_color
+                            }
+                            .into(),
+                            border: iced::Border {
+                                radius: 2.0.into(),
+                                width: 0.0,
+                                ..Default::default()
+                            },
+                        },
+                    },
+                    gap: None,
+                    auto_scroll: iced::widget::scrollable::AutoScroll {
+                        background: iced::Background::Color(iced::Color::TRANSPARENT),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        icon: iced::Color::TRANSPARENT,
+                    },
+                }
+            });
+        }
+
         if let Some(id) = id {
             scroll = scroll.id(Id::new(id));
         }
@@ -1834,29 +2132,86 @@ impl Backend for IcedBackend {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        tooltip_label: String,
+        tooltip_text: String,
         context: &Context,
     ) -> Self::AnyView<Message> {
-        use iced::widget::{container, tooltip};
+        use iced::widget::tooltip;
+        let scale = context.theme.scaling;
+
         tooltip(
             content,
-            iced::widget::text(tooltip_label)
-                .size(14.0 * context.theme.scaling)
-                .color(context.theme.colors.text_primary),
-            tooltip::Position::FollowCursor,
+            iced::widget::text(tooltip_text).size(14.0 * scale),
+            tooltip::Position::Bottom,
         )
-        .style(|theme: &Theme| {
-            let palette = theme.extended_palette();
-            container::Style {
-                background: Some(palette.background.weak.color.into()),
+        .into()
+    }
+
+    fn glass_card<Message: 'static>(
+        content: Self::AnyView<Message>,
+        padding: Padding,
+        width: Length,
+        height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::container;
+        let theme = context.theme;
+        let mut bg = theme.colors.surface;
+        bg.a = theme.glass_opacity;
+
+        let shadow = context.shadow(
+            theme.shadow_color,
+            iced::Vector::new(theme.shadow_offset[0], theme.shadow_offset[1]),
+            theme.shadow_blur,
+        );
+
+        let scale = theme.scaling;
+        let radius = context.radius(theme.radius * scale);
+        let padding = Padding {
+            top: padding.top * scale,
+            right: padding.right * scale,
+            bottom: padding.bottom * scale,
+            left: padding.left * scale,
+        };
+
+        container(content)
+            .padding(padding)
+            .width(scale_length(width, scale))
+            .height(scale_length(height, scale))
+            .center_y(Length::Fill)
+            .style(move |_| container::Style {
+                background: Some(bg.into()),
                 border: iced::Border {
-                    radius: 8.0.into(),
-                    ..Default::default()
+                    radius,
+                    color: Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+                    width: 1.0 * scale,
                 },
-                text_color: Some(palette.background.weak.text),
+                shadow,
                 ..Default::default()
-            }
-        })
+            })
+            .into()
+    }
+
+    fn section<Message: 'static>(
+        title: String,
+        content: Self::AnyView<Message>,
+        width: Length,
+        height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::{column, container, text};
+        let scale = context.theme.scaling;
+
+        container(
+            column![
+                text(title)
+                    .size(12.0 * scale)
+                    .color(context.theme.colors.text_primary.scale_alpha(0.6)),
+                content
+            ]
+            .spacing(8.0 * scale),
+        )
+        .width(scale_length(width, scale))
+        .height(scale_length(height, scale))
         .into()
     }
 }
@@ -1868,12 +2223,42 @@ pub struct TermBackend;
 impl Backend for TermBackend {
     type AnyView<Message: 'static> = String;
 
-    fn with_tooltip<Message: 'static>(
-        content: Self::AnyView<Message>,
-        tooltip_label: String,
+    fn rich_text<Message: Clone + 'static>(
+        _spans: Vec<TextSpan>,
+        _size: f32,
+        _width: Length,
+        _alignment: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        format!("{} (Tooltip: {})", content, tooltip_label)
+        String::new()
+    }
+
+    fn with_tooltip<Message: 'static>(
+        content: Self::AnyView<Message>,
+        tooltip: String,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("{} (Tooltip: {})", content, tooltip)
+    }
+
+    fn glass_card<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("(GLASS)\n{}", content)
+    }
+
+    fn section<Message: 'static>(
+        title: String,
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("\x1b[1;2m# {}\x1b[0m\n{}", title.to_uppercase(), content)
     }
 
     fn vstack<Message: 'static>(
@@ -1884,7 +2269,7 @@ impl Backend for TermBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         children.join("\n")
     }
@@ -1897,7 +2282,7 @@ impl Backend for TermBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         children.join(" ")
     }
@@ -1911,7 +2296,7 @@ impl Backend for TermBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         children.join(" ")
     }
@@ -2034,6 +2419,7 @@ impl Backend for TermBackend {
         _font: Option<iced::Font>,
         is_secure: bool,
         _variant: Variant,
+        _id: Option<iced::widget::Id>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!(
@@ -2128,6 +2514,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _id: Option<&'static str>,
+        _show_indicators: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -2347,14 +2734,42 @@ pub struct AIBackend;
 impl Backend for AIBackend {
     type AnyView<Message: 'static> = SemanticNode;
 
-    fn with_tooltip<Message: 'static>(
-        content: Self::AnyView<Message>,
-        tooltip: String,
+    fn rich_text<Message: Clone + 'static>(
+        _spans: Vec<TextSpan>,
+        _size: f32,
+        _width: Length,
+        _alignment: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        let mut node = content;
-        node.documentation = Some(tooltip);
-        node
+        SemanticNode::default()
+    }
+
+    fn with_tooltip<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _tooltip: String,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn glass_card<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _padding: Padding,
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn section<Message: 'static>(
+        _title: String,
+        content: Self::AnyView<Message>,
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
     }
 
     fn vstack<Message: 'static>(
@@ -2365,7 +2780,7 @@ impl Backend for AIBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -2387,7 +2802,7 @@ impl Backend for AIBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -2410,7 +2825,7 @@ impl Backend for AIBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _scale: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -2594,6 +3009,7 @@ impl Backend for AIBackend {
         _font: Option<iced::Font>,
         _is_secure: bool,
         _variant: Variant,
+        _id: Option<iced::widget::Id>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
@@ -2740,6 +3156,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _id: Option<&'static str>,
+        _show_indicators: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content

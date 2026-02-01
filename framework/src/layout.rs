@@ -1,4 +1,4 @@
-use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
+use crate::core::{Backend, Context, IcedBackend, View};
 use iced::Length;
 
 /// A vertical stack layout that arranges children from top to bottom.
@@ -12,19 +12,15 @@ pub struct VStack<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static> VStack<Message, IcedBackend> {
+impl<Message: 'static, B: Backend> VStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static> VStack<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static, B: Backend> VStack<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             children: Vec::new(),
@@ -95,7 +91,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
             self.height,
             self.align_x,
             self.align_y,
-            context.theme.scaling,
+            context,
         )
     }
 
@@ -125,19 +121,15 @@ pub struct HStack<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static> HStack<Message, IcedBackend> {
+impl<Message: 'static, B: Backend> HStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static> HStack<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static, B: Backend> HStack<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             children: Vec::new(),
@@ -208,7 +200,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
             self.height,
             self.align_x,
             self.align_y,
-            context.theme.scaling,
+            context,
         )
     }
 
@@ -235,19 +227,15 @@ pub struct ZStack<Message: 'static, B: Backend = IcedBackend> {
     alignment: iced::Alignment,
 }
 
-impl<Message: 'static> ZStack<Message, IcedBackend> {
+impl<Message: 'static, B: Backend> ZStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static> ZStack<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static, B: Backend> ZStack<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             children: Vec::new(),
@@ -344,7 +332,7 @@ impl<V: View<Message, B> + Sized + 'static, Message: Clone + 'static, B: Backend
                 iced::Length::Shrink,
                 iced::Alignment::Center,
                 iced::Alignment::Center,
-                context.theme.scaling,
+                context,
             )
         })
     }
@@ -369,24 +357,15 @@ pub struct ResponsiveGrid<Message: 'static, B: Backend = IcedBackend> {
     pub mobile_items_per_row: usize,
 }
 
-impl<Message: 'static> ResponsiveGrid<Message, IcedBackend> {
+impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
     pub fn new() -> Self {
-        Self {
-            children: Vec::new(),
-            spacing: 20.0,
-            items_per_row: 2,
-            mobile_items_per_row: 1,
-        }
+        Self::new_generic()
     }
-}
 
-impl<Message: 'static> ResponsiveGrid<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             children: Vec::new(),
@@ -462,19 +441,15 @@ pub struct Wrap<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static> Wrap<Message, IcedBackend> {
+impl<Message: 'static, B: Backend> Wrap<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static> Wrap<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
-}
 
-impl<Message: 'static, B: Backend> Wrap<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             children: Vec::new(),
@@ -552,7 +527,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Wrap<Message, B> {
             self.height,
             self.align_x,
             self.align_y,
-            context.theme.scaling,
+            context,
         )
     }
 

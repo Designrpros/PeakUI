@@ -147,7 +147,7 @@ impl<Message: 'static> View<Message, IcedBackend> for ToolbarGroup<Message> {
             Length::Shrink,
             Alignment::Center,
             Alignment::Center,
-            theme.scaling,
+            context,
         );
 
         let radius = context.radius(24.0);

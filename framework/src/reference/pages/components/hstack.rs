@@ -1,7 +1,7 @@
-use crate::reference::views::ComponentDoc;
+use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
+use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
 pub fn view(_context: &Context) -> PageResult<Message> {
@@ -16,10 +16,13 @@ HStack::new()
     .push(Icon::new("heart"))
     .push(Text::new("Favorites"))
 "#,
-            Arc::new(HStack::<Message, IcedBackend>::new_generic()
-                .spacing(16.0)
-                .push(Icon::<IcedBackend>::new("user").size(20.0).primary())
-                .push(Text::<IcedBackend>::new("Profile Settings").body().bold()))
+            Arc::new(
+                hstack![
+                    icon("user").size(20.0).primary(),
+                    text("Profile Settings").body().bold()
+                ]
+                .spacing(16.0),
+            )
         )
     )
 }

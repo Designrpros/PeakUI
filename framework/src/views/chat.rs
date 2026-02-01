@@ -1,14 +1,16 @@
-use crate::core::Backend;
-use crate::prelude::*;
+use crate::core::{Backend, Context, SemanticNode, View};
+use crate::modifiers::{Intent, Variant};
+use crate::views::MarkdownView;
+use iced::{Length, Padding};
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ChatMessage {
     pub role: ChatRole,
     pub content: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum ChatRole {
     User,
     Assistant,
@@ -45,73 +47,166 @@ impl<Message: Clone + 'static> AIChatView<Message> {
     }
 }
 
-// Implement View for AIChatView (IcedBackend)
-impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for AIChatView<Message> {
-    fn view(&self, context: &Context) -> iced::Element<'static, Message, Theme, Renderer> {
+// Consolidate backend implementations into one generic implementation
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Message> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
         let on_action = &self.on_action;
 
         // 1. Create message list
-        let mut message_stack = VStack::<Message, crate::core::IcedBackend>::new()
-            .spacing(12.0)
-            .padding(iced::Padding {
+        let mut message_list = Vec::new();
+
+        for msg in &self.messages {
+            message_list.push(View::<Message, B>::view(
+                &ChatBubble::new(msg.clone(), self.on_action.clone()),
+                context,
+            ));
+        }
+
+        if self.is_thinking {
+            message_list.push(View::<Message, B>::view(&ThinkingBubble {}, context));
+        }
+
+        // Wrap message list in VStack
+        let message_stack = B::vstack(
+            message_list,
+            12.0,
+            Padding {
                 top: 20.0,
                 bottom: 20.0,
                 left: 12.0,
                 right: 12.0,
-            })
-            .width(Length::Fill);
+            },
+            Length::Fill,
+            Length::Shrink, // Only as tall as content? No, vstack for content list usually shrinks.
+            // But ScrollView handles the scrolling.
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        );
 
-        for msg in &self.messages {
-            message_stack =
-                message_stack.push(ChatBubble::new(msg.clone(), self.on_action.clone()));
-        }
-
-        if self.is_thinking {
-            message_stack = message_stack.push(ThinkingBubble {});
-        }
-
-        let scroll = ScrollView::<Message, crate::core::IcedBackend>::new(message_stack)
-            .height(Length::Fill)
-            .id("chat_scroll");
+        let scroll = B::scroll_view(
+            message_stack,
+            Length::Fill,
+            Length::Fill,
+            Some("chat_scroll"),
+            true,
+            context,
+        );
 
         // 2. Input Area
-        let input_row_1 = TextInput::new(&self.input_value, "Ask anything...", {
-            let act = self.on_action.clone();
-            move |s| (act)(ChatViewMessage::InputChanged(s))
-        })
-        .variant(Variant::Ghost)
-        .width(Length::Fill)
-        .on_submit((on_action)(ChatViewMessage::SendPressed));
+        let input_row_1 = B::text_input(
+            self.input_value.clone(),
+            "Ask anything...".to_string(),
+            {
+                let act = self.on_action.clone();
+                move |s| (act)(ChatViewMessage::InputChanged(s))
+            },
+            Some((on_action)(ChatViewMessage::SendPressed)),
+            None,
+            false,
+            Variant::Ghost,
+            Some(iced::widget::Id::new("chat_input")),
+            context,
+        );
 
-        let input_row_2 = HStack::<Message, crate::core::IcedBackend>::new()
-            .align_y(iced::Alignment::Center)
-            .push(crate::atoms::Space::new(Length::Fill, Length::Shrink))
-            .push(
-                Button::<Message, crate::core::IcedBackend>::label("")
-                    .icon("arrow-up")
-                    .variant(Variant::Compact)
-                    .on_press((on_action)(ChatViewMessage::SendPressed)),
-            );
+        let _input_row_2 = B::hstack(
+            vec![
+                B::space(Length::Fill, Length::Shrink),
+                B::button(
+                    B::text(
+                        "".to_string(),
+                        14.0,
+                        None,
+                        false,
+                        false,
+                        None,
+                        None,
+                        Length::Shrink,
+                        iced::Alignment::Center,
+                        context,
+                    ), // Empty label, icon handled by modifier or separate setup?
+                    // Button helper in Backend trait currently takes 'content' View.
+                    // But here we want Icon button logic.
+                    // Let's create content with Icon.
+                    Some((on_action)(ChatViewMessage::SendPressed)),
+                    Variant::Compact,
+                    Intent::Neutral,
+                    Length::Shrink,
+                    false, // is_compact
+                    context,
+                ), // Wait, original code was:
+                   // Button::label("").icon("arrow-up").variant(Variant::Compact)
+                   // The generic B::button takes already built content.
+                   // So I wrap Icon in it.
+            ],
+            0.0,
+            Padding::ZERO,
+            Length::Fill, // HStack Width
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
 
-        let divider = crate::atoms::Divider::new();
+        // Fix input_row_2 button content:
+        let send_icon = crate::atoms::Icon::<B>::new("arrow-up").view(context);
+        let send_btn = B::button(
+            send_icon,
+            Some((on_action)(ChatViewMessage::SendPressed)),
+            Variant::Compact,
+            Intent::Neutral,
+            Length::Shrink,
+            true, // is_compact = true
+            context,
+        );
 
-        let input_area = VStack::<Message, crate::core::IcedBackend>::new()
-            .spacing(8.0)
-            .push(divider)
-            .push(
-                VStack::<Message, crate::core::IcedBackend>::new()
-                    .padding(12.0)
-                    .push(input_row_1)
-                    .push(input_row_2),
-            );
+        let input_row_2_fixed = B::hstack(
+            vec![B::space(Length::Fill, Length::Shrink), send_btn],
+            0.0,
+            Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
+
+        let divider = B::divider(context);
+
+        let input_area = B::vstack(
+            vec![
+                divider,
+                B::vstack(
+                    vec![input_row_1, input_row_2_fixed],
+                    8.0,
+                    Padding::from(12),
+                    Length::Fill,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                ),
+            ],
+            8.0,
+            Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        );
 
         // 3. Combine
-        VStack::<Message, crate::core::IcedBackend>::new()
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .push(scroll)
-            .push(input_area)
-            .view(context)
+        B::vstack(
+            vec![scroll, input_area],
+            0.0,
+            Padding::ZERO,
+            Length::Fill,
+            Length::Fill,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
@@ -125,16 +220,6 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for AICha
             documentation: None,
             ..Default::default()
         }
-    }
-}
-
-// Stub for TermBackend
-impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for AIChatView<Message> {
-    fn view(&self, _context: &Context) -> String {
-        "AI Chat (Terminal Not Supported)".to_string()
-    }
-    fn describe(&self, _context: &Context) -> SemanticNode {
-        Default::default()
     }
 }
 
@@ -153,37 +238,55 @@ impl<Message> ChatBubble<Message> {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatBubble<Message> {
-    fn view(&self, context: &Context) -> iced::Element<'static, Message, Theme, Renderer> {
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Message> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
         let is_user = self.message.role == ChatRole::User;
 
         if is_user {
-            let bubble = iced::widget::container(
-                Text::<crate::core::IcedBackend>::new(self.message.content.clone())
-                    .caption1()
-                    .color(t.colors.on_primary)
-                    .view(context),
-            )
-            .padding(12.0)
-            .style(move |_| iced::widget::container::Style {
-                background: Some(t.colors.primary.into()),
-                border: iced::Border {
-                    radius: 12.0.into(),
-                    ..Default::default()
-                },
-                ..Default::default()
-            });
+            let bubble_content = B::text(
+                self.message.content.clone(),
+                14.0, // Caption1 size approx
+                Some(t.colors.on_primary),
+                false,
+                false,
+                None,
+                None,
+                Length::Shrink, // Text width
+                iced::Alignment::Start,
+                context,
+            );
 
-            iced::widget::row![iced::widget::Space::new().width(Length::Fill), bubble]
-                .padding(Padding {
+            let bubble = B::container(
+                bubble_content,
+                Padding::from(12),
+                Length::Shrink,
+                Length::Shrink,
+                Some(t.colors.primary),
+                12.0,
+                0.0,
+                None,
+                None,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            );
+
+            B::hstack(
+                vec![B::space(Length::Fill, Length::Shrink), bubble],
+                0.0,
+                Padding {
                     top: 0.0,
                     right: 12.0,
                     bottom: 0.0,
                     left: 0.0,
-                })
-                .width(Length::Fill)
-                .into()
+                },
+                Length::Fill,
+                Length::Shrink,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            )
         } else {
             // AI Message: Parse for Actions
             let raw_content = self.message.content.clone();
@@ -217,8 +320,7 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
                 text_parts.push(raw_content[last_idx..].to_string());
             }
 
-            let mut assistant_content =
-                VStack::<Message, crate::core::IcedBackend>::new().spacing(12.0);
+            let mut assistant_children = Vec::new();
             let on_act = self.on_action.clone();
 
             if actions.is_empty() {
@@ -227,36 +329,50 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ChatB
                     .size(12.0)
                     .padding(Padding::ZERO)
                     .on_copy(move |code| (on_act_inner)(ChatViewMessage::CopyCode(code)));
-                assistant_content = assistant_content.push(content);
+                assistant_children.push(View::<Message, B>::view(&content, context));
             } else {
                 for text in text_parts {
                     if !text.trim().is_empty() {
                         let on_act_inner = on_act.clone();
-                        assistant_content = assistant_content.push(
-                            MarkdownView::new(text)
-                                .size(12.0)
-                                .padding(Padding::ZERO)
-                                .on_copy(move |code| {
-                                    (on_act_inner)(ChatViewMessage::CopyCode(code))
-                                }),
-                        );
+                        let content = MarkdownView::new(text)
+                            .size(12.0)
+                            .padding(Padding::ZERO)
+                            .on_copy(move |code| (on_act_inner)(ChatViewMessage::CopyCode(code)));
+                        assistant_children.push(View::<Message, B>::view(&content, context));
                     }
                 }
 
                 for action in actions {
-                    assistant_content = assistant_content.push(ToolCard::new(action));
+                    assistant_children
+                        .push(View::<Message, B>::view(&ToolCard::new(action), context));
                 }
             }
 
-            iced::widget::container(assistant_content.view(context))
-                .padding(Padding {
-                    top: 12.0,
-                    right: 12.0,
-                    bottom: 12.0,
-                    left: 12.0,
-                })
-                .width(Length::Fill)
-                .into()
+            let assistant_col = B::vstack(
+                assistant_children,
+                12.0,
+                Padding::ZERO,
+                Length::Fill,
+                Length::Shrink,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            );
+
+            B::container(
+                assistant_col,
+                Padding::from(12),
+                Length::Fill,
+                Length::Shrink, // Container height
+                None,           // Transparent
+                0.0,
+                0.0,
+                None,
+                None,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            )
         }
     }
 
@@ -286,8 +402,8 @@ impl ToolCard {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ToolCard {
-    fn view(&self, context: &Context) -> iced::Element<'static, Message, Theme, Renderer> {
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
 
         // Parse: [Action: Name(Params)]
@@ -321,45 +437,68 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ToolC
             _ => name,
         };
 
-        let card_content = HStack::<Message, crate::core::IcedBackend>::new()
-            .spacing(12.0)
-            .align_y(iced::Alignment::Center)
-            .push(
-                Icon::<crate::core::IcedBackend>::new(icon_name)
-                    .size(16.0)
-                    .color(t.colors.primary),
-            )
-            .push(
-                VStack::<Message, crate::core::IcedBackend>::new()
-                    .spacing(2.0)
-                    .push(
-                        Text::<crate::core::IcedBackend>::new(display_name)
-                            .caption1()
-                            .bold(),
-                    )
-                    .push(
-                        Text::<crate::core::IcedBackend>::new(params)
-                            .caption2()
-                            .dim(),
-                    ),
-            );
+        let card_content = B::hstack(
+            vec![
+                B::icon(icon_name.to_string(), 16.0, Some(t.colors.primary), context),
+                B::vstack(
+                    vec![
+                        B::text(
+                            display_name.to_string(),
+                            12.0,
+                            None,
+                            true,
+                            false,
+                            None,
+                            None,
+                            Length::Shrink,
+                            iced::Alignment::Start,
+                            context,
+                        ),
+                        B::text(
+                            params.to_string(),
+                            10.0,
+                            Some(t.colors.text_secondary),
+                            false,
+                            true,
+                            None,
+                            None,
+                            Length::Shrink,
+                            iced::Alignment::Start,
+                            context,
+                        ),
+                    ],
+                    2.0,
+                    Padding::ZERO,
+                    Length::Shrink,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                ),
+            ],
+            12.0,
+            Padding::ZERO,
+            Length::Shrink,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
 
-        iced::widget::container(card_content.view(context))
-            .padding(8.0)
-            .width(Length::Shrink)
-            .style(move |t: &Theme| {
-                let palette = t.extended_palette();
-                iced::widget::container::Style {
-                    background: Some(palette.background.weak.color.scale_alpha(0.05).into()),
-                    border: iced::Border {
-                        radius: 8.0.into(),
-                        width: 1.0,
-                        color: palette.background.strong.color.scale_alpha(0.1),
-                    },
-                    ..Default::default()
-                }
-            })
-            .into()
+        B::container(
+            card_content,
+            Padding::from(8),
+            Length::Shrink,
+            Length::Shrink,
+            Some(t.colors.surface.scale_alpha(0.3)), // extended_palette replacement
+            8.0,
+            1.0,
+            Some(t.colors.border.scale_alpha(0.5)), // extended_palette replacement
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
@@ -371,40 +510,60 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ToolC
     }
 }
 
-impl<Message: Clone + 'static> View<Message, crate::core::TermBackend> for ChatBubble<Message> {
-    fn view(&self, _context: &Context) -> String {
-        format!(
-            "{}: {}",
-            if self.message.role == ChatRole::User {
-                "User"
-            } else {
-                "AI"
-            },
-            self.message.content
-        )
-    }
-    fn describe(&self, _context: &Context) -> SemanticNode {
-        Default::default()
-    }
-}
-
 // ThinkingBubble View
 struct ThinkingBubble {}
 
-impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for ThinkingBubble {
-    fn view(
-        &self,
-        context: &Context,
-    ) -> <crate::core::IcedBackend as crate::core::Backend>::AnyView<Message> {
-        let content = HStack::<Message, crate::core::IcedBackend>::new()
-            .spacing(4.0)
-            .align_y(iced::Alignment::Center)
-            .push(Text::<crate::core::IcedBackend>::new("•").size(16.0))
-            .push(Text::<crate::core::IcedBackend>::new("•").size(16.0))
-            .push(Text::<crate::core::IcedBackend>::new("•").size(16.0))
-            .view(context);
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for ThinkingBubble {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let content = B::hstack(
+            vec![
+                B::text(
+                    "•".to_string(),
+                    16.0,
+                    None,
+                    false,
+                    false,
+                    None,
+                    None,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    context,
+                ),
+                B::text(
+                    "•".to_string(),
+                    16.0,
+                    None,
+                    false,
+                    false,
+                    None,
+                    None,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    context,
+                ),
+                B::text(
+                    "•".to_string(),
+                    16.0,
+                    None,
+                    false,
+                    false,
+                    None,
+                    None,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    context,
+                ),
+            ],
+            4.0,
+            Padding::ZERO,
+            Length::Shrink,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
 
-        crate::core::IcedBackend::container(
+        B::container(
             content,
             Padding::new(12.0).right(20.0).left(20.0),
             Length::Fill,
@@ -414,8 +573,8 @@ impl<Message: Clone + 'static> View<Message, crate::core::IcedBackend> for Think
             0.0,
             None,
             None,
-            Alignment::Start,
-            Alignment::Start,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
             context,
         )
     }

@@ -1,6 +1,6 @@
 use crate::atoms::Text;
 use crate::controls::Button;
-use crate::core::{Backend, Context, IcedBackend, View};
+use crate::core::{Backend, Context, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::Variant;
 use crate::views::{CodeBlock, MarkdownView};
@@ -8,7 +8,7 @@ use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-pub struct ComponentDoc<Message: 'static, B: Backend = IcedBackend> {
+pub struct ComponentDoc<Message: 'static, B: Backend> {
     title: String,
     description: String,
     theory: Option<String>,
@@ -96,21 +96,18 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Message, IcedBackend> {
-    fn view(
-        &self,
-        context: &Context,
-    ) -> iced::Element<'static, Message, iced::Theme, iced::Renderer> {
+impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
         let theme = context.theme;
 
         // 1. Header with Title and Description
         // IMPORTANT: We set width(Length::Fill) on the VStack to ensure text can expand
-        let header = VStack::<Message, IcedBackend>::new_generic()
+        let header = VStack::<Message, B>::new_generic()
             .spacing(12.0)
             .width(Length::Fill)
             .align_x(Alignment::Start)
             .push(
-                Text::<IcedBackend>::new(self.title.clone())
+                Text::<B>::new(self.title.clone())
                     .large_title()
                     .bold()
                     .align_start()
@@ -118,7 +115,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                     .color(theme.colors.text_primary),
             )
             .push(
-                Text::<IcedBackend>::new(self.description.clone())
+                Text::<B>::new(self.description.clone())
                     .body()
                     .align_start()
                     .color(theme.colors.text_secondary)
@@ -130,7 +127,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         let on_render_mode_change = self.on_render_mode_change.clone();
 
         let scrollable_tabs = move |ctx: &Context| {
-            let mut mode_tabs = HStack::<Message, IcedBackend>::new_generic()
+            let mut mode_tabs = HStack::<Message, B>::new_generic()
                 .spacing(12.0)
                 .width(Length::Shrink); // Must be Shrink for horizontal scrollable
 
@@ -138,7 +135,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                 let on_change = on_change.clone();
                 mode_tabs = mode_tabs
                     .push(
-                        Button::<Message, IcedBackend>::label("Canvas")
+                        Button::<Message, B>::label("Canvas")
                             .variant(
                                 if render_mode == crate::reference::app::RenderMode::Canvas {
                                     Variant::Solid
@@ -150,7 +147,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                             .neural("lab_tab_canvas"),
                     )
                     .push(
-                        Button::<Message, IcedBackend>::label("Terminal")
+                        Button::<Message, B>::label("Terminal")
                             .variant(
                                 if render_mode == crate::reference::app::RenderMode::Terminal {
                                     Variant::Solid
@@ -162,7 +159,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                             .neural("lab_tab_terminal"),
                     )
                     .push(
-                        Button::<Message, IcedBackend>::label("Neural")
+                        Button::<Message, B>::label("Neural")
                             .variant(
                                 if render_mode == crate::reference::app::RenderMode::Neural {
                                     Variant::Solid
@@ -174,7 +171,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                             .neural("lab_tab_neural"),
                     )
                     .push(
-                        Button::<Message, IcedBackend>::label("Spatial")
+                        Button::<Message, B>::label("Spatial")
                             .variant(
                                 if render_mode == crate::reference::app::RenderMode::Spatial {
                                     Variant::Solid
@@ -187,39 +184,40 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                     );
             }
 
-            iced::widget::scrollable(mode_tabs.view(ctx))
-                .direction(iced::widget::scrollable::Direction::Horizontal(
-                    iced::widget::scrollable::Scrollbar::new()
-                        .width(4)
-                        .scroller_width(4)
-                        .margin(2),
-                ))
-                .width(Length::Fill)
-                .into()
+            B::scroll_view(
+                mode_tabs.view(ctx),
+                Length::Fill,
+                Length::Shrink,
+                None,
+                false,
+                ctx,
+            )
         };
 
         let preview_area = match self.render_mode {
             crate::reference::app::RenderMode::Canvas => {
                 let preview = self.preview.clone();
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
-                    VStack::<Message, IcedBackend>::new_generic()
+                    VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(
-                            crate::containers::Card::<Message, IcedBackend>::new_generic(
-                                crate::core::ProxyView::new(move |ctx| {
-                                    let preview_view = preview.view(ctx);
-                                    crate::scroll_view::ScrollView::apply_style(
-                                        iced::widget::scrollable(preview_view),
-                                        &ctx.theme,
-                                        true,
-                                    )
-                                    .width(Length::Fill)
-                                    .into()
-                                }),
-                            ),
-                        ),
+                        .push(crate::containers::Card::<Message, B>::new_generic(
+                            crate::core::ProxyView::new(move |ctx| {
+                                let preview_view = preview.view(ctx);
+                                // B::scroll_view needed or generic container?
+                                // Let's assume content fits or internal scrolling.
+                                // If we need scrolling, we use B::scroll_view
+                                B::scroll_view(
+                                    preview_view,
+                                    Length::Fill,
+                                    Length::Fill,
+                                    None,
+                                    false,
+                                    ctx,
+                                )
+                            }),
+                        )),
                 )
             }
             crate::reference::app::RenderMode::Terminal => {
@@ -228,9 +226,9 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                     .as_deref()
                     .unwrap_or("No terminal representation available.")
                     .to_string();
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
-                    VStack::<Message, IcedBackend>::new_generic()
+                    VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(CodeBlock::<Message>::new(ansi)),
@@ -243,9 +241,9 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                 } else {
                     "No neural representation available.".to_string()
                 };
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
-                    VStack::<Message, IcedBackend>::new_generic()
+                    VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(CodeBlock::<Message>::new(json)),
@@ -257,9 +255,9 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
                     .as_deref()
                     .unwrap_or("No spatial representation available.")
                     .to_string();
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
-                    VStack::<Message, IcedBackend>::new_generic()
+                    VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(CodeBlock::<Message>::new(json)),
@@ -271,16 +269,16 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         // 3. Code Block with Copy (Using the Shared CodeBlock component)
         let code_snippet = self.code_snippet.clone();
 
-        let code_area = crate::containers::Section::<Message, IcedBackend>::new_generic(
+        let code_area = crate::containers::Section::<Message, B>::new_generic(
             "Usage",
             crate::core::ProxyView::new(move |ctx| {
-                CodeBlock::<Message>::rust(code_snippet.clone()).view(ctx)
+                View::<Message, B>::view(&CodeBlock::<Message>::rust(code_snippet.clone()), ctx)
             }),
         )
         .width(Length::Fill);
 
         // Assemble
-        let mut doc_content = VStack::<Message, IcedBackend>::new_generic()
+        let mut doc_content = VStack::<Message, B>::new_generic()
             .spacing(40.0)
             .padding(Padding {
                 top: context.safe_area.top.max(48.0),
@@ -296,7 +294,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         // Add Theory section if present
         if let Some(theory) = &self.theory {
             doc_content = doc_content.push(
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "Theory",
                     MarkdownView::new(theory.clone()),
                 )
@@ -307,7 +305,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ComponentDoc<Messa
         // Add Props Table if present
         if let Some(props) = &self.props_table {
             doc_content = doc_content.push(
-                crate::containers::Section::<Message, IcedBackend>::new_generic(
+                crate::containers::Section::<Message, B>::new_generic(
                     "Props",
                     MarkdownView::new(props.clone()),
                 )

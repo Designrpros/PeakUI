@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ChatCompletionMessage {
@@ -27,16 +27,9 @@ pub struct OpenRouterClient {
     api_key: String,
 }
 
-const FALLBACK_KEY: &str = "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";
-
 impl OpenRouterClient {
     pub fn new(user_key: String) -> Self {
-        let api_key = if user_key.is_empty() {
-            FALLBACK_KEY.to_string()
-        } else {
-            user_key
-        };
-        Self { api_key }
+        Self { api_key: user_key }
     }
 
     pub async fn chat(&self, messages: Vec<ChatCompletionMessage>) -> Result<String, String> {
@@ -68,7 +61,7 @@ impl OpenRouterClient {
         }
 
         let body: OpenRouterResponse = response.json().await.map_err(|e| e.to_string())?;
-        
+
         body.choices
             .first()
             .map(|c| c.message.content.clone())

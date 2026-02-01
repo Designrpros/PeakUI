@@ -153,7 +153,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             Length::Shrink,
             Alignment::Center,
             Alignment::Center,
-            context.theme.scaling,
+            context,
         );
 
         B::button(
@@ -391,7 +391,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
             Length::Shrink,
             Alignment::Center,
             Alignment::Center,
-            context.theme.scaling,
+            context,
         )
     }
 
@@ -417,6 +417,7 @@ pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBac
     width: Length,
     variant: Variant,
     is_secure: bool,
+    id: Option<iced::widget::Id>,
     _phantom: std::marker::PhantomData<B>,
 }
 
@@ -435,8 +436,14 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
             width: Length::Fill,
             variant: Variant::Solid,
             is_secure: false,
+            id: None,
             _phantom: std::marker::PhantomData,
         }
+    }
+
+    pub fn id(mut self, id: iced::widget::Id) -> Self {
+        self.id = Some(id);
+        self
     }
 
     pub fn width(mut self, width: Length) -> Self {
@@ -476,6 +483,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             self.font.clone(),
             self.is_secure,
             self.variant,
+            self.id.clone(),
             context,
         );
         B::container(

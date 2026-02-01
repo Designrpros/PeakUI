@@ -1,8 +1,8 @@
+use crate::core::{Backend, SpatialBackend};
+use crate::navigation::PageResult;
+use crate::prelude::*;
 use crate::reference::app::{ButtonLabState, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
-use crate::core::{Backend, SpatialBackend};
-use crate::prelude::*;
-use crate::navigation::PageResult;
 use std::sync::Arc;
 
 fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
@@ -24,7 +24,11 @@ fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
         .document("Primary action for the lab experiment")
 }
 
-pub fn view(base_context: &Context, lab: &ButtonLabState, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(
+    base_context: &Context,
+    lab: &ButtonLabState,
+    render_mode: RenderMode,
+) -> PageResult<Message> {
     let context = if lab.is_focused {
         base_context.clone().with_focus("button")
     } else {
@@ -36,13 +40,11 @@ pub fn view(base_context: &Context, lab: &ButtonLabState, render_mode: RenderMod
 
     // 1. Canvas View (Standard GUI)
     let button = create_button::<IcedBackend>(lab);
-    let canvas_preview = VStack::<Message, IcedBackend>::new()
-        .width(if lab.is_full_width {
-            Length::Fixed(400.0)
-        } else {
-            Length::Shrink
-        })
-        .push(button);
+    let canvas_preview = vstack![button].width(if lab.is_full_width {
+        Length::Fixed(400.0)
+    } else {
+        Length::Shrink
+    });
 
     // 2. Terminal View (ANSI Text)
     let terminal_preview = create_button::<TermBackend>(lab).view(context);
@@ -145,120 +147,103 @@ impl View<Message, IcedBackend> for ButtonInspector {
                     left: 20.0,
                 })
                 .push(
-                    VStack::new_generic()
-                        .spacing(8.0)
-                        .push(
-                            Text::<IcedBackend>::new("Label")
-                                .caption2()
-                                .bold()
-                                .secondary(),
-                        )
-                        .push(TextInput::<Message>::new(
-                            self.lab.label.clone(),
-                            "Button label",
-                            |s| Message::UpdateButtonLabel(s),
-                        )),
+                    vstack![
+                        text("Label").caption2().bold().secondary(),
+                        TextInput::<Message>::new(self.lab.label.clone(), "Button label", |s| {
+                            Message::UpdateButtonLabel(s)
+                        }),
+                    ]
+                    .spacing(8.0),
                 )
                 .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Variant")
-                                .caption2()
-                                .bold()
-                                .secondary(),
+                    vstack![
+                        text("Variant").caption2().bold().secondary(),
+                        SegmentedPicker::<Message, Theme>::new(
+                            vec![
+                                (
+                                    "Solid".to_string(),
+                                    Message::UpdateButtonVariant(Variant::Solid),
+                                ),
+                                (
+                                    "Soft".to_string(),
+                                    Message::UpdateButtonVariant(Variant::Soft),
+                                ),
+                                (
+                                    "Outl".to_string(),
+                                    Message::UpdateButtonVariant(Variant::Outline),
+                                ),
+                                (
+                                    "Ghst".to_string(),
+                                    Message::UpdateButtonVariant(Variant::Ghost),
+                                ),
+                                (
+                                    "Cmpct".to_string(),
+                                    Message::UpdateButtonVariant(Variant::Compact),
+                                ),
+                            ],
+                            match self.lab.variant {
+                                Variant::Solid => 0,
+                                Variant::Soft => 1,
+                                Variant::Outline => 2,
+                                Variant::Ghost => 3,
+                                Variant::Compact => 4,
+                                Variant::Plain => 4,
+                            },
                         )
-                        .push(
-                            SegmentedPicker::<Message, Theme>::new(
-                                vec![
-                                    (
-                                        "Solid".to_string(),
-                                        Message::UpdateButtonVariant(Variant::Solid),
-                                    ),
-                                    (
-                                        "Soft".to_string(),
-                                        Message::UpdateButtonVariant(Variant::Soft),
-                                    ),
-                                    (
-                                        "Outl".to_string(),
-                                        Message::UpdateButtonVariant(Variant::Outline),
-                                    ),
-                                    (
-                                        "Ghst".to_string(),
-                                        Message::UpdateButtonVariant(Variant::Ghost),
-                                    ),
-                                    (
-                                        "Cmpct".to_string(),
-                                        Message::UpdateButtonVariant(Variant::Compact),
-                                    ),
-                                ],
-                                match self.lab.variant {
-                                    Variant::Solid => 0,
-                                    Variant::Soft => 1,
-                                    Variant::Outline => 2,
-                                    Variant::Ghost => 3,
-                                    Variant::Compact => 4,
-                                    Variant::Plain => 4,
-                                },
-                            )
-                            .background_color(theme.colors.surface_variant)
-                            .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
-                        ),
+                        .background_color(theme.colors.surface_variant)
+                        .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
+                    ]
+                    .spacing(12.0),
                 )
                 .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Intent")
-                                .caption2()
-                                .bold()
-                                .secondary(),
+                    vstack![
+                        text("Intent").caption2().bold().secondary(),
+                        SegmentedPicker::<Message, Theme>::new(
+                            vec![
+                                (
+                                    "Pri".to_string(),
+                                    Message::UpdateButtonIntent(Intent::Primary),
+                                ),
+                                (
+                                    "Suc".to_string(),
+                                    Message::UpdateButtonIntent(Intent::Success),
+                                ),
+                                (
+                                    "Wrn".to_string(),
+                                    Message::UpdateButtonIntent(Intent::Warning),
+                                ),
+                                (
+                                    "Dng".to_string(),
+                                    Message::UpdateButtonIntent(Intent::Danger),
+                                ),
+                            ],
+                            match self.lab.intent {
+                                Intent::Primary => 0,
+                                Intent::Success => 1,
+                                Intent::Warning => 2,
+                                Intent::Danger => 3,
+                                _ => 0,
+                            },
                         )
-                        .push(
-                            SegmentedPicker::<Message, Theme>::new(
-                                vec![
-                                    (
-                                        "Pri".to_string(),
-                                        Message::UpdateButtonIntent(Intent::Primary),
-                                    ),
-                                    (
-                                        "Suc".to_string(),
-                                        Message::UpdateButtonIntent(Intent::Success),
-                                    ),
-                                    (
-                                        "Wrn".to_string(),
-                                        Message::UpdateButtonIntent(Intent::Warning),
-                                    ),
-                                    (
-                                        "Dng".to_string(),
-                                        Message::UpdateButtonIntent(Intent::Danger),
-                                    ),
-                                ],
-                                match self.lab.intent {
-                                    Intent::Primary => 0,
-                                    Intent::Success => 1,
-                                    Intent::Warning => 2,
-                                    Intent::Danger => 3,
-                                    _ => 0,
-                                },
-                            )
-                            .background_color(theme.colors.surface_variant)
-                            .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
-                        ),
+                        .background_color(theme.colors.surface_variant)
+                        .active_bg_color(theme.colors.primary.scale_alpha(0.8)),
+                    ]
+                    .spacing(12.0),
                 )
                 .push(Divider::new())
                 .push(
-                    VStack::new_generic()
-                        .spacing(16.0)
-                        .push(Toggle::new("Full Width", self.lab.is_full_width, |b| {
+                    vstack![
+                        Toggle::new("Full Width", self.lab.is_full_width, |b| {
                             Message::ToggleButtonFullWidth(b)
-                        }))
-                        .push(Toggle::new("Disabled", self.lab.is_disabled, |b| {
+                        }),
+                        Toggle::new("Disabled", self.lab.is_disabled, |b| {
                             Message::ToggleButtonDisabled(b)
-                        }))
-                        .push(Toggle::new("Simulate Focus", self.lab.is_focused, |b| {
+                        }),
+                        Toggle::new("Simulate Focus", self.lab.is_focused, |b| {
                             Message::ToggleButtonFocused(b)
-                        })),
+                        })
+                    ]
+                    .spacing(16.0),
                 ),
         )
         .view(context)

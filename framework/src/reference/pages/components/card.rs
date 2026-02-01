@@ -1,12 +1,13 @@
-use crate::reference::views::ComponentDoc;
+use crate::dsl::container;
+use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
+use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(_context: &Context) -> PageResult<Message> {
+pub fn view<B: Backend>(_context: &Context) -> PageResult<Message, B> {
     PageResult::new(
-        ComponentDoc::new(
+        ComponentDoc::<Message, B>::new(
             "Card",
             "A stylized container with a background, border, and shadow, used to group related information into a singular unit.",
             r#"
@@ -16,31 +17,26 @@ Card::new(
         .push(Text::new("Card description content goes here."))
 )
 "#,
-            Arc::new(VStack::<Message, IcedBackend>::new_generic()
-                .spacing(20.0)
-                .push(ProxyView::new(move |ctx| {
-                    container(
-                        VStack::<Message, IcedBackend>::new_generic()
-                            .spacing(8.0)
-                            .push(Text::<IcedBackend>::new("Modern Card").title3().bold())
-                            .push(Text::<IcedBackend>::new("Cards are the building blocks of dashboard interfaces.").body().secondary())
-                            .view(ctx)
+            Arc::new(
+                vstack![ProxyView::new(move |ctx| {
+                    let colors = &ctx.theme.colors;
+                    container::<Message, B>(
+                        vstack![
+                            text::<B>("Modern Card").title3().bold(),
+                            text::<B>("Cards are the building blocks of dashboard interfaces.")
+                                .body()
+                                .secondary()
+                        ]
+                        .spacing(8.0),
                     )
-                    .padding(24)
-                    .style(move |theme: &Theme| {
-                        let colors = theme.extended_palette();
-                        container::Style {
-                            background: Some(colors.background.weak.color.into()),
-                            border: Border {
-                                color: colors.background.strong.color.scale_alpha(0.1),
-                                width: 1.0,
-                                radius: 16.0.into(),
-                            },
-                            ..Default::default()
-                        }
-                    })
-                    .into()
-                })))
+                    .padding(24.0)
+                    .background(colors.surface)
+                    .border(1.0, colors.border)
+                    .radius(16.0)
+                    .view(ctx)
+                })]
+                .spacing(20.0),
+            ),
         )
     )
 }

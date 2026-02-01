@@ -1,6 +1,7 @@
-use crate::prelude::*;
-use iced::widget::{column, container, row, scrollable, text};
-use iced::{Background, Border, Color, Element, Length, Theme};
+use crate::atoms::Icon;
+use crate::core::{Backend, Context, TextSpan, View};
+use crate::modifiers::Variant;
+use iced::{Color, Length};
 
 pub struct CodeBlock<Message = ()> {
     code: String,
@@ -39,100 +40,166 @@ impl<Message> CodeBlock<Message> {
     }
 }
 
-impl<Message> View<Message, IcedBackend> for CodeBlock<Message>
+impl<Message, B: Backend> View<Message, B> for CodeBlock<Message>
 where
     Message: Clone + 'static,
 {
-    fn view(&self, context: &Context) -> Element<'static, Message, Theme, iced::Renderer> {
-        let theme_mode = context.theme; // We use this for outer borders, but code is always dark
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let theme_mode = context.theme;
 
         // VS Code Colors
         let bg_color = Color::from_rgb8(30, 30, 30); // #1E1E1E
         let header_bg = Color::from_rgb8(37, 37, 38); // #252526
+        let border_color = theme_mode.colors.border.scale_alpha(0.5);
 
         // 1. Window Chrome (Header)
-        let header = container(
-            row![
-                // Language Label
-                text(self.language.to_uppercase())
-                    .size(10)
-                    .font(iced::Font::MONOSPACE)
-                    .color(Color::from_rgb8(150, 150, 150)),
-                iced::widget::Space::new().width(Length::Fill),
-                // Copy Button
-                if let Some(on_copy) = &self.on_copy {
-                    let msg = on_copy(self.code.clone());
-                    let btn: Element<'static, Message, Theme, iced::Renderer> =
-                        iced::widget::button(
-                            row![
-                                crate::atoms::Icon::<IcedBackend>::new("copy")
-                                    .size(10.0)
-                                    .color(Color::from_rgb8(150, 150, 150))
-                                    .view(context),
-                                text("Copy")
-                                    .size(10)
-                                    .font(iced::Font::MONOSPACE)
-                                    .color(Color::from_rgb8(150, 150, 150)),
-                            ]
-                            .spacing(6)
-                            .align_y(iced::Alignment::Center),
-                        )
-                        .on_press(msg)
-                        .style(iced::widget::button::secondary)
-                        .padding([4, 8])
-                        .into();
-                    btn
-                } else {
-                    iced::widget::Space::new().width(0).into()
-                },
-            ]
-            .width(Length::Fill)
-            .align_y(iced::Alignment::Center)
-            .padding([8, 12])
-            .spacing(12),
-        )
-        .style(move |_| container::Style {
-            background: Some(Background::Color(header_bg)),
-            ..Default::default()
-        });
+        let header_items = vec![
+            B::text(
+                self.language.to_uppercase(),
+                10.0,
+                Some(Color::from_rgb8(150, 150, 150)),
+                false,
+                false,
+                None,
+                Some(iced::Font::MONOSPACE),
+                Length::Shrink,
+                iced::Alignment::Start,
+                context,
+            ),
+            B::space(Length::Fill, Length::Shrink),
+            if let Some(on_copy) = &self.on_copy {
+                let msg = on_copy(self.code.clone());
+
+                let btn_content = B::hstack(
+                    vec![
+                        Icon::<B>::new("copy")
+                            .size(10.0)
+                            .color(Color::from_rgb8(150, 150, 150))
+                            .view(context),
+                        B::text(
+                            "Copy".to_string(),
+                            10.0,
+                            Some(Color::from_rgb8(150, 150, 150)),
+                            false,
+                            false,
+                            None,
+                            Some(iced::Font::MONOSPACE),
+                            Length::Shrink,
+                            iced::Alignment::Start,
+                            context,
+                        ),
+                    ],
+                    6.0,
+                    iced::Padding::from([2, 4]),
+                    Length::Shrink,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    iced::Alignment::Center,
+                    context,
+                );
+
+                B::button(
+                    btn_content,
+                    Some(msg),
+                    Variant::Ghost,
+                    crate::modifiers::Intent::Neutral,
+                    Length::Shrink,
+                    true,
+                    context,
+                )
+            } else {
+                B::space(Length::Fixed(0.0), Length::Shrink)
+            },
+        ];
+
+        let header = B::hstack(
+            header_items,
+            12.0,
+            iced::Padding::from([8, 12]),
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
+
+        let header_container = B::container(
+            header,
+            iced::Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            Some(header_bg),
+            0.0, // Top radius handled by outer container? Or 0 here.
+            0.0,
+            None,
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Center,
+            context,
+        );
 
         // 2. Code Area with Syntax Highlighting
-        let code_area = container(scrollable(highlight_rust::<Message>(&self.code)).direction(
-            scrollable::Direction::Both {
-                vertical: scrollable::Scrollbar::new().width(6).scroller_width(6),
-                horizontal: scrollable::Scrollbar::new().width(6).scroller_width(6),
-            },
-        ))
-        .padding(16)
-        .width(Length::Fill)
-        .style(move |_| container::Style {
-            background: Some(Background::Color(bg_color)),
-            ..Default::default()
-        });
+        let raw_code_view = highlight_rust::<Message, B>(&self.code, context);
+        let scroll_area = B::scroll_view(
+            raw_code_view,
+            Length::Fill,
+            Length::Shrink,
+            None,
+            true,
+            context,
+        );
+        // Note: scroll_view usually enables scrolling if content overflows.
+
+        let code_container = B::container(
+            scroll_area,
+            iced::Padding::from(16),
+            Length::Fill,
+            Length::Shrink,
+            Some(bg_color),
+            0.0,
+            0.0,
+            None,
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        );
 
         // 3. Assemble
-        container(column![header, code_area])
-            .clip(true)
-            .width(Length::Fill)
-            .style(move |_| container::Style {
-                border: Border {
-                    color: theme_mode.colors.border.scale_alpha(0.5),
-                    width: 1.0,
-                    radius: 8.0.into(),
-                },
-                background: Some(Background::Color(bg_color)),
-                ..Default::default()
-            })
-            .into()
+        let col = B::vstack(
+            vec![header_container, code_container],
+            0.0,
+            iced::Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        );
+
+        B::container(
+            col,
+            iced::Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            Some(bg_color), // Background of the whole block
+            8.0,
+            1.0,
+            Some(border_color),
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        )
     }
 }
 
 // Helper: Heuristic Syntax Highlighter
-fn highlight_rust<'a, Message>(content: &str) -> Element<'a, Message, Theme, iced::Renderer>
+fn highlight_rust<Message, B: Backend>(content: &str, context: &Context) -> B::AnyView<Message>
 where
     Message: 'static + Clone,
 {
-    let mut spans: Vec<iced::advanced::text::Span<'_, ()>> = Vec::new();
+    let mut spans: Vec<TextSpan> = Vec::new();
 
     // VS Code Dark Theme Palette
     let c_keyword = Color::from_rgb8(197, 134, 192); // Purple
@@ -171,15 +238,13 @@ where
             c_plain
         };
 
-        spans.push(
-            iced::widget::text::Span::new(token.to_string())
-                .color(color)
-                .font(iced::Font::MONOSPACE),
-        );
+        spans.push(TextSpan {
+            content: token.to_string(),
+            color: Some(color),
+            font: Some(iced::Font::MONOSPACE),
+            size: None, // Default size
+        });
     }
 
-    iced::widget::rich_text(spans)
-        .size(13)
-        .line_height(1.6)
-        .into()
+    B::rich_text(spans, 13.0, Length::Fill, iced::Alignment::Start, context)
 }

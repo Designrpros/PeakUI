@@ -73,7 +73,7 @@ impl MotionDemo {
             ThemeTokens::get(ShellMode::Desktop, ThemeTone::Dark),
             Localization::default(),
             |context| {
-                VStack::new()
+                VStack::<Message, peak_ui::core::IcedBackend>::new()
                     .push(Text::new("Motion Engine").size(48.0))
                     .push(Text::new("Smooth Spring Physics").size(18.0))
                     .push(Space::new(Length::Fixed(0.0), Length::Fixed(40.0)))
