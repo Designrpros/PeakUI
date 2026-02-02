@@ -3,6 +3,7 @@ use crate::modifiers::{Intent, Variant};
 // Force rebuild to pick up peak-icons changes
 use iced::{widget::Id, Element, Subscription, Task};
 use iced::{Alignment, Color, Length, Padding, Renderer, Shadow, Size, Theme, Vector};
+pub use nalgebra::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector3};
 pub use peak_core::registry::ShellMode;
 
 pub trait App: Sized {
@@ -102,6 +103,70 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     }
 }
 
+pub struct SpatialBillboard<Message: 'static, B: Backend, V: View<Message, B>> {
+    pub inner: V,
+    pub active: bool,
+    pub _phantom: std::marker::PhantomData<(Message, B)>,
+}
+
+impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+    for SpatialBillboard<Message, B, V>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let mut child_context = context.clone();
+        child_context.billboarding = self.active;
+        self.inner.view(&child_context)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe(context);
+        node.neural_tag = Some(format!(
+            "{}:spatial:billboard:{}",
+            node.neural_tag.as_deref().unwrap_or_default(),
+            self.active
+        ));
+        node
+    }
+
+    fn describe_iced(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe_iced(context);
+        node.neural_tag = Some(format!(
+            "{}:spatial:billboard:{}",
+            node.neural_tag.as_deref().unwrap_or_default(),
+            self.active
+        ));
+        node
+    }
+}
+
+pub struct PhysicalDepthView<Message: 'static, B: Backend, V: View<Message, B>> {
+    pub inner: V,
+    pub depth: f32,
+    pub _phantom: std::marker::PhantomData<(Message, B)>,
+}
+
+impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+    for PhysicalDepthView<Message, B, V>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let mut child_context = context.clone();
+        child_context.depth_offset = self.depth;
+        self.inner.view(&child_context)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe(context);
+        node.depth = Some(self.depth);
+        node
+    }
+
+    fn describe_iced(&self, context: &Context) -> SemanticNode {
+        let mut node = self.inner.describe_iced(context);
+        node.depth = Some(self.depth);
+        node
+    }
+}
+
 pub struct NeuralSudo<Message: 'static, B: Backend, V: View<Message, B>> {
     inner: V,
     reason: String,
@@ -144,13 +209,15 @@ pub struct Context {
     pub localization: Localization,
     pub peak_id: String,
     pub foreground: Option<Color>,
+    pub billboarding: bool,
+    pub depth_offset: f32,
 }
 
 impl Default for Context {
     fn default() -> Self {
         Self {
-            theme: ThemeTokens::default(),
             mode: ShellMode::Desktop,
+            theme: peak_theme::ThemeTokens::default(),
             device: DeviceType::Desktop,
             size: iced::Size::ZERO,
             safe_area: iced::Padding::ZERO,
@@ -158,6 +225,8 @@ impl Default for Context {
             localization: Localization::default(),
             peak_id: String::new(),
             foreground: None,
+            billboarding: false,
+            depth_offset: 0.0,
         }
     }
 }
@@ -173,7 +242,7 @@ pub enum DeviceType {
 impl Context {
     pub fn new(
         mode: ShellMode,
-        theme: ThemeTokens,
+        theme: peak_theme::ThemeTokens,
         size: Size,
         localization: Localization,
     ) -> Self {
@@ -194,6 +263,8 @@ impl Context {
             localization,
             peak_id: String::new(),
             foreground: None,
+            billboarding: false,
+            depth_offset: 0.0,
         }
     }
 
@@ -254,16 +325,157 @@ pub enum Layout {
     Wrap,
 }
 
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct BoundingBox3D {
+    pub min: Point3<f32>,
+    pub max: Point3<f32>,
+}
+
+impl BoundingBox3D {
+    pub fn new(min: Point3<f32>, max: Point3<f32>) -> Self {
+        Self { min, max }
+    }
+
+    pub fn zero() -> Self {
+        Self::new(Point3::origin(), Point3::origin())
+    }
+
+    pub fn size(&self) -> Vector3<f32> {
+        self.max - self.min
+    }
+
+    pub fn center(&self) -> Point3<f32> {
+        self.min + (self.size() / 2.0)
+    }
+
+    pub fn intersect_ray(&self, ray: &Ray) -> Option<f32> {
+        let mut t_min = f32::MIN;
+        let mut t_max = f32::MAX;
+
+        for i in 0..3 {
+            let inv_d = 1.0 / ray.direction[i];
+            let mut t0 = (self.min[i] - ray.origin[i]) * inv_d;
+            let mut t1 = (self.max[i] - ray.origin[i]) * inv_d;
+
+            if inv_d < 0.0 {
+                std::mem::swap(&mut t0, &mut t1);
+            }
+
+            t_min = t_min.max(t0);
+            t_max = t_max.min(t1);
+
+            if t_max <= t_min {
+                return None;
+            }
+        }
+
+        if t_min > 0.0 {
+            Some(t_min)
+        } else if t_max > 0.0 {
+            Some(t_max)
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, serde::Serialize)]
+pub struct Ray {
+    pub origin: Point3<f32>,
+    pub direction: Vector3<f32>,
+}
+
+impl Ray {
+    pub fn new(origin: Point3<f32>, direction: Vector3<f32>) -> Self {
+        Self {
+            origin,
+            direction: direction.normalize(),
+        }
+    }
+
+    pub fn at(&self, t: f32) -> Point3<f32> {
+        self.origin + self.direction * t
+    }
+}
+
+pub struct RayHit<Message = ()> {
+    pub distance: f32,
+    pub point: Point3<f32>,
+    pub normal: Vector3<f32>,
+    pub message: Option<Message>,
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct SpatialNode {
+#[serde(bound = "")]
+pub struct SpatialNode<Message = ()> {
     pub role: String,
     pub width: f32,
     pub height: f32,
     pub depth: f32,
     pub transform: Transform3D,
+    pub bounds: BoundingBox3D,
     pub layout: Layout,
     pub is_focused: bool,
-    pub children: Vec<SpatialNode>,
+    pub billboarding: bool,
+    #[serde(skip)]
+    pub on_press: Option<Message>,
+    pub children: Vec<SpatialNode<Message>>,
+}
+
+impl<Message: Clone> SpatialNode<Message> {
+    pub fn hit_test(&self, ray: &Ray) -> Option<RayHit<Message>> {
+        // 1. Transform ray into local space
+        let local_origin = ray.origin - self.transform.position;
+        let local_ray = Ray::new(Point3::from(local_origin), ray.direction);
+
+        // 2. Check bounding box
+        let dist = self.bounds.intersect_ray(&local_ray)?;
+
+        // 3. Child check (recursive) - find closest child hit
+        let mut best_hit: Option<RayHit<Message>> = None;
+
+        for child in &self.children {
+            if let Some(hit) = child.hit_test(&local_ray) {
+                if best_hit
+                    .as_ref()
+                    .map_or(true, |bh| hit.distance < bh.distance)
+                {
+                    best_hit = Some(hit);
+                }
+            }
+        }
+
+        // 4. Return closest hit
+        if let Some(mut hit) = best_hit {
+            // Transform hit back to parent space
+            hit.point = Point3::from(hit.point.coords + self.transform.position);
+            Some(hit)
+        } else {
+            // Hit this node's bounding box
+            Some(RayHit {
+                distance: dist,
+                point: ray.at(dist),
+                normal: Vector3::zeros(),
+                message: self.on_press.clone(),
+            })
+        }
+    }
+
+    pub fn to_empty(&self) -> SpatialNode<()> {
+        SpatialNode {
+            role: self.role.clone(),
+            width: self.width,
+            height: self.height,
+            depth: self.depth,
+            transform: self.transform,
+            bounds: self.bounds,
+            layout: self.layout,
+            is_focused: self.is_focused,
+            billboarding: self.billboarding,
+            on_press: None,
+            children: self.children.iter().map(|c| c.to_empty()).collect(),
+        }
+    }
 }
 
 fn scale_length(l: Length, scale: f32) -> Length {
@@ -273,12 +485,21 @@ fn scale_length(l: Length, scale: f32) -> Length {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, serde::Serialize)]
+#[derive(Debug, Clone, Copy, serde::Serialize)]
 pub struct Transform3D {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
-    pub rotation_y: f32,
+    pub position: Vector3<f32>,
+    pub rotation: Vector3<f32>, // Euler angles for now, will upgrade to Quat in layout
+    pub scale: Vector3<f32>,
+}
+
+impl Default for Transform3D {
+    fn default() -> Self {
+        Self {
+            position: Vector3::zeros(),
+            rotation: Vector3::zeros(),
+            scale: Vector3::new(1.0, 1.0, 1.0),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -362,14 +583,23 @@ pub trait Backend: Sized + Clone + 'static {
 
     fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message>;
 
-    fn space<Message: 'static>(width: Length, height: Length) -> Self::AnyView<Message>;
+    fn space<Message: 'static>(
+        width: Length,
+        height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
 
-    fn circle<Message: 'static>(radius: f32, color: Option<Color>) -> Self::AnyView<Message>;
+    fn circle<Message: 'static>(
+        radius: f32,
+        color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
 
     fn capsule<Message: 'static>(
         width: Length,
         height: Length,
         color: Option<Color>,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn rectangle<Message: 'static>(
@@ -379,6 +609,7 @@ pub trait Backend: Sized + Clone + 'static {
         radius: f32,
         border_width: f32,
         border_color: Option<Color>,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn button<Message: Clone + 'static>(
@@ -429,12 +660,14 @@ pub trait Backend: Sized + Clone + 'static {
         width: Length,
         height: Length,
         alignment: Alignment,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn grid<Message: 'static>(
         children: Vec<Self::AnyView<Message>>,
         columns: usize,
         spacing: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn image<Message: 'static>(
@@ -442,6 +675,7 @@ pub trait Backend: Sized + Clone + 'static {
         width: Length,
         height: Length,
         radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn video<Message: 'static>(
@@ -449,6 +683,7 @@ pub trait Backend: Sized + Clone + 'static {
         width: Length,
         height: Length,
         radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn web_view<Message: 'static>(
@@ -456,6 +691,7 @@ pub trait Backend: Sized + Clone + 'static {
         width: Length,
         height: Length,
         radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn container<Message: 'static>(
@@ -487,6 +723,7 @@ pub trait Backend: Sized + Clone + 'static {
         on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         on_press: Option<Message>,
         on_release: Option<Message>,
+        context: &Context,
     ) -> Self::AnyView<Message>;
 
     fn with_tooltip<Message: 'static>(
@@ -513,7 +750,7 @@ pub trait Backend: Sized + Clone + 'static {
 }
 
 impl Backend for SpatialBackend {
-    type AnyView<Message: 'static> = SpatialNode;
+    type AnyView<Message: 'static> = SpatialNode<Message>;
 
     fn vstack<Message: 'static>(
         children: Vec<Self::AnyView<Message>>,
@@ -523,13 +760,14 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         let mut y_offset = 0.0;
         let mut nodes = Vec::new();
 
         for mut child in children {
-            child.transform.y = y_offset;
+            child.transform.position.y = y_offset;
+            child.transform.position.z += context.depth_offset;
             y_offset += child.height + spacing;
             nodes.push(child);
         }
@@ -540,8 +778,11 @@ impl Backend for SpatialBackend {
             height: y_offset,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: false,
+            on_press: None,
             children: nodes,
         }
     }
@@ -554,13 +795,14 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         let mut x_offset = 0.0;
         let mut nodes = Vec::new();
 
         for mut child in children {
-            child.transform.x = x_offset;
+            child.transform.position.x = x_offset;
+            child.transform.position.z += context.depth_offset;
             x_offset += child.width + spacing;
             nodes.push(child);
         }
@@ -571,8 +813,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Horizontal,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: nodes,
         }
     }
@@ -586,7 +831,7 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "wrap".to_string(),
@@ -594,8 +839,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Wrap,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children,
         }
     }
@@ -605,7 +853,7 @@ impl Backend for SpatialBackend {
         _size: f32,
         _width: Length,
         _alignment: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "rich_text".to_string(),
@@ -613,8 +861,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -629,7 +880,7 @@ impl Backend for SpatialBackend {
         _font: Option<iced::Font>,
         _width: Length,
         _alignment: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "text".to_string(),
@@ -637,8 +888,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![], // SpatialBackend doesn't store text content in children
         }
     }
@@ -647,7 +901,7 @@ impl Backend for SpatialBackend {
         _name: String,
         _size: f32,
         _color: Option<Color>,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "icon".to_string(),
@@ -655,47 +909,67 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
 
-    fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
+    fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message> {
         SpatialNode {
             role: "divider".to_string(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
 
-    fn space<Message: 'static>(_width: Length, _height: Length) -> Self::AnyView<Message> {
+    fn space<Message: 'static>(
+        _width: Length,
+        _height: Length,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "space".to_string(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
 
-    fn circle<Message: 'static>(_radius: f32, _color: Option<Color>) -> Self::AnyView<Message> {
+    fn circle<Message: 'static>(
+        _radius: f32,
+        _color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "circle".to_string(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -704,6 +978,7 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _color: Option<Color>,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "capsule".to_string(),
@@ -711,8 +986,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -724,6 +1002,7 @@ impl Backend for SpatialBackend {
         _radius: f32,
         _border_width: f32,
         _border_color: Option<Color>,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "rectangle".to_string(),
@@ -731,8 +1010,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -744,7 +1026,7 @@ impl Backend for SpatialBackend {
         _intent: Intent,
         _width: Length,
         _is_compact: bool,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "button".to_string(),
@@ -752,8 +1034,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: _on_press,
             children: vec![content],
         }
     }
@@ -762,7 +1047,7 @@ impl Backend for SpatialBackend {
         _title: String,
         _icon: String,
         _is_selected: bool,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "sidebar_item".to_string(),
@@ -770,8 +1055,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Horizontal,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -785,7 +1073,7 @@ impl Backend for SpatialBackend {
         _is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "text_input".to_string(),
@@ -793,8 +1081,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: true,
+            billboarding: context.billboarding,
+            on_press: _on_submit,
             children: vec![],
         }
     }
@@ -803,7 +1094,7 @@ impl Backend for SpatialBackend {
         _range: std::ops::RangeInclusive<f32>,
         _value: f32,
         _on_change: impl Fn(f32) -> Message + 'static,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "slider".to_string(),
@@ -811,8 +1102,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -821,7 +1115,7 @@ impl Backend for SpatialBackend {
         _label: String,
         _is_active: bool,
         _on_toggle: impl Fn(bool) -> Message + 'static,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "toggle".to_string(),
@@ -829,8 +1123,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -840,16 +1137,29 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _alignment: Alignment,
+        context: &Context,
     ) -> Self::AnyView<Message> {
+        let mut z_offset = 0.0;
+        let mut nodes = Vec::new();
+
+        for mut child in children {
+            child.transform.position.z = z_offset;
+            z_offset += 10.0; // Default depth spacing for ZStack
+            nodes.push(child);
+        }
+
         SpatialNode {
             role: "zstack".to_string(),
             width: 0.0,
             height: 0.0,
-            depth: 0.0,
+            depth: z_offset,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
-            children,
+            billboarding: context.billboarding,
+            on_press: None,
+            children: nodes,
         }
     }
 
@@ -857,6 +1167,7 @@ impl Backend for SpatialBackend {
         children: Vec<Self::AnyView<Message>>,
         _columns: usize,
         _spacing: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "grid".to_string(),
@@ -864,8 +1175,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children,
         }
     }
@@ -875,6 +1189,7 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "image".to_string(),
@@ -882,8 +1197,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -893,6 +1211,7 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "video".to_string(),
@@ -900,8 +1219,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -911,6 +1233,7 @@ impl Backend for SpatialBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "web_view".to_string(),
@@ -918,8 +1241,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![],
         }
     }
@@ -936,7 +1262,7 @@ impl Backend for SpatialBackend {
         _shadow: Option<iced::Shadow>,
         _align_x: Alignment,
         _align_y: Alignment,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "container".to_string(),
@@ -944,8 +1270,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![content],
         }
     }
@@ -956,7 +1285,7 @@ impl Backend for SpatialBackend {
         _height: Length,
         _id: Option<&'static str>,
         _show_indicators: bool,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "scroll_view".to_string(),
@@ -964,8 +1293,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
             children: vec![content],
         }
     }
@@ -975,6 +1307,7 @@ impl Backend for SpatialBackend {
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,
         _on_release: Option<Message>,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "mouse_area".to_string(),
@@ -982,8 +1315,11 @@ impl Backend for SpatialBackend {
             height: 0.0,
             depth: 0.0,
             transform: Transform3D::default(),
+            bounds: BoundingBox3D::zero(),
             layout: Layout::Vertical,
             is_focused: false,
+            billboarding: context.billboarding,
+            on_press: _on_press,
             children: vec![content],
         }
     }
@@ -1328,14 +1664,22 @@ impl Backend for IcedBackend {
             .into()
     }
 
-    fn space<Message: 'static>(width: Length, height: Length) -> Self::AnyView<Message> {
+    fn space<Message: 'static>(
+        width: Length,
+        height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         iced::widget::Space::new()
             .width(width)
             .height(height)
             .into()
     }
 
-    fn circle<Message: 'static>(radius: f32, color: Option<Color>) -> Self::AnyView<Message> {
+    fn circle<Message: 'static>(
+        radius: f32,
+        color: Option<Color>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         use iced::widget::container;
         container(
             iced::widget::Space::new()
@@ -1359,6 +1703,7 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
         container(iced::widget::Space::new().width(width).height(height))
@@ -1382,6 +1727,7 @@ impl Backend for IcedBackend {
         radius: f32,
         border_width: f32,
         border_color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
 
@@ -1681,6 +2027,7 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         _alignment: Alignment,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let s = iced::widget::stack(children).width(width).height(height);
         s.into()
@@ -1690,6 +2037,7 @@ impl Backend for IcedBackend {
         mut children: Vec<Self::AnyView<Message>>,
         columns: usize,
         spacing: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         if columns == 0 {
             return iced::widget::column(children).spacing(spacing).into();
@@ -1718,6 +2066,7 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let p: String = path.into();
 
@@ -1808,6 +2157,7 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::{container, text};
 
@@ -1841,6 +2191,7 @@ impl Backend for IcedBackend {
         width: Length,
         height: Length,
         radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         #[cfg(target_arch = "wasm32")]
         {
@@ -2114,6 +2465,7 @@ impl Backend for IcedBackend {
         on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         on_press: Option<Message>,
         on_release: Option<Message>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::mouse_area;
         let mut area = mouse_area(content);
@@ -2355,11 +2707,19 @@ impl Backend for TermBackend {
         "────────────────────".to_string()
     }
 
-    fn space<Message: 'static>(_width: Length, _height: Length) -> Self::AnyView<Message> {
+    fn space<Message: 'static>(
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         " ".to_string()
     }
 
-    fn circle<Message: 'static>(_radius: f32, _color: Option<Color>) -> Self::AnyView<Message> {
+    fn circle<Message: 'static>(
+        _radius: f32,
+        _color: Option<Color>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         "O".to_string()
     }
 
@@ -2367,6 +2727,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         "=".to_string()
     }
@@ -2378,6 +2739,7 @@ impl Backend for TermBackend {
         _radius: f32,
         _border_width: f32,
         _border_color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         "█".to_string()
     }
@@ -2453,6 +2815,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _alignment: Alignment,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         children.join("\n")
     }
@@ -2461,6 +2824,7 @@ impl Backend for TermBackend {
         children: Vec<Self::AnyView<Message>>,
         _columns: usize,
         _spacing: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         children.join(" | ")
     }
@@ -2470,6 +2834,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[IMG: {}]", path.into())
     }
@@ -2479,6 +2844,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[VIDEO: {}]", path.into())
     }
@@ -2488,6 +2854,7 @@ impl Backend for TermBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[WEB: {}]", url)
     }
@@ -2525,6 +2892,7 @@ impl Backend for TermBackend {
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,
         _on_release: Option<Message>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }
@@ -2541,6 +2909,28 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         NeuralView {
             inner: self,
             tag: tag.into(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    fn billboard(self, active: bool) -> SpatialBillboard<Message, B, Self>
+    where
+        Self: Sized + 'static,
+    {
+        SpatialBillboard {
+            inner: self,
+            active,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    fn physical_depth(self, depth: f32) -> PhysicalDepthView<Message, B, Self>
+    where
+        Self: Sized + 'static,
+    {
+        PhysicalDepthView {
+            inner: self,
+            depth,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -2619,6 +3009,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
 pub struct SemanticNode {
     #[serde(rename = "r")]
     pub role: String,
+    #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
@@ -2635,6 +3027,10 @@ pub struct SemanticNode {
     pub is_protected: bool,
     #[serde(rename = "pr", skip_serializing_if = "Option::is_none")]
     pub protection_reason: Option<String>,
+    #[serde(rename = "z", skip_serializing_if = "Option::is_none")]
+    pub depth: Option<f32>,
+    #[serde(rename = "s", skip_serializing_if = "Option::is_none")]
+    pub scale: Option<[f32; 3]>,
 }
 
 fn is_false(b: &bool) -> bool {
@@ -2912,7 +3308,11 @@ impl Backend for AIBackend {
         }
     }
 
-    fn space<Message: 'static>(_width: Length, _height: Length) -> Self::AnyView<Message> {
+    fn space<Message: 'static>(
+        _width: Length,
+        _height: Length,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
             role: "space".to_string(),
@@ -2925,7 +3325,11 @@ impl Backend for AIBackend {
         }
     }
 
-    fn circle<Message: 'static>(_radius: f32, _color: Option<Color>) -> Self::AnyView<Message> {
+    fn circle<Message: 'static>(
+        _radius: f32,
+        _color: Option<Color>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
             role: "circle".to_string(),
@@ -2942,6 +3346,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -2962,6 +3367,7 @@ impl Backend for AIBackend {
         _radius: f32,
         _border_width: f32,
         _border_color: Option<Color>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -3083,6 +3489,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _alignment: Alignment,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -3100,6 +3507,7 @@ impl Backend for AIBackend {
         children: Vec<Self::AnyView<Message>>,
         columns: usize,
         _spacing: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             accessibility: None,
@@ -3118,6 +3526,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             role: "image".to_string(),
@@ -3131,6 +3540,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             role: "video".to_string(),
@@ -3144,6 +3554,7 @@ impl Backend for AIBackend {
         _width: Length,
         _height: Length,
         _radius: f32,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
             role: "web_view".to_string(),
@@ -3185,6 +3596,7 @@ impl Backend for AIBackend {
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,
         _on_release: Option<Message>,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         content
     }

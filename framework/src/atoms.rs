@@ -255,7 +255,7 @@ impl<B: Backend> Rectangle<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Rectangle<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::rectangle(
             self.width,
             self.height,
@@ -263,6 +263,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Rectangle<B> {
             self.radius,
             self.border_width,
             self.border_color,
+            context,
         )
     }
 
@@ -303,8 +304,8 @@ impl<B: Backend> Circle<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Circle<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::circle(self.radius, self.color)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::circle(self.radius, self.color, context)
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -346,8 +347,8 @@ impl<B: Backend> Capsule<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Capsule<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::capsule(self.width, self.height, self.color)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::capsule(self.width, self.height, self.color, context)
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -382,8 +383,8 @@ impl<B: Backend> Space<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Space<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::space(self.width, self.height)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::space(self.width, self.height, context)
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -549,8 +550,14 @@ impl<B: Backend> Image<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::image(self.path.clone(), self.width, self.height, self.radius)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::image(
+            self.path.clone(),
+            self.width,
+            self.height,
+            self.radius,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -603,8 +610,14 @@ impl<B: Backend> Video<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::video(self.path.clone(), self.width, self.height, self.radius)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::video(
+            self.path.clone(),
+            self.width,
+            self.height,
+            self.radius,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -657,8 +670,14 @@ impl<B: Backend> WebView<B> {
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
-    fn view(&self, _context: &Context) -> B::AnyView<Message> {
-        B::web_view(self.url.clone(), self.width, self.height, self.radius)
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        B::web_view(
+            self.url.clone(),
+            self.width,
+            self.height,
+            self.radius,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {

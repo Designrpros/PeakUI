@@ -1275,6 +1275,9 @@ impl App {
                 Action::Unknown(name) => {
                     log::warn!("Unknown AI Action: {}", name);
                 }
+                Action::Teleport { .. } | Action::Scale { .. } | Action::Rotate { .. } => {
+                    log::info!("AI Spatial Action received: {:?}", action);
+                }
             }
         }
 

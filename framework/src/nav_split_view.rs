@@ -343,6 +343,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                     None, // We don't use move here, we use global move below
                     self.on_start_resize_sidebar.clone(),
                     self.on_stop_resize_sidebar.clone(),
+                    context,
                 ));
             } else {
                 // Fixed divider if locked
@@ -401,6 +402,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                         None,
                         self.on_start_resize_inspector.clone(),
                         self.on_stop_resize_inspector.clone(),
+                        context,
                     ));
                 } else {
                     main_row = main_row.push(
@@ -479,6 +481,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                             as Arc<dyn Fn(iced::Point) -> Message + Send + Sync>),
                         None, // Divider handles start
                         on_stop,
+                        context,
                     )
                 } else {
                     container(main_row)

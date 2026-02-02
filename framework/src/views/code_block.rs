@@ -66,7 +66,7 @@ where
                 iced::Alignment::Start,
                 context,
             ),
-            B::space(Length::Fill, Length::Shrink),
+            B::space(Length::Fill, Length::Shrink, context),
             if let Some(on_copy) = &self.on_copy {
                 let msg = on_copy(self.code.clone());
 
@@ -108,7 +108,7 @@ where
                     context,
                 )
             } else {
-                B::space(Length::Fixed(0.0), Length::Shrink)
+                B::space(Length::Fixed(0.0), Length::Shrink, context)
             },
         ];
 

@@ -112,7 +112,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
 
         let _input_row_2 = B::hstack(
             vec![
-                B::space(Length::Fill, Length::Shrink),
+                B::space(Length::Fill, Length::Shrink, context),
                 B::button(
                     B::text(
                         "".to_string(),
@@ -162,7 +162,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
         );
 
         let input_row_2_fixed = B::hstack(
-            vec![B::space(Length::Fill, Length::Shrink), send_btn],
+            vec![B::space(Length::Fill, Length::Shrink, context), send_btn],
             0.0,
             Padding::ZERO,
             Length::Fill,
@@ -274,7 +274,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Messa
             );
 
             B::hstack(
-                vec![B::space(Length::Fill, Length::Shrink), bubble],
+                vec![B::space(Length::Fill, Length::Shrink, context), bubble],
                 0.0,
                 Padding {
                     top: 0.0,
@@ -374,6 +374,9 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
             Action::SetLabMode(_) => "flask-conical",
             Action::Shell(_) => "terminal",
             Action::Memorize(_) => "database",
+            Action::Teleport { .. } => "move",
+            Action::Scale { .. } => "maximize",
+            Action::Rotate { .. } => "rotate-cw",
             Action::Unknown(_) => "help-circle",
         };
 
@@ -386,6 +389,15 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
             Action::SetLabMode(m) => ("Switch Mode", format!("{:?}", m)),
             Action::Shell(cmd) => ("Execute Shell", cmd.clone()),
             Action::Memorize(content) => ("Memorize", content.clone()),
+            Action::Teleport { target, x, y, z } => (
+                "Teleport",
+                format!("{} to [{:.0}, {:.0}, {:.0}]", target, x, y, z),
+            ),
+            Action::Scale { target, factor } => ("Scale", format!("{} by {:.2}x", target, factor)),
+            Action::Rotate { target, x, y, z } => (
+                "Rotate",
+                format!("{} to [{:.0}, {:.0}, {:.0}]", target, x, y, z),
+            ),
             Action::Unknown(raw) => ("Action", raw.clone()),
         };
 

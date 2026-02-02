@@ -21,6 +21,22 @@ pub enum Action {
     Shell(String), // New: Shell command execution (PROTECTED)
     #[serde(alias = "memorize", alias = "Memorize")]
     Memorize(String), // New: Save information to PeakDB
+    #[serde(alias = "teleport", alias = "Teleport")]
+    Teleport {
+        target: String,
+        x: f32,
+        y: f32,
+        z: f32,
+    },
+    #[serde(alias = "scale", alias = "Scale")]
+    Scale { target: String, factor: f32 },
+    #[serde(alias = "rotate", alias = "Rotate")]
+    Rotate {
+        target: String,
+        x: f32,
+        y: f32,
+        z: f32,
+    },
     #[serde(alias = "unknown", alias = "Unknown")]
     Unknown(String),
 }

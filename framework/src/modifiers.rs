@@ -66,3 +66,9 @@ pub struct IdealWidth(pub f32);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Locked(pub bool);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Billboard(pub bool);
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PhysicalDepth(pub f32);

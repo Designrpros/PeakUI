@@ -269,7 +269,13 @@ impl<Message: 'static, B: Backend> ZStack<Message, B> {
 impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
-        B::zstack(child_views, self.width, self.height, self.alignment)
+        B::zstack(
+            child_views,
+            self.width,
+            self.height,
+            self.alignment,
+            context,
+        )
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
@@ -405,7 +411,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
         };
 
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
-        B::grid(child_views, items_per_row, self.spacing)
+        B::grid(child_views, items_per_row, self.spacing, context)
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {

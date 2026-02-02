@@ -642,7 +642,7 @@ fn render_table<Message: Clone + 'static, B: Backend>(
         // Divider
         if r_idx < data_rows.len() - 1 {
             table_children.push(B::container(
-                B::space(Length::Fill, Length::Fixed(1.0)),
+                B::space(Length::Fill, Length::Fixed(1.0), context),
                 iced::Padding::ZERO,
                 Length::Fill,
                 Length::Shrink,

@@ -16,7 +16,7 @@ pub struct ComponentDoc<Message: 'static, B: Backend> {
     preview: Arc<dyn View<Message, B>>,
     terminal_preview: Option<String>,
     neural_preview: Option<crate::core::SemanticNode>,
-    spatial_preview: Option<String>,
+    spatial_preview: Option<crate::core::SpatialNode<()>>,
     render_mode: crate::reference::app::RenderMode,
     on_render_mode_change:
         Option<Arc<dyn Fn(crate::reference::app::RenderMode) -> Message + Send + Sync>>,
@@ -59,11 +59,8 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
         self
     }
 
-    pub fn spatial(mut self, spatial: crate::core::SpatialNode) -> Self {
-        self.spatial_preview = Some(
-            serde_json::to_string_pretty(&spatial)
-                .unwrap_or_else(|_| "Error serializing spatial node".to_string()),
-        );
+    pub fn spatial<M: Clone>(mut self, spatial: crate::core::SpatialNode<M>) -> Self {
+        self.spatial_preview = Some(spatial.to_empty());
         self
     }
 
@@ -250,17 +247,35 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 )
             }
             crate::reference::app::RenderMode::Spatial => {
-                let json = self
-                    .spatial_preview
-                    .as_deref()
-                    .unwrap_or("No spatial representation available.")
-                    .to_string();
+                let spatial_node = self.spatial_preview.clone();
                 crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(CodeBlock::<Message>::new(json)),
+                        .push(crate::core::ProxyView::new(move |ctx| {
+                            if let Some(node) = &spatial_node {
+                                crate::core::View::<Message, B>::view(
+                                    &crate::reference::views::SimulatorView::<Message>::new(
+                                        node.clone(),
+                                    ),
+                                    ctx,
+                                )
+                            } else {
+                                B::text(
+                                    "No spatial representation available.".to_string(),
+                                    14.0,
+                                    None,
+                                    false,
+                                    true,
+                                    None,
+                                    None,
+                                    Length::Shrink,
+                                    iced::Alignment::Center,
+                                    ctx,
+                                )
+                            }
+                        })),
                 )
             }
         }
