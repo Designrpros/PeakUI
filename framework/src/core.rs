@@ -4046,6 +4046,22 @@ mod wasm_portal {
     where
         Renderer: renderer::Renderer,
     {
+        fn tag(&self) -> widget::tree::Tag {
+            self.inner.as_widget().tag()
+        }
+
+        fn state(&self) -> widget::tree::State {
+            self.inner.as_widget().state()
+        }
+
+        fn children(&self) -> Vec<widget::Tree> {
+            self.inner.as_widget().children()
+        }
+
+        fn diff(&self, tree: &mut widget::Tree) {
+            self.inner.as_widget().diff(tree)
+        }
+
         fn size(&self) -> Size<Length> {
             self.inner.as_widget().size()
         }
