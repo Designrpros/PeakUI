@@ -1,9 +1,14 @@
-# PeakUI 🏔️
-> **The Universal Interface Framework for Rust.**
->
-> *Build for Pixels. Build for Terminals. Build for Intelligence.*
+# PeakUI
 
-**PeakUI** is a high-performance, declarative UI framework tailored for building professional-grade applications. It combines the ergonomics of **SwiftUI** with the system-level power of **Rust**, enabling you to write a single view hierarchy that renders natively across every dimension of computing.
+<p align="center">
+  <img src="apps/showcase/assets/peak_logo.png" alt="Peak Logo" width="300"/>
+  <br>
+  <b>The Universal Interface Framework for Rust.</b>
+  <br>
+  <i>Build for Pixels. Build for Terminals. Build for Intelligence.</i>
+</p>
+
+PeakUI is a high-performance, declarative UI framework tailored for building professional-grade applications. It combines the ergonomics of SwiftUI with the system-level power of Rust, enabling you to write a single view hierarchy that renders natively across every dimension of computing.
 
 [![License](https://img.shields.io/badge/license-BSL--1.1-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
@@ -11,36 +16,53 @@
 
 ---
 
-## 🌟 Why PeakUI?
+## Core Philosophy
 
-Most frameworks force you to choose: *Performance vs. Productivity* or *Web vs. Native*. PeakUI chooses **Physics**.
+Most frameworks force a choice between performance and productivity, or web and native. PeakUI focuses on **Physicality and Intent**.
 
-### 1. The "One Codebase" Promise
-Write your component logic once. Run it everywhere.
-* 🖥️ **Native Desktop:** Metal/Vulkan accelerated rendering with Glassmorphism.
-* 🌐 **Web (WASM):** Compiles to lightweight WASM for edge-deployed interfaces.
-* 📟 **Terminal (TUI):** **Exclusive Feature.** The *exact same code* renders as a high-fidelity ASCII/ANSI interface for SSH sessions.
+### 1. Universal Rendering
+Write your component logic once and deploy it across fundamentally different backends:
+- **Native Desktop**: Metal/Vulkan accelerated rendering with native vibrancy and glassmorphism.
+- **Web (WASM)**: High-performance WASM builds for edge-deployed modern interfaces.
+- **Terminal (TUI)**: The same codebase renders as a high-fidelity terminal interface.
 
-### 2. AI-Native Architecture 🧠
-PeakUI is the first framework built for the **Agentic Era**.
-* **MCP Integration:** Implements the [Model Context Protocol](https://modelcontextprotocol.io/) out of the box.
-* **Semantic State:** Your UI tree is automatically exposed as structured context to LLMs.
-* **Agent Control:** AI agents can read the screen and trigger `Message` events to navigate or control the app autonomously.
+### 2. Intelligence-Native Architecture
+PeakUI is the first framework designed for the Agentic Era.
+- **Semantic Contract**: The UI tree is automatically exposed as structured data (Semantic Nodes) for AI agents to perceive with zero-latency.
+- **Spatial Engine**: A full 3D coordinate system with hierarchical depth, enabling agents to navigate interfaces via volumetric raycasting.
+- **Sovereign Interface**: Move beyond accessibility hacks; the UI communicates its exact "Intent" through a deterministic semantic protocol.
 
-### 3. Spatial & Motion Design
-* **Spring Physics:** integrated `motion.rs` engine for fluid, interruptible animations.
-* **Z-Index Layering:** First-class `ZStack` and `Overlay` support for complex, depth-aware interfaces.
-* **Gesture System:** Unified touch and mouse handling for advanced interactions.
+### 3. Motion & Spatial Design
+- **Physics-Driven**: Spring physics engine for fluid and interruptible motion.
+- **Volumetric Layout**: Support for 3D layering, rotation, and scale transformations.
+- **Unified Interactions**: A single interaction model for mouse, touch, and spatial gaze/pinch.
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-The best way to experience PeakUI is the **Showcase App**, a "Component Lab" simulating a full Operating System.
+The recommended way to explore PeakUI is through the **Showcase App**, a component laboratory simulating a modern Operating System.
 
-### Option A: The Desktop Experience (GUI)
-Runs with full GPU acceleration (Metal/DX12).
+### Desktop Experience (GUI)
+Run with full GPU acceleration:
 
 ```bash
-# Run the visual showcase
 cargo run --release --example showcase
+```
+
+### Terminal Experience (TUI)
+Experience the exact same app in your shell:
+
+```bash
+# Set the backend to terminal via feature flags
+cargo run --release --example showcase --features tui
+```
+
+---
+
+## Technical Core
+
+PeakUI relies on a small set of powerful abstractions:
+- **Backend Trait**: A standardized interface for rendering, interaction, and perception.
+- **View Trait**: A declarative way to describe UI that is independent of the final rendering method.
+- **Context**: Thread-safe application state that flows through the view hierarchy.

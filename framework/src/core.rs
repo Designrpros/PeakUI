@@ -149,9 +149,14 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     for PhysicalDepthView<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        let mut child_context = context.clone();
-        child_context.depth_offset = self.depth;
-        self.inner.view(&child_context)
+        let view = self.inner.view(context);
+        B::spatial_modifier(
+            view,
+            Vector3::new(0.0, 0.0, self.depth),
+            Vector3::new(1.0, 1.0, 1.0),
+            Vector3::zeros(),
+            context,
+        )
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
@@ -210,7 +215,6 @@ pub struct Context {
     pub peak_id: String,
     pub foreground: Option<Color>,
     pub billboarding: bool,
-    pub depth_offset: f32,
 }
 
 impl Default for Context {
@@ -226,7 +230,6 @@ impl Default for Context {
             peak_id: String::new(),
             foreground: None,
             billboarding: false,
-            depth_offset: 0.0,
         }
     }
 }
@@ -264,7 +267,6 @@ impl Context {
             peak_id: String::new(),
             foreground: None,
             billboarding: false,
-            depth_offset: 0.0,
         }
     }
 
@@ -747,6 +749,14 @@ pub trait Backend: Sized + Clone + 'static {
         height: Length,
         context: &Context,
     ) -> Self::AnyView<Message>;
+
+    fn spatial_modifier<Message: 'static>(
+        content: Self::AnyView<Message>,
+        position: Vector3<f32>,
+        scale: Vector3<f32>,
+        rotation: Vector3<f32>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
 }
 
 impl Backend for SpatialBackend {
@@ -760,14 +770,14 @@ impl Backend for SpatialBackend {
         _height: Length,
         _align_x: Alignment,
         _align_y: Alignment,
-        context: &Context,
+        _context: &Context,
     ) -> Self::AnyView<Message> {
         let mut y_offset = 0.0;
         let mut nodes = Vec::new();
 
         for mut child in children {
             child.transform.position.y = y_offset;
-            child.transform.position.z += context.depth_offset;
+            child.transform.position.z = 1.0; // Restoring hierarchical step
             y_offset += child.height + spacing;
             nodes.push(child);
         }
@@ -802,7 +812,7 @@ impl Backend for SpatialBackend {
 
         for mut child in children {
             child.transform.position.x = x_offset;
-            child.transform.position.z += context.depth_offset;
+            child.transform.position.z = 1.0; // Restoring hierarchical step
             x_offset += child.width + spacing;
             nodes.push(child);
         }
@@ -833,6 +843,12 @@ impl Backend for SpatialBackend {
         _align_y: Alignment,
         context: &Context,
     ) -> Self::AnyView<Message> {
+        let mut nodes = Vec::new();
+        for mut child in children {
+            child.transform.position.z = 1.0;
+            nodes.push(child);
+        }
+
         SpatialNode {
             role: "wrap".to_string(),
             width: 0.0,
@@ -844,7 +860,7 @@ impl Backend for SpatialBackend {
             is_focused: false,
             billboarding: context.billboarding,
             on_press: None,
-            children,
+            children: nodes,
         }
     }
 
@@ -1349,6 +1365,21 @@ impl Backend for SpatialBackend {
         _height: Length,
         _context: &Context,
     ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn spatial_modifier<Message: 'static>(
+        mut content: Self::AnyView<Message>,
+        position: Vector3<f32>,
+        scale: Vector3<f32>,
+        rotation: Vector3<f32>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content.transform.position += position;
+        content.transform.scale.x *= scale.x;
+        content.transform.scale.y *= scale.y;
+        content.transform.scale.z *= scale.z;
+        content.transform.rotation += rotation;
         content
     }
 }
@@ -2566,6 +2597,16 @@ impl Backend for IcedBackend {
         .height(scale_length(height, scale))
         .into()
     }
+
+    fn spatial_modifier<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _position: Vector3<f32>,
+        _scale: Vector3<f32>,
+        _rotation: Vector3<f32>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
 }
 
 /// A Terminal-based TUI backend.
@@ -2887,6 +2928,16 @@ impl Backend for TermBackend {
         content
     }
 
+    fn spatial_modifier<Message: 'static>(
+        content: Self::AnyView<Message>,
+        _position: Vector3<f32>,
+        _scale: Vector3<f32>,
+        _rotation: Vector3<f32>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content
+    }
+
     fn mouse_area<Message: Clone + 'static>(
         content: Self::AnyView<Message>,
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
@@ -3196,6 +3247,11 @@ impl Backend for AIBackend {
         _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
+        let mut children = children;
+        for child in &mut children {
+            child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
+        }
+
         SemanticNode {
             accessibility: None,
             role: "vstack".to_string(),
@@ -3218,6 +3274,11 @@ impl Backend for AIBackend {
         _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
+        let mut children = children;
+        for child in &mut children {
+            child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
+        }
+
         SemanticNode {
             accessibility: None,
             role: "hstack".to_string(),
@@ -3241,6 +3302,11 @@ impl Backend for AIBackend {
         _align_y: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
+        let mut children = children;
+        for child in &mut children {
+            child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
+        }
+
         SemanticNode {
             accessibility: None,
             role: "wrap".to_string(),
@@ -3598,6 +3664,19 @@ impl Backend for AIBackend {
         _on_release: Option<Message>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
+        content
+    }
+
+    fn spatial_modifier<Message: 'static>(
+        mut content: Self::AnyView<Message>,
+        position: Vector3<f32>,
+        scale: Vector3<f32>,
+        _rotation: Vector3<f32>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        content.depth = Some(content.depth.unwrap_or(0.0) + position.z);
+        let s = content.scale.unwrap_or([1.0, 1.0, 1.0]);
+        content.scale = Some([s[0] * scale.x, s[1] * scale.y, s[2] * scale.z]);
         content
     }
 }
