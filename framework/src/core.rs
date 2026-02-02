@@ -4302,6 +4302,33 @@ mod wasm_portal {
                         log::info!("FocusBridge activated overlay for: {}", self.dom_id);
                     }
                 }
+                iced::Event::Window(iced::window::Event::RedrawRequested(_)) => {
+                    // On every frame, check if overlay value changed and sync to Iced
+                    // This is the DOM → Iced synchronization mechanism
+                    use wasm_bindgen::JsCast;
+                    use web_sys::HtmlInputElement;
+
+                    if let Some(window) = web_sys::window() {
+                        if let Some(document) = window.document() {
+                            if let Some(el) = document.get_element_by_id(&self.dom_id) {
+                                if let Ok(input) = el.dyn_into::<HtmlInputElement>() {
+                                    let overlay_value = input.value();
+                                    if overlay_value != self.current_value {
+                                        log::info!(
+                                            "Overlay value changed: '{}' -> '{}'",
+                                            self.current_value,
+                                            overlay_value
+                                        );
+                                        // Update our stored value - this will be used in next draw()
+                                        self.current_value = overlay_value;
+                                        // Request redraw to show the new text
+                                        shell.request_redraw();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 _ => {}
             }
 
