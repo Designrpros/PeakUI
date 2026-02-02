@@ -2045,12 +2045,8 @@ impl Backend for IcedBackend {
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
         if let Some(dom_id) = dom_id {
-            // Only use FocusBridge on "Mobile" (Slim) layouts to avoid breaking Desktop processing
-            if context.is_slim() {
-                wasm_portal::FocusBridge::new(element, dom_id).into()
-            } else {
-                element
-            }
+            // Use FocusBridge on all WASM targets for proper IME/keyboard support
+            wasm_portal::FocusBridge::new(element, dom_id).into()
         } else {
             element
         }
@@ -3997,6 +3993,89 @@ mod wasm_portal {
         ImageState::Loading
     }
 
+    /// Creates or updates a transparent overlay input positioned exactly over an Iced widget
+    /// This enables proper mobile keyboard triggering and IME support on all WASM targets
+    pub fn create_overlay_input(
+        id: &str,
+        x: f32,
+        y: f32,
+        width: f32,
+        height: f32,
+        current_value: &str,
+    ) {
+        use wasm_bindgen::JsCast;
+        use web_sys::{window, HtmlInputElement};
+
+        let window = window().unwrap();
+        let document = window.document().unwrap();
+
+        // Try to find existing overlay or create new one
+        let input = if let Some(el) = document.get_element_by_id(id) {
+            el.dyn_into::<HtmlInputElement>().ok()
+        } else {
+            // Create new overlay input
+            if let Ok(element) = document.create_element("input") {
+                if let Ok(input) = element.dyn_into::<HtmlInputElement>() {
+                    input.set_id(id);
+                    input.set_type("text");
+
+                    // Append to body
+                    if let Some(body) = document.body() {
+                        let _ = body.append_child(&input);
+                    }
+
+                    log::info!("Created overlay input: {}", id);
+                    Some(input)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
+        };
+
+        if let Some(input) = input {
+            // Update styling - transparent overlay positioned exactly over widget
+            let style = input.style();
+            let _ = style.set_property("position", "absolute");
+            let _ = style.set_property("left", &format!("{}px", x));
+            let _ = style.set_property("top", &format!("{}px", y));
+            let _ = style.set_property("width", &format!("{}px", width));
+            let _ = style.set_property("height", &format!("{}px", height));
+
+            // Make transparent but functional
+            let _ = style.set_property("background", "transparent");
+            let _ = style.set_property("border", "none");
+            let _ = style.set_property("outline", "none");
+            let _ = style.set_property("color", "transparent");
+            let _ = style.set_property("caret-color", "transparent"); // Hide cursor for now
+
+            // Critical for mobile: min font-size prevents iOS zoom
+            let _ = style.set_property("font-size", "16px");
+
+            // Ensure it's above the canvas
+            let _ = style.set_property("z-index", "1000");
+            let _ = style.set_property("pointer-events", "auto");
+
+            // Sync value from Iced state
+            if input.value() != current_value {
+                input.set_value(current_value);
+            }
+
+            log::debug!(
+                "Updated overlay input {} at ({}, {}) {}x{}",
+                id,
+                x,
+                y,
+                width,
+                height
+            );
+        } else {
+            log::error!("Failed to create overlay input: {}", id);
+        }
+    }
+
+    /// Legacy function for compatibility - directs to overlay creation
     pub fn focus_input(id: &str) {
         use wasm_bindgen::JsCast;
         use web_sys::{window, HtmlInputElement};
@@ -4007,25 +4086,10 @@ mod wasm_portal {
         if let Some(el) = document.get_element_by_id(id) {
             if let Ok(input) = el.dyn_into::<HtmlInputElement>() {
                 let _ = input.focus();
+                log::debug!("Focused existing overlay: {}", id);
             }
         } else {
-            // Create a hidden input to bridge the focus
-            if let Ok(input) = document.create_element("input") {
-                if let Ok(input) = input.dyn_into::<HtmlInputElement>() {
-                    input.set_id(id);
-                    let style = input.style();
-                    let _ = style.set_property("position", "absolute");
-                    let _ = style.set_property("left", "-9999px");
-                    let _ = style.set_property("top", "0");
-                    let _ = style.set_property("opacity", "0");
-                    let _ = style.set_property("pointer-events", "none");
-
-                    if let Some(body) = document.body() {
-                        let _ = body.append_child(&input);
-                        let _ = input.focus();
-                    }
-                }
-            }
+            log::warn!("focus_input called but no overlay exists for: {}", id);
         }
     }
 
@@ -4090,6 +4154,18 @@ mod wasm_portal {
             cursor: mouse::Cursor,
             viewport: &Rectangle,
         ) {
+            // Create/update transparent overlay input with exact bounds
+            let bounds = layout.bounds();
+            create_overlay_input(
+                &self.dom_id,
+                bounds.x,
+                bounds.y,
+                bounds.width,
+                bounds.height,
+                "", // TODO: sync actual text value from inner TextInput
+            );
+
+            // Draw the inner Iced widget normally
             self.inner
                 .as_widget()
                 .draw(tree, renderer, theme, style, layout, cursor, viewport)
@@ -4110,11 +4186,22 @@ mod wasm_portal {
                 iced::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
                 | iced::Event::Touch(iced::touch::Event::FingerPressed { .. }) => {
                     if let Some(_cursor_position) = cursor.position_in(layout.bounds()) {
-                        log::debug!(
-                            "FocusBridge triggering synchronous focus for DOM ID: {}",
-                            self.dom_id
+                        let bounds = layout.bounds();
+
+                        // Ensure overlay exists with current bounds
+                        create_overlay_input(
+                            &self.dom_id,
+                            bounds.x,
+                            bounds.y,
+                            bounds.width,
+                            bounds.height,
+                            "", // TODO: sync actual value
                         );
+
+                        // Focus the overlay
                         focus_input(&self.dom_id);
+
+                        log::info!("FocusBridge activated overlay for: {}", self.dom_id);
                     }
                 }
                 _ => {}
