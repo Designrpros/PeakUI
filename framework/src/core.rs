@@ -2047,17 +2047,25 @@ impl Backend for IcedBackend {
 
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
-        // Only use FocusBridge on actual touch-capable mobile devices
-        // Check for touch support, not just window size (narrow desktop windows exist!)
-        let is_touch_device = {
+        // Only use FocusBridge on actual mobile devices
+        // Need both touch capability AND mobile user agent (MacBooks have touch trackpads!)
+        let is_mobile_device = {
             if let Some(window) = web_sys::window() {
-                // Check if device has touch events (mobile/tablet)
+                let navigator = window.navigator();
+                let user_agent = navigator.user_agent().unwrap_or_default().to_lowercase();
+
+                // Check if user agent indicates mobile device
+                let is_mobile_ua = user_agent.contains("mobile")
+                    || user_agent.contains("android")
+                    || user_agent.contains("iphone")
+                    || user_agent.contains("ipad")
+                    || user_agent.contains("ipod");
+
+                // Also check for touch capability
                 let has_touch =
                     js_sys::Reflect::has(&window, &wasm_bindgen::JsValue::from_str("ontouchstart"))
                         .unwrap_or(false);
 
-                // Also check navigator.maxTouchPoints for more accuracy
-                let navigator = window.navigator();
                 let max_touch_points = js_sys::Reflect::get(
                     &navigator,
                     &wasm_bindgen::JsValue::from_str("maxTouchPoints"),
@@ -2066,14 +2074,16 @@ impl Backend for IcedBackend {
                 .and_then(|v| v.as_f64())
                 .unwrap_or(0.0);
 
-                has_touch || max_touch_points > 0.0
+                // Require BOTH mobile user agent AND touch capability
+                // This excludes desktop with trackpad
+                is_mobile_ua && (has_touch || max_touch_points > 0.0)
             } else {
                 false
             }
         };
 
-        if is_touch_device {
-            // On mobile/tablet, use overlay for keyboard support
+        if is_mobile_device {
+            // On actual mobile devices, use overlay for keyboard support
             let final_dom_id = dom_id.or_else(|| {
                 widget_id_for_dom
                     .as_ref()
