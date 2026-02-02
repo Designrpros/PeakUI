@@ -2047,26 +2047,33 @@ impl Backend for IcedBackend {
 
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
-        // On WASM, always use FocusBridge for mobile keyboard support
-        // Auto-generate dom_id if not provided
-        let final_dom_id = dom_id.or_else(|| {
-            // Use widget id if available, otherwise generate unique ID from value hash
-            widget_id_for_dom
-                .as_ref()
-                .map(|widget_id| format!("text-input-{:?}", widget_id))
-                .or_else(|| {
-                    use std::collections::hash_map::DefaultHasher;
-                    use std::hash::{Hash, Hasher};
-                    let mut hasher = DefaultHasher::new();
-                    value.hash(&mut hasher);
-                    placeholder.hash(&mut hasher);
-                    Some(format!("text-input-{}", hasher.finish()))
-                })
-        });
+        // Only use FocusBridge on actual mobile devices (not just narrow desktop windows)
+        // is_slim() checks user agent and actual device capabilities
+        let is_mobile_device = context.is_slim();
 
-        if let Some(dom_id) = final_dom_id {
-            wasm_portal::FocusBridge::new(element, dom_id, value).into()
+        if is_mobile_device {
+            // On mobile, use overlay for keyboard support
+            let final_dom_id = dom_id.or_else(|| {
+                widget_id_for_dom
+                    .as_ref()
+                    .map(|widget_id| format!("text-input-{:?}", widget_id))
+                    .or_else(|| {
+                        use std::collections::hash_map::DefaultHasher;
+                        use std::hash::{Hash, Hasher};
+                        let mut hasher = DefaultHasher::new();
+                        value.hash(&mut hasher);
+                        placeholder.hash(&mut hasher);
+                        Some(format!("text-input-{}", hasher.finish()))
+                    })
+            });
+
+            if let Some(dom_id) = final_dom_id {
+                wasm_portal::FocusBridge::new(element, dom_id, value).into()
+            } else {
+                element
+            }
         } else {
+            // Desktop: use normal Iced input (works perfectly without overlay)
             element
         }
     }
@@ -4062,19 +4069,26 @@ mod wasm_portal {
             let _ = style.set_property("width", &format!("{}px", width));
             let _ = style.set_property("height", &format!("{}px", height));
 
-            // Make transparent but functional
+            // Style the overlay to trigger keyboard but stay invisible
+            // The overlay's job is to: 1) Receive clicks/taps, 2) Show mobile keyboard, 3) Capture typing
+            // Iced canvas below handles the visual rendering
             let _ = style.set_property("background", "transparent");
             let _ = style.set_property("border", "none");
             let _ = style.set_property("outline", "none");
+
+            // Make visually invisible but still functional
             let _ = style.set_property("color", "transparent");
-            let _ = style.set_property("caret-color", "transparent"); // Hide cursor for now
+            let _ = style.set_property("caret-color", "transparent");
+            let _ = style.set_property("opacity", "0.01"); // Nearly invisible but clickable
+
+            // Allow clicks/taps to focus the input (triggers keyboard)
+            let _ = style.set_property("pointer-events", "auto");
 
             // Critical for mobile: min font-size prevents iOS zoom
             let _ = style.set_property("font-size", "16px");
 
-            // Ensure it's above the canvas
+            // Position above canvas to intercept clicks
             let _ = style.set_property("z-index", "1000");
-            let _ = style.set_property("pointer-events", "auto");
 
             // Sync value from Iced state
             if input.value() != current_value {
