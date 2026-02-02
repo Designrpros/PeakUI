@@ -2014,6 +2014,9 @@ impl Backend for IcedBackend {
             .on_input(on_change)
             .secure(is_secure);
 
+        // Clone id for later use in dom_id generation (before it gets moved)
+        let widget_id_for_dom = id.clone();
+
         if let Some(id) = id {
             input = input.id(id);
         }
@@ -2044,8 +2047,24 @@ impl Backend for IcedBackend {
 
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
-        if let Some(dom_id) = dom_id {
-            // Use FocusBridge on all WASM targets for proper IME/keyboard support
+        // On WASM, always use FocusBridge for mobile keyboard support
+        // Auto-generate dom_id if not provided
+        let final_dom_id = dom_id.or_else(|| {
+            // Use widget id if available, otherwise generate unique ID from value hash
+            widget_id_for_dom
+                .as_ref()
+                .map(|widget_id| format!("text-input-{:?}", widget_id))
+                .or_else(|| {
+                    use std::collections::hash_map::DefaultHasher;
+                    use std::hash::{Hash, Hasher};
+                    let mut hasher = DefaultHasher::new();
+                    value.hash(&mut hasher);
+                    placeholder.hash(&mut hasher);
+                    Some(format!("text-input-{}", hasher.finish()))
+                })
+        });
+
+        if let Some(dom_id) = final_dom_id {
             wasm_portal::FocusBridge::new(element, dom_id, value).into()
         } else {
             element

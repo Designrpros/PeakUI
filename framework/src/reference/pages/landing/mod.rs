@@ -108,6 +108,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
                                         )
                                         .variant(Variant::Ghost)
                                         .on_submit(Message::EnterApp)
+                                        .dom_id("landing-search-input")
                                         .width(Length::Fill)
                                     )
                                     .push(
