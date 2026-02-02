@@ -73,6 +73,14 @@ where
         widget::tree::State::new(State::default())
     }
 
+    fn children(&self) -> Vec<widget::Tree> {
+        self.inner.as_widget().children()
+    }
+
+    fn diff(&self, tree: &mut widget::Tree) {
+        self.inner.as_widget().diff(tree)
+    }
+
     fn update(
         &mut self,
         tree: &mut widget::Tree,
@@ -100,7 +108,7 @@ where
             | iced::Event::Touch(iced::touch::Event::FingerLost { .. }) => {
                 state.drag_start = None;
                 if state.is_scrolling {
-                    shell.capture_event();
+                    // shell.capture_event(); // Do NOT capture, let it scroll!
                     return;
                 }
             }
@@ -122,7 +130,7 @@ where
                     }
 
                     if state.is_scrolling {
-                        shell.capture_event();
+                        // shell.capture_event(); // Do NOT capture, let it scroll!
                         return;
                     }
                 }
@@ -131,7 +139,7 @@ where
         }
 
         if state.is_scrolling {
-            shell.capture_event();
+            // shell.capture_event(); // Do NOT capture, let it scroll!
             return;
         }
 

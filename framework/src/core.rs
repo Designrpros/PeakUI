@@ -2045,7 +2045,12 @@ impl Backend for IcedBackend {
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
         if let Some(dom_id) = dom_id {
-            wasm_portal::FocusBridge::new(element, dom_id).into()
+            // Only use FocusBridge on "Mobile" (Slim) layouts to avoid breaking Desktop processing
+            if context.is_slim() {
+                wasm_portal::FocusBridge::new(element, dom_id).into()
+            } else {
+                element
+            }
         } else {
             element
         }
