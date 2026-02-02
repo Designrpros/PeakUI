@@ -47,7 +47,9 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        self.inner.as_widget_mut().layout(tree, renderer, limits)
+        self.inner
+            .as_widget_mut()
+            .layout(&mut tree.children[0], renderer, limits)
     }
 
     fn draw(
@@ -60,9 +62,15 @@ where
         cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        self.inner
-            .as_widget()
-            .draw(tree, renderer, theme, style, layout, cursor, viewport)
+        self.inner.as_widget().draw(
+            &tree.children[0],
+            renderer,
+            theme,
+            style,
+            layout,
+            cursor,
+            viewport,
+        )
     }
 
     fn tag(&self) -> widget::tree::Tag {
@@ -74,11 +82,11 @@ where
     }
 
     fn children(&self) -> Vec<widget::Tree> {
-        self.inner.as_widget().children()
+        vec![widget::Tree::new(&self.inner)]
     }
 
     fn diff(&self, tree: &mut widget::Tree) {
-        self.inner.as_widget().diff(tree)
+        tree.diff_children(std::slice::from_ref(&self.inner))
     }
 
     fn update(
@@ -144,7 +152,14 @@ where
         }
 
         self.inner.as_widget_mut().update(
-            tree, event, layout, cursor, renderer, clipboard, shell, viewport,
+            &mut tree.children[0],
+            event,
+            layout,
+            cursor,
+            renderer,
+            clipboard,
+            shell,
+            viewport,
         )
     }
 
@@ -156,9 +171,13 @@ where
         viewport: &Rectangle,
         renderer: &Renderer,
     ) -> mouse::Interaction {
-        self.inner
-            .as_widget()
-            .mouse_interaction(tree, layout, cursor, viewport, renderer)
+        self.inner.as_widget().mouse_interaction(
+            &tree.children[0],
+            layout,
+            cursor,
+            viewport,
+            renderer,
+        )
     }
 
     fn operate(
@@ -170,7 +189,7 @@ where
     ) {
         self.inner
             .as_widget_mut()
-            .operate(tree, layout, renderer, operation)
+            .operate(&mut tree.children[0], layout, renderer, operation)
     }
 }
 
