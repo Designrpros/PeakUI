@@ -2046,7 +2046,7 @@ impl Backend for IcedBackend {
 
         if let Some(dom_id) = dom_id {
             // Use FocusBridge on all WASM targets for proper IME/keyboard support
-            wasm_portal::FocusBridge::new(element, dom_id).into()
+            wasm_portal::FocusBridge::new(element, dom_id, value).into()
         } else {
             element
         }
@@ -4070,6 +4070,11 @@ mod wasm_portal {
                 width,
                 height
             );
+
+            // Note: Keyboard events from the overlay automatically bubble to the window,
+            // which Iced listens to. This provides automatic DOM → Iced text sync.
+            // The overlay captures physical typing, browser shows it in overlay.value,
+            // and simultaneously Iced receives keyboard events to update its state.
         } else {
             log::error!("Failed to create overlay input: {}", id);
         }
@@ -4096,16 +4101,19 @@ mod wasm_portal {
     pub struct FocusBridge<'a, Message, Theme, Renderer> {
         inner: Element<'a, Message, Theme, Renderer>,
         dom_id: String,
+        current_value: String,
     }
 
     impl<'a, Message, Theme, Renderer> FocusBridge<'a, Message, Theme, Renderer> {
         pub fn new(
             inner: impl Into<Element<'a, Message, Theme, Renderer>>,
             dom_id: String,
+            current_value: String,
         ) -> Self {
             Self {
                 inner: inner.into(),
                 dom_id,
+                current_value,
             }
         }
     }
@@ -4162,7 +4170,7 @@ mod wasm_portal {
                 bounds.y,
                 bounds.width,
                 bounds.height,
-                "", // TODO: sync actual text value from inner TextInput
+                &self.current_value,
             );
 
             // Draw the inner Iced widget normally
@@ -4195,7 +4203,7 @@ mod wasm_portal {
                             bounds.y,
                             bounds.width,
                             bounds.height,
-                            "", // TODO: sync actual value
+                            &self.current_value,
                         );
 
                         // Focus the overlay
