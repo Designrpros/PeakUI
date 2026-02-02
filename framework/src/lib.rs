@@ -42,6 +42,7 @@ pub mod core;
 pub mod forms;
 pub mod gestures;
 pub mod layout;
+pub mod mobile;
 pub mod modifiers;
 pub mod motion;
 pub mod nav_split_view;

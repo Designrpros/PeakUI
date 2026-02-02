@@ -287,6 +287,10 @@ impl Context {
         self.size.width > 1200.0
     }
 
+    pub fn is_mobile(&self) -> bool {
+        self.device == DeviceType::Mobile
+    }
+
     pub fn shadow(&self, color: Color, offset: impl Into<Vector>, blur_radius: f32) -> Shadow {
         if cfg!(target_arch = "wasm32") {
             Shadow::default()
@@ -640,6 +644,7 @@ pub trait Backend: Sized + Clone + 'static {
         is_secure: bool,
         variant: Variant,
         id: Option<iced::widget::Id>,
+        dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -1089,6 +1094,7 @@ impl Backend for SpatialBackend {
         _is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
+        _dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -1814,7 +1820,7 @@ impl Backend for IcedBackend {
                 .into();
         }
 
-        button(
+        let b = button(
             iced::widget::container(content)
                 .width(width)
                 .height(Length::Fill)
@@ -1933,8 +1939,13 @@ impl Backend for IcedBackend {
                     ..Default::default()
                 },
             }
-        })
-        .into()
+        });
+
+        if context.device == DeviceType::Mobile {
+            crate::mobile::GestureArena::new(b).into()
+        } else {
+            b.into()
+        }
     }
 
     fn sidebar_item<Message: Clone + 'static>(
@@ -1986,6 +1997,7 @@ impl Backend for IcedBackend {
         }
     }
 
+    #[cfg(target_arch = "wasm32")]
     fn text_input<Message: Clone + 'static>(
         value: String,
         placeholder: String,
@@ -1995,6 +2007,61 @@ impl Backend for IcedBackend {
         is_secure: bool,
         variant: Variant,
         id: Option<iced::widget::Id>,
+        dom_id: Option<String>,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        let mut input = iced::widget::text_input(&placeholder, &value)
+            .on_input(on_change)
+            .secure(is_secure);
+
+        if let Some(id) = id {
+            input = input.id(id);
+        }
+
+        if let Some(msg) = on_submit {
+            input = input.on_submit(msg);
+        }
+
+        if let Some(font) = font {
+            input = input.font(font);
+        }
+
+        // Apply variant style
+        input = match variant {
+            Variant::Ghost => {
+                let colors = context.theme.colors;
+                input.style(move |_theme, _status| iced::widget::text_input::Style {
+                    background: iced::Background::Color(iced::Color::TRANSPARENT),
+                    border: iced::Border::default(),
+                    icon: colors.text_secondary,
+                    placeholder: colors.text_secondary,
+                    value: colors.text_primary,
+                    selection: colors.primary,
+                })
+            }
+            _ => input,
+        };
+
+        let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
+
+        if let Some(dom_id) = dom_id {
+            wasm_portal::FocusBridge::new(element, dom_id).into()
+        } else {
+            element
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn text_input<Message: Clone + 'static>(
+        value: String,
+        placeholder: String,
+        on_change: impl Fn(String) -> Message + 'static,
+        on_submit: Option<Message>,
+        font: Option<iced::Font>,
+        is_secure: bool,
+        variant: Variant,
+        id: Option<iced::widget::Id>,
+        _dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
@@ -2823,6 +2890,7 @@ impl Backend for TermBackend {
         is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
+        _dom_id: Option<String>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!(
@@ -3500,6 +3568,7 @@ impl Backend for AIBackend {
         _is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
+        _dom_id: Option<String>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
@@ -3722,6 +3791,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ProxyView<Messag
 #[cfg(target_arch = "wasm32")]
 mod wasm_portal {
     use iced::advanced::layout::{self, Layout};
+    use iced::advanced::mouse;
     use iced::advanced::renderer;
     use iced::advanced::widget::{self, Widget};
     use iced::widget::image::Handle;
@@ -3920,5 +3990,153 @@ mod wasm_portal {
         });
 
         ImageState::Loading
+    }
+
+    pub fn focus_input(id: &str) {
+        use wasm_bindgen::JsCast;
+        use web_sys::{window, HtmlInputElement};
+
+        let window = window().unwrap();
+        let document = window.document().unwrap();
+
+        if let Some(el) = document.get_element_by_id(id) {
+            if let Ok(input) = el.dyn_into::<HtmlInputElement>() {
+                let _ = input.focus();
+            }
+        } else {
+            // Create a hidden input to bridge the focus
+            if let Ok(input) = document.create_element("input") {
+                if let Ok(input) = input.dyn_into::<HtmlInputElement>() {
+                    input.set_id(id);
+                    let style = input.style();
+                    let _ = style.set_property("position", "absolute");
+                    let _ = style.set_property("left", "-9999px");
+                    let _ = style.set_property("top", "0");
+                    let _ = style.set_property("opacity", "0");
+                    let _ = style.set_property("pointer-events", "none");
+
+                    if let Some(body) = document.body() {
+                        let _ = body.append_child(&input);
+                        let _ = input.focus();
+                    }
+                }
+            }
+        }
+    }
+
+    pub struct FocusBridge<'a, Message, Theme, Renderer> {
+        inner: Element<'a, Message, Theme, Renderer>,
+        dom_id: String,
+    }
+
+    impl<'a, Message, Theme, Renderer> FocusBridge<'a, Message, Theme, Renderer> {
+        pub fn new(
+            inner: impl Into<Element<'a, Message, Theme, Renderer>>,
+            dom_id: String,
+        ) -> Self {
+            Self {
+                inner: inner.into(),
+                dom_id,
+            }
+        }
+    }
+
+    impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+        for FocusBridge<'a, Message, Theme, Renderer>
+    where
+        Renderer: renderer::Renderer,
+    {
+        fn size(&self) -> Size<Length> {
+            self.inner.as_widget().size()
+        }
+
+        fn layout(
+            &mut self,
+            tree: &mut widget::Tree,
+            renderer: &Renderer,
+            limits: &layout::Limits,
+        ) -> layout::Node {
+            self.inner.as_widget_mut().layout(tree, renderer, limits)
+        }
+
+        fn draw(
+            &self,
+            tree: &widget::Tree,
+            renderer: &mut Renderer,
+            theme: &Theme,
+            style: &renderer::Style,
+            layout: Layout<'_>,
+            cursor: mouse::Cursor,
+            viewport: &Rectangle,
+        ) {
+            self.inner
+                .as_widget()
+                .draw(tree, renderer, theme, style, layout, cursor, viewport)
+        }
+
+        fn update(
+            &mut self,
+            state: &mut widget::Tree,
+            event: &iced::Event,
+            layout: Layout<'_>,
+            cursor: mouse::Cursor,
+            renderer: &Renderer,
+            clipboard: &mut dyn iced::advanced::Clipboard,
+            shell: &mut iced::advanced::Shell<'_, Message>,
+            viewport: &Rectangle,
+        ) {
+            match event {
+                iced::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
+                | iced::Event::Touch(iced::touch::Event::FingerPressed { .. }) => {
+                    if let Some(_cursor_position) = cursor.position_in(layout.bounds()) {
+                        log::debug!(
+                            "FocusBridge triggering synchronous focus for DOM ID: {}",
+                            self.dom_id
+                        );
+                        focus_input(&self.dom_id);
+                    }
+                }
+                _ => {}
+            }
+
+            self.inner.as_widget_mut().update(
+                state, event, layout, cursor, renderer, clipboard, shell, viewport,
+            )
+        }
+
+        fn mouse_interaction(
+            &self,
+            state: &widget::Tree,
+            layout: Layout<'_>,
+            cursor: mouse::Cursor,
+            viewport: &Rectangle,
+            renderer: &Renderer,
+        ) -> mouse::Interaction {
+            self.inner
+                .as_widget()
+                .mouse_interaction(state, layout, cursor, viewport, renderer)
+        }
+
+        fn operate(
+            &mut self,
+            state: &mut widget::Tree,
+            layout: Layout<'_>,
+            renderer: &Renderer,
+            operation: &mut dyn widget::Operation,
+        ) {
+            self.inner
+                .as_widget_mut()
+                .operate(state, layout, renderer, operation)
+        }
+    }
+
+    impl<'a, Message: 'static, Theme: 'a, Renderer> From<FocusBridge<'a, Message, Theme, Renderer>>
+        for Element<'a, Message, Theme, Renderer>
+    where
+        Renderer: renderer::Renderer + 'static,
+    {
+        fn from(bridge: FocusBridge<'a, Message, Theme, Renderer>) -> Self {
+            Self::new(bridge)
+        }
     }
 }

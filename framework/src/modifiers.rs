@@ -17,6 +17,21 @@ pub enum ControlSize {
     XLarge,
 }
 
+impl ControlSize {
+    pub fn resolve(&self, is_mobile: bool) -> Self {
+        if is_mobile {
+            match self {
+                ControlSize::Small => ControlSize::Medium,
+                ControlSize::Medium => ControlSize::Large,
+                ControlSize::Large => ControlSize::XLarge,
+                ControlSize::XLarge => ControlSize::XLarge,
+            }
+        } else {
+            *self
+        }
+    }
+}
+
 #[derive(
     Debug,
     Clone,
