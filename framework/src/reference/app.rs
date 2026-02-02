@@ -1314,7 +1314,11 @@ impl App {
 
     pub fn view(&self) -> Element<'_, Message> {
         log::info!("App::view called. show_landing: {}", self.show_landing);
-        let mode = ShellMode::Desktop;
+        let mode = if self.window_width < 800.0 {
+            ShellMode::Mobile
+        } else {
+            ShellMode::Desktop
+        };
         let tone = self.theme_tone;
         let tokens = ThemeTokens::with_theme(self.theme, tone);
 

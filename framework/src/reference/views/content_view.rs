@@ -159,6 +159,7 @@ impl ContentView {
                         Message::Search(s)
                     })
                     .variant(Variant::Ghost)
+                    .dom_id("header-search-input")
                     .neural("header-search")
                     .view(context);
 
