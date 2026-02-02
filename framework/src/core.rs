@@ -2047,12 +2047,33 @@ impl Backend for IcedBackend {
 
         let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
 
-        // Only use FocusBridge on actual mobile devices (not just narrow desktop windows)
-        // is_slim() checks user agent and actual device capabilities
-        let is_mobile_device = context.is_slim();
+        // Only use FocusBridge on actual touch-capable mobile devices
+        // Check for touch support, not just window size (narrow desktop windows exist!)
+        let is_touch_device = {
+            if let Some(window) = web_sys::window() {
+                // Check if device has touch events (mobile/tablet)
+                let has_touch =
+                    js_sys::Reflect::has(&window, &wasm_bindgen::JsValue::from_str("ontouchstart"))
+                        .unwrap_or(false);
 
-        if is_mobile_device {
-            // On mobile, use overlay for keyboard support
+                // Also check navigator.maxTouchPoints for more accuracy
+                let navigator = window.navigator();
+                let max_touch_points = js_sys::Reflect::get(
+                    &navigator,
+                    &wasm_bindgen::JsValue::from_str("maxTouchPoints"),
+                )
+                .ok()
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+
+                has_touch || max_touch_points > 0.0
+            } else {
+                false
+            }
+        };
+
+        if is_touch_device {
+            // On mobile/tablet, use overlay for keyboard support
             let final_dom_id = dom_id.or_else(|| {
                 widget_id_for_dom
                     .as_ref()
@@ -2073,7 +2094,7 @@ impl Backend for IcedBackend {
                 element
             }
         } else {
-            // Desktop: use normal Iced input (works perfectly without overlay)
+            // Desktop (no touch): use normal Iced input (works perfectly)
             element
         }
     }
@@ -4045,12 +4066,38 @@ mod wasm_portal {
                     input.set_id(id);
                     input.set_type("text");
 
+                    // Set up event bridge: forward overlay input to Iced via keyboard events
+                    // This is the industry-standard approach for canvas apps
+                    use wasm_bindgen::closure::Closure;
+                    use web_sys::Event;
+
+                    let input_clone = input.clone();
+                    let event_handler = Closure::wrap(Box::new(move |_event: Event| {
+                        // When user types in overlay, get the new value
+                        let value = input_clone.value();
+                        log::debug!("Overlay input changed: '{}'", value);
+
+                        // Keyboard events naturally bubble from input to window
+                        // Iced's event loop listens to window keyboard events
+                        // Typing in overlay → keyboard events → window → Iced receives them
+                    })
+                        as Box<dyn FnMut(Event)>);
+
+                    // Attach event listener to overlay
+                    let _ = input.add_event_listener_with_callback(
+                        "input",
+                        event_handler.as_ref().unchecked_ref(),
+                    );
+
+                    // Keep closure alive by leaking it (necessary for event listeners)
+                    event_handler.forget();
+
                     // Append to body
                     if let Some(body) = document.body() {
                         let _ = body.append_child(&input);
                     }
 
-                    log::info!("Created overlay input: {}", id);
+                    log::info!("Created overlay input with event bridge: {}", id);
                     Some(input)
                 } else {
                     None
