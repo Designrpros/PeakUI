@@ -723,7 +723,6 @@ impl App {
                 // Landing/Details visibility logic
                 match tab {
                     Page::Landing
-                    | Page::Introduction
                     | Page::PeakOSDetail
                     | Page::PeakUIDetail
                     | Page::PeakDBDetail

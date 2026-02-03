@@ -1,6 +1,6 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
     PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
@@ -17,7 +17,7 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
                     .spacing(12.0)
                     .align_x(iced::Alignment::Start)
                     .push(
-                        Text::<IcedBackend>::new("Quick Start")
+                        Text::<IcedBackend>::new("Introduction")
                             .size(if is_narrow { 32.0 } else { 48.0 })
                             .bold()
                             .align_start()

@@ -325,44 +325,22 @@ impl ContentView {
         }
 
         // --- 4. Final Assembly ---
-        // Responsive Assembly: Mobile uses a Column (non-blocking) while Desktop uses a Stack (hovering).
-        // This ensures the sidebar is fully interactive on narrow viewports while maintaining the premium look on desktop.
-        let final_view: Element<'static, Message> = if is_mobile {
-            iced::widget::column![
-                container(split_view.view(&content_context))
-                    .width(Length::Fill)
-                    .height(Length::FillPortion(1)),
-                container(tabbar.view(context))
-                    .width(Length::Fill)
-                    .align_x(Alignment::Center)
-                    .padding(Padding {
-                        top: 12.0,
-                        right: 20.0,
-                        bottom: 24.0,
-                        left: 20.0,
-                    })
-            ]
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
-        } else {
-            // Desktop: Floating dock using zstack (ORIGINAL DESIGN - DO NOT CHANGE)
-            iced::widget::stack![
-                split_view.view(&content_context),
-                container(tabbar.view(context))
-                    .width(Length::Fill)
-                    .height(Length::Fill) // Need full height for align_y to position at bottom
-                    .align_x(Alignment::Center)
-                    .align_y(Alignment::End)
-                    .padding(Padding {
-                        top: 0.0,
-                        right: 20.0,
-                        bottom: 32.0,
-                        left: 20.0,
-                    })
-            ]
-            .into()
-        };
+        // Unified Floating Dock: Both mobile and desktop use stack layout for a consistent floating dock experience
+        let final_view: Element<'static, Message> = iced::widget::stack![
+            split_view.view(&content_context),
+            container(tabbar.view(context))
+                .width(Length::Fill)
+                .height(Length::Fill) // Need full height for align_y to position at bottom
+                .align_x(Alignment::Center)
+                .align_y(Alignment::End)
+                .padding(Padding {
+                    top: 0.0,
+                    right: 20.0,
+                    bottom: if is_mobile { 24.0 } else { 32.0 },
+                    left: 20.0,
+                })
+        ]
+        .into();
 
         final_view
     }
