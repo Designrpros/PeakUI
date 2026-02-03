@@ -1939,11 +1939,16 @@ impl Backend for IcedBackend {
             }
         });
 
-        if context.device == DeviceType::Mobile {
-            crate::mobile::GestureArena::new(b).into()
-        } else {
-            b.into()
-        }
+        // GestureArena disabled - it breaks mouse clicks on desktop browsers in narrow viewports
+        // TODO: Re-enable only for actual touch devices (not desktop + narrow viewport)
+        // #[cfg(target_arch = "wasm32")]
+        // {
+        //     if context.device == DeviceType::Mobile {
+        //         return crate::mobile::GestureArena::new(b).into();
+        //     }
+        // }
+
+        b.into()
     }
 
     fn sidebar_item<Message: Clone + 'static>(

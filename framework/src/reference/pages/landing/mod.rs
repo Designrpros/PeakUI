@@ -11,7 +11,7 @@ pub mod peak_relay;
 pub mod peak_hub;
 
 pub fn view(context: &Context, query: &str, placeholder: &str) -> Element<'static, Message, Theme, Renderer> {
-    log::info!("RENDER: LANDING PAGE");
+    // log::info!("RENDER: LANDING PAGE");
     let is_mobile = context.is_slim();
     let _t = context.theme;
 

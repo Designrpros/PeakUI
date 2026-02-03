@@ -115,8 +115,6 @@ impl ContentView {
         // --- 3. Integrated Header --
         let _ = (); // Discard old notch content logic variable
 
-        let mut final_inspector: Option<Box<dyn View<Message, IcedBackend>>> = None;
-
         let query = self.search_query.clone();
         let show_inspector = self.show_inspector;
         let sidebar_toggle = page.sidebar_toggle.take();
@@ -321,19 +319,15 @@ impl ContentView {
                 Box::new(ai_inspector)
             };
 
-            if is_mobile {
-                // Mobile: Detach inspector to render as top-level overlay (above dock)
-                final_inspector = Some(inspector_content);
-            } else {
-                // Desktop: Keep inspector in split view for resizing/layout
-                split_view = split_view.inspector(inspector_content);
-            }
+            split_view = split_view
+                .inspector(inspector_content)
+                .on_dismiss_inspector(Message::ToggleInspector);
         }
 
         // --- 4. Final Assembly ---
         // Responsive Assembly: Mobile uses a Column (non-blocking) while Desktop uses a Stack (hovering).
         // This ensures the sidebar is fully interactive on narrow viewports while maintaining the premium look on desktop.
-        let mut final_view: Element<'static, Message> = if is_mobile {
+        let final_view: Element<'static, Message> = if is_mobile {
             iced::widget::column![
                 container(split_view.view(&content_context))
                     .width(Length::Fill)
@@ -369,48 +363,6 @@ impl ContentView {
             ]
             .into()
         };
-
-        // Mobile Inspector Overlay - These remain as stacks because they are true overlays
-        if let Some(inspector) = final_inspector {
-            let radius = context.radius(16.0);
-            let bg_color = context.theme.colors.surface_variant;
-            let sheet = container(inspector.view(context))
-                .width(Length::Fill)
-                .height(Length::FillPortion(1))
-                .padding(16)
-                .style(move |_| container::Style {
-                    background: Some(bg_color.into()),
-                    border: Border {
-                        radius,
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                });
-
-            final_view = iced::widget::stack![
-                final_view,
-                container(iced::widget::column![
-                    iced::widget::Space::new()
-                        .width(Length::Fill)
-                        .height(Length::FillPortion(1)),
-                    sheet.height(Length::FillPortion(1))
-                ])
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .style(|_| container::Style {
-                    background: Some(
-                        iced::Color {
-                            a: 0.5,
-                            ..iced::Color::BLACK
-                        }
-                        .into(),
-                    ),
-                    ..Default::default()
-                })
-                .align_y(iced::alignment::Vertical::Bottom),
-            ]
-            .into();
-        }
 
         final_view
     }

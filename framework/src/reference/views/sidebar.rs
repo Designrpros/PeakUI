@@ -462,6 +462,14 @@ impl View<Message, IcedBackend> for SidebarItem {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let theme = context.theme;
         let active = self.active;
+        let page_clone = self.page.clone();
+        let label_clone = self.label.clone();
+
+        log::trace!(
+            "📱 SidebarItem::view - Rendering: {} (active: {})",
+            self.label,
+            active
+        );
 
         Button::new(
             HStack::new_generic()
@@ -497,7 +505,7 @@ impl View<Message, IcedBackend> for SidebarItem {
             Variant::Ghost
         })
         .width(Length::Fill)
-        .on_press(Message::SetTab(self.page.clone()))
+        .on_press(Message::SetTab(page_clone))
         .view(context)
     }
 

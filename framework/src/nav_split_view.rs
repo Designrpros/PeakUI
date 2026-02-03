@@ -22,6 +22,7 @@ pub struct NavigationSplitView<Message: 'static + Send + Sync, B: Backend = Iced
     sidebar_locked: bool,
     inspector_locked: bool,
     on_none: Option<Message>,
+    on_dismiss_inspector: Option<Message>,
 }
 
 impl<Message: Clone + 'static + Send + Sync> NavigationSplitView<Message, IcedBackend> {
@@ -66,6 +67,7 @@ impl<Message: Clone + 'static + Send + Sync, B: Backend> NavigationSplitView<Mes
             sidebar_locked: false,
             inspector_locked: false,
             on_none: None,
+            on_dismiss_inspector: None,
         }
     }
 
@@ -149,6 +151,11 @@ impl<Message: Clone + 'static + Send + Sync, B: Backend> NavigationSplitView<Mes
 
     pub fn on_none(mut self, msg: Message) -> Self {
         self.on_none = Some(msg);
+        self
+    }
+
+    pub fn on_dismiss_inspector(mut self, msg: Message) -> Self {
+        self.on_dismiss_inspector = Some(msg);
         self
     }
 }
@@ -235,24 +242,34 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
                     .height(Length::Fill);
 
                 if let Some(inspector) = &self.inspector {
-                    // Dimmed Background
-                    stack = stack.push(
-                        container(
-                            iced::widget::Space::new()
-                                .width(Length::Fill)
-                                .height(Length::Fill),
-                        )
-                        .style(|_| container::Style {
-                            background: Some(
-                                iced::Color {
-                                    a: 0.5,
-                                    ..iced::Color::BLACK
-                                }
-                                .into(),
-                            ),
-                            ..Default::default()
-                        }),
-                    );
+                    // Dimmed Background - Now interactive to dismiss
+                    let overlay = container(
+                        iced::widget::Space::new()
+                            .width(Length::Fill)
+                            .height(Length::Fill),
+                    )
+                    .style(|_| container::Style {
+                        background: Some(
+                            iced::Color {
+                                a: 0.5,
+                                ..iced::Color::BLACK
+                            }
+                            .into(),
+                        ),
+                        ..Default::default()
+                    });
+
+                    if let Some(dismiss_msg) = self.on_dismiss_inspector.clone() {
+                        stack = stack.push(IcedBackend::mouse_area(
+                            overlay.into(),
+                            None,
+                            Some(dismiss_msg),
+                            None,
+                            context,
+                        ));
+                    } else {
+                        stack = stack.push(overlay);
+                    }
 
                     let radius = context.radius(16.0);
                     let bg_color = theme.colors.surface_variant;

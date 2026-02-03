@@ -667,8 +667,8 @@ impl App {
                 Task::none()
             }
             Message::SetTab(tab) => {
-                log::debug!(
-                    "Setting Tab: {:?} (Category: {})",
+                log::info!(
+                    "🔥 SetTab RECEIVED: {:?} (Category: {})",
                     tab,
                     tab.navigation_mode()
                 );
@@ -1397,12 +1397,13 @@ impl App {
         } else {
             "Desktop"
         };
-        log::info!(
-            "App::view: {} Mode, width: {}, show_sidebar: {}",
-            mode,
-            self.window_width,
-            self.show_sidebar
-        );
+        // Debug logging disabled for performance - was causing console spam
+        // log::info!(
+        //     "App::view: {} Mode, width: {}, show_sidebar: {}",
+        //     mode,
+        //     self.window_width,
+        //     self.show_sidebar
+        // );
         let mode = if self.window_width < 900.0 {
             ShellMode::Mobile
         } else {
@@ -1412,76 +1413,59 @@ impl App {
         let tokens = ThemeTokens::with_theme(self.theme, tone);
 
         if self.show_landing {
+            // Create context directly without responsive wrapper for performance
+            let size = iced::Size::new(self.window_width, 800.0); // Height doesn't matter for landing
+            let context = Context::new(mode, tokens, size, self.localization.clone());
+
             // Capture the search query state
             let query = self.search_query.clone();
             let typewriter_text = self.typewriter_text.clone();
-
             let active_tab = self.active_tab.clone();
-
             let db_records = self.db.get_all();
 
-            return iced::widget::container(crate::core::responsive(
-                mode,
-                tokens.clone(),
-                self.localization.clone(),
-                move |context| {
-                    let query = query.clone();
-                    let typewriter_text = typewriter_text.clone();
-                    let db_records = db_records.clone();
+            let content: Element<'_, Message> = match &active_tab {
+                Page::PeakOSDetail => {
+                    crate::reference::pages::landing::peak_os::view(&context, context.is_slim())
+                        .view
+                        .view(&context)
+                        .into()
+                }
+                Page::PeakUIDetail => {
+                    crate::reference::pages::landing::peak_ui::view(&context, context.is_slim())
+                        .view
+                        .view(&context)
+                        .into()
+                }
+                Page::PeakDBDetail => crate::reference::pages::landing::peak_db::view(
+                    &context,
+                    context.is_slim(),
+                    db_records,
+                )
+                .view
+                .view(&context)
+                .into(),
+                Page::PeakRelayDetail => {
+                    crate::reference::pages::landing::peak_relay::view(&context, context.is_slim())
+                        .view
+                        .view(&context)
+                        .into()
+                }
+                Page::PeakHubDetail => {
+                    crate::reference::pages::landing::peak_hub::view(&context, context.is_slim())
+                        .view
+                        .view(&context)
+                        .into()
+                }
+                _ => crate::reference::pages::landing::view(&context, &query, &typewriter_text)
+                    .into(),
+            };
 
-                    match &active_tab {
-                        Page::PeakOSDetail => crate::reference::pages::landing::peak_os::view(
-                            &context,
-                            context.is_slim(),
-                        )
-                        .view
-                        .view(&context)
-                        .into(),
-                        Page::PeakUIDetail => crate::reference::pages::landing::peak_ui::view(
-                            &context,
-                            context.is_slim(),
-                        )
-                        .view
-                        .view(&context)
-                        .into(),
-                        Page::PeakDBDetail => crate::reference::pages::landing::peak_db::view(
-                            &context,
-                            context.is_slim(),
-                            db_records,
-                        )
-                        .view
-                        .view(&context)
-                        .into(),
-                        Page::PeakRelayDetail => {
-                            crate::reference::pages::landing::peak_relay::view(
-                                &context,
-                                context.is_slim(),
-                            )
-                            .view
-                            .view(&context)
-                            .into()
-                        }
-                        Page::PeakHubDetail => crate::reference::pages::landing::peak_hub::view(
-                            &context,
-                            context.is_slim(),
-                        )
-                        .view
-                        .view(&context)
-                        .into(),
-                        _ => crate::reference::pages::landing::view(
-                            &context,
-                            &query,
-                            &typewriter_text,
-                        )
-                        .into(),
-                    }
-                },
-            ))
-            .style(move |_| iced::widget::container::Style {
-                background: Some(tokens.colors.background.into()),
-                ..Default::default()
-            })
-            .into();
+            return iced::widget::container(content)
+                .style(move |_| iced::widget::container::Style {
+                    background: Some(tokens.colors.background.into()),
+                    ..Default::default()
+                })
+                .into();
         }
 
         // 1. Prepare Content
@@ -1609,14 +1593,15 @@ impl App {
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
         let events = iced::event::listen().map(|event| {
-            if let iced::Event::Keyboard(_) = event {
-                // Keep raw logging for now to compare
-                log::info!("RAW EVENT: {:?}", event);
-            }
+            // Debug logging disabled for performance
+            // if let iced::Event::Keyboard(_) = event {
+            //     log::info!("RAW EVENT: {:?}", event);
+            // }
             match event {
-                iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
-                    Message::UpdateCursorPos(position)
-                }
+                // Cursor tracking disabled - was causing re-render on every mouse move
+                // iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) => {
+                //     Message::UpdateCursorPos(position)
+                // }
                 iced::Event::Mouse(iced::mouse::Event::ButtonPressed(
                     iced::mouse::Button::Right,
                 )) => Message::OpenContextMenu(iced::Point::ORIGIN),
