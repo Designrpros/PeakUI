@@ -108,7 +108,6 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
                                         )
                                         .variant(Variant::Ghost)
                                         .on_submit(Message::EnterApp)
-                                        .dom_id("landing-search-input")
                                         .width(Length::Fill)
                                     )
                                     .push(
@@ -201,7 +200,7 @@ fn about_section(context: &Context, is_mobile: bool) -> Container<Message, IcedB
         )
         .push(
             Container::new(
-                Text::new("PeakUI is not just a framework; it is the first sovereign interface layer designed for the Intelligence Era. It decouples logic from rendering, allowing a single Rust codebase to deploy natively to Linux, macOS, Windows, Web (WASM), VR, and Terminal (TUI) without modification.")
+                Text::new("PeakUI is not just a framework; it is the first universal interface layer designed for the Intelligence Era. It decouples logic from rendering, allowing a single Rust codebase to deploy natively to Linux, macOS, Windows, Web (WASM), VR, and Terminal (TUI) without modification.")
                     .body()
                     .height(Length::Shrink)
             )
@@ -240,7 +239,7 @@ fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, Ice
                 .push(pillar_card("PeakOS", "Real-Time Orchestration", "Deterministic kernel for hardware coordination.", "cpu", context, Page::PeakOSDetail))
                 .push(pillar_card("PeakUI", "Semantic Vision", "The world's first AI-native semantic interface.", "eye", context, Page::PeakUIDetail))
                 .push(pillar_card("PeakDB", "Neural Memory", "Local-first vector storage for encrypted on-device RAG.", "database", context, Page::PeakDBDetail))
-                .push(pillar_card("PeakRelay", "Distributed Spirit", "Peer-to-peer intelligence mesh for sovereign swarms.", "share-2", context, Page::PeakRelayDetail))
+                .push(pillar_card("PeakRelay", "Distributed Spirit", "Peer-to-peer intelligence mesh for universal swarms.", "share-2", context, Page::PeakRelayDetail))
                 .push(pillar_card("Peak Hub", "Swarm Command", "The dedicated dashboard for controlling the entire stack.", "activity", context, Page::PeakHubDetail)),
         );
 
@@ -293,7 +292,7 @@ fn verticals_section(context: &Context, is_mobile: bool) -> Container<Message, I
         .push(vertical_card("Defense", "Decentralized zero-trust tactical secure compute.", "shield", context))
         .push(vertical_card("Manufacturing", "Deterministic control for precision robotics.", "target", context));
 
-    Container::new(VStack::new().spacing(48.0).width(Length::Fill).push(section_header("Industrial Verticals", "Sovereign tech for infrastructure.", is_mobile)).push(grid))
+    Container::new(VStack::new().spacing(48.0).width(Length::Fill).push(section_header("Industrial Verticals", "Universal tech for infrastructure.", is_mobile)).push(grid))
         .padding(if is_mobile { 24.0 } else { 80.0 }).width(Length::Fill)
 }
 

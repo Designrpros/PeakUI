@@ -107,7 +107,6 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
             false,
             Variant::Ghost,
             Some(iced::widget::Id::new("chat_input")),
-            None,
             context,
         );
 

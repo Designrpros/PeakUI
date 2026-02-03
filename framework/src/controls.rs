@@ -418,7 +418,6 @@ pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBac
     variant: Variant,
     is_secure: bool,
     id: Option<iced::widget::Id>,
-    dom_id: Option<String>,
     _phantom: std::marker::PhantomData<B>,
 }
 
@@ -438,7 +437,6 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
             variant: Variant::Solid,
             is_secure: false,
             id: None,
-            dom_id: None,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -450,11 +448,6 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
 
     pub fn width(mut self, width: Length) -> Self {
         self.width = width;
-        self
-    }
-
-    pub fn dom_id(mut self, id: impl Into<String>) -> Self {
-        self.dom_id = Some(id.into());
         self
     }
 
@@ -491,7 +484,6 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             self.is_secure,
             self.variant,
             self.id.clone(),
-            self.dom_id.clone(),
             context,
         );
         B::container(

@@ -644,7 +644,6 @@ pub trait Backend: Sized + Clone + 'static {
         is_secure: bool,
         variant: Variant,
         id: Option<iced::widget::Id>,
-        dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -1094,7 +1093,6 @@ impl Backend for SpatialBackend {
         _is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
-        _dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -2007,15 +2005,11 @@ impl Backend for IcedBackend {
         is_secure: bool,
         variant: Variant,
         id: Option<iced::widget::Id>,
-        dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
             .on_input(on_change)
             .secure(is_secure);
-
-        // Clone id for later use in dom_id generation (before it gets moved)
-        let widget_id_for_dom = id.clone();
 
         if let Some(id) = id {
             input = input.id(id);
@@ -2045,68 +2039,7 @@ impl Backend for IcedBackend {
             _ => input,
         };
 
-        let element: iced::Element<'static, Message, Theme, Renderer> = input.padding(10).into();
-
-        // Only use FocusBridge on actual mobile devices
-        // Need both touch capability AND mobile user agent (MacBooks have touch trackpads!)
-        let is_mobile_device = {
-            if let Some(window) = web_sys::window() {
-                let navigator = window.navigator();
-                let user_agent = navigator.user_agent().unwrap_or_default().to_lowercase();
-
-                // Check if user agent indicates mobile device
-                let is_mobile_ua = user_agent.contains("mobile")
-                    || user_agent.contains("android")
-                    || user_agent.contains("iphone")
-                    || user_agent.contains("ipad")
-                    || user_agent.contains("ipod");
-
-                // Also check for touch capability
-                let has_touch =
-                    js_sys::Reflect::has(&window, &wasm_bindgen::JsValue::from_str("ontouchstart"))
-                        .unwrap_or(false);
-
-                let max_touch_points = js_sys::Reflect::get(
-                    &navigator,
-                    &wasm_bindgen::JsValue::from_str("maxTouchPoints"),
-                )
-                .ok()
-                .and_then(|v| v.as_f64())
-                .unwrap_or(0.0);
-
-                // Require BOTH mobile user agent AND touch capability
-                // This excludes desktop with trackpad
-                is_mobile_ua && (has_touch || max_touch_points > 0.0)
-            } else {
-                false
-            }
-        };
-
-        if is_mobile_device {
-            // On actual mobile devices, use overlay for keyboard support
-            let final_dom_id = dom_id.or_else(|| {
-                widget_id_for_dom
-                    .as_ref()
-                    .map(|widget_id| format!("text-input-{:?}", widget_id))
-                    .or_else(|| {
-                        use std::collections::hash_map::DefaultHasher;
-                        use std::hash::{Hash, Hasher};
-                        let mut hasher = DefaultHasher::new();
-                        value.hash(&mut hasher);
-                        placeholder.hash(&mut hasher);
-                        Some(format!("text-input-{}", hasher.finish()))
-                    })
-            });
-
-            if let Some(dom_id) = final_dom_id {
-                wasm_portal::FocusBridge::new(element, dom_id, value).into()
-            } else {
-                element
-            }
-        } else {
-            // Desktop (no touch): use normal Iced input (works perfectly)
-            element
-        }
+        input.padding(10).into()
     }
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -2119,7 +2052,6 @@ impl Backend for IcedBackend {
         is_secure: bool,
         variant: Variant,
         id: Option<iced::widget::Id>,
-        _dom_id: Option<String>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let mut input = iced::widget::text_input(&placeholder, &value)
@@ -2948,7 +2880,6 @@ impl Backend for TermBackend {
         is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
-        _dom_id: Option<String>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!(
@@ -3626,7 +3557,6 @@ impl Backend for AIBackend {
         _is_secure: bool,
         _variant: Variant,
         _id: Option<iced::widget::Id>,
-        _dom_id: Option<String>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode {
@@ -3849,7 +3779,6 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ProxyView<Messag
 #[cfg(target_arch = "wasm32")]
 mod wasm_portal {
     use iced::advanced::layout::{self, Layout};
-    use iced::advanced::mouse;
     use iced::advanced::renderer;
     use iced::advanced::widget::{self, Widget};
     use iced::widget::image::Handle;
@@ -4048,328 +3977,5 @@ mod wasm_portal {
         });
 
         ImageState::Loading
-    }
-
-    /// Creates or updates a transparent overlay input positioned exactly over an Iced widget
-    /// This enables proper mobile keyboard triggering and IME support on all WASM targets
-    pub fn create_overlay_input(
-        id: &str,
-        x: f32,
-        y: f32,
-        width: f32,
-        height: f32,
-        current_value: &str,
-    ) {
-        use wasm_bindgen::JsCast;
-        use web_sys::{window, HtmlInputElement};
-
-        let window = window().unwrap();
-        let document = window.document().unwrap();
-
-        // Try to find existing overlay or create new one
-        let input = if let Some(el) = document.get_element_by_id(id) {
-            el.dyn_into::<HtmlInputElement>().ok()
-        } else {
-            // Create new overlay input
-            if let Ok(element) = document.create_element("input") {
-                if let Ok(input) = element.dyn_into::<HtmlInputElement>() {
-                    input.set_id(id);
-                    input.set_type("text");
-
-                    // Set up event bridge: forward overlay input to Iced via keyboard events
-                    // This is the industry-standard approach for canvas apps
-                    use wasm_bindgen::closure::Closure;
-                    use web_sys::Event;
-
-                    let input_clone = input.clone();
-                    let event_handler = Closure::wrap(Box::new(move |_event: Event| {
-                        // When user types in overlay, get the new value
-                        let value = input_clone.value();
-                        log::debug!("Overlay input changed: '{}'", value);
-
-                        // Keyboard events naturally bubble from input to window
-                        // Iced's event loop listens to window keyboard events
-                        // Typing in overlay → keyboard events → window → Iced receives them
-                    })
-                        as Box<dyn FnMut(Event)>);
-
-                    // Attach event listener to overlay
-                    let _ = input.add_event_listener_with_callback(
-                        "input",
-                        event_handler.as_ref().unchecked_ref(),
-                    );
-
-                    // Keep closure alive by leaking it (necessary for event listeners)
-                    event_handler.forget();
-
-                    // Append to body
-                    if let Some(body) = document.body() {
-                        let _ = body.append_child(&input);
-                    }
-
-                    log::info!("Created overlay input with event bridge: {}", id);
-                    Some(input)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        };
-
-        if let Some(input) = input {
-            // Update styling - transparent overlay positioned exactly over widget
-            let style = input.style();
-            let _ = style.set_property("position", "absolute");
-            let _ = style.set_property("left", &format!("{}px", x));
-            let _ = style.set_property("top", &format!("{}px", y));
-            let _ = style.set_property("width", &format!("{}px", width));
-            let _ = style.set_property("height", &format!("{}px", height));
-
-            // Style the overlay to trigger keyboard but stay invisible
-            // The overlay's job is to: 1) Receive clicks/taps, 2) Show mobile keyboard, 3) Capture typing
-            // Iced canvas below handles the visual rendering
-            let _ = style.set_property("background", "transparent");
-            let _ = style.set_property("border", "none");
-            let _ = style.set_property("outline", "none");
-
-            // Make visually invisible but still functional
-            let _ = style.set_property("color", "transparent");
-            let _ = style.set_property("caret-color", "transparent");
-            let _ = style.set_property("opacity", "0.01"); // Nearly invisible but clickable
-
-            // Allow clicks/taps to focus the input (triggers keyboard)
-            let _ = style.set_property("pointer-events", "auto");
-
-            // Critical for mobile: min font-size prevents iOS zoom
-            let _ = style.set_property("font-size", "16px");
-
-            // Position above canvas to intercept clicks
-            let _ = style.set_property("z-index", "1000");
-
-            // Sync value from Iced state
-            if input.value() != current_value {
-                input.set_value(current_value);
-            }
-
-            log::debug!(
-                "Updated overlay input {} at ({}, {}) {}x{}",
-                id,
-                x,
-                y,
-                width,
-                height
-            );
-
-            // Note: Keyboard events from the overlay automatically bubble to the window,
-            // which Iced listens to. This provides automatic DOM → Iced text sync.
-            // The overlay captures physical typing, browser shows it in overlay.value,
-            // and simultaneously Iced receives keyboard events to update its state.
-        } else {
-            log::error!("Failed to create overlay input: {}", id);
-        }
-    }
-
-    /// Legacy function for compatibility - directs to overlay creation
-    pub fn focus_input(id: &str) {
-        use wasm_bindgen::JsCast;
-        use web_sys::{window, HtmlInputElement};
-
-        let window = window().unwrap();
-        let document = window.document().unwrap();
-
-        if let Some(el) = document.get_element_by_id(id) {
-            if let Ok(input) = el.dyn_into::<HtmlInputElement>() {
-                let _ = input.focus();
-                log::debug!("Focused existing overlay: {}", id);
-            }
-        } else {
-            log::warn!("focus_input called but no overlay exists for: {}", id);
-        }
-    }
-
-    pub struct FocusBridge<'a, Message, Theme, Renderer> {
-        inner: Element<'a, Message, Theme, Renderer>,
-        dom_id: String,
-        current_value: String,
-    }
-
-    impl<'a, Message, Theme, Renderer> FocusBridge<'a, Message, Theme, Renderer> {
-        pub fn new(
-            inner: impl Into<Element<'a, Message, Theme, Renderer>>,
-            dom_id: String,
-            current_value: String,
-        ) -> Self {
-            Self {
-                inner: inner.into(),
-                dom_id,
-                current_value,
-            }
-        }
-    }
-
-    impl<'a, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
-        for FocusBridge<'a, Message, Theme, Renderer>
-    where
-        Renderer: renderer::Renderer,
-    {
-        fn tag(&self) -> widget::tree::Tag {
-            self.inner.as_widget().tag()
-        }
-
-        fn state(&self) -> widget::tree::State {
-            self.inner.as_widget().state()
-        }
-
-        fn children(&self) -> Vec<widget::Tree> {
-            self.inner.as_widget().children()
-        }
-
-        fn diff(&self, tree: &mut widget::Tree) {
-            self.inner.as_widget().diff(tree)
-        }
-
-        fn size(&self) -> Size<Length> {
-            self.inner.as_widget().size()
-        }
-
-        fn layout(
-            &mut self,
-            tree: &mut widget::Tree,
-            renderer: &Renderer,
-            limits: &layout::Limits,
-        ) -> layout::Node {
-            self.inner.as_widget_mut().layout(tree, renderer, limits)
-        }
-
-        fn draw(
-            &self,
-            tree: &widget::Tree,
-            renderer: &mut Renderer,
-            theme: &Theme,
-            style: &renderer::Style,
-            layout: Layout<'_>,
-            cursor: mouse::Cursor,
-            viewport: &Rectangle,
-        ) {
-            // Create/update transparent overlay input with exact bounds
-            let bounds = layout.bounds();
-            create_overlay_input(
-                &self.dom_id,
-                bounds.x,
-                bounds.y,
-                bounds.width,
-                bounds.height,
-                &self.current_value,
-            );
-
-            // Draw the inner Iced widget normally
-            self.inner
-                .as_widget()
-                .draw(tree, renderer, theme, style, layout, cursor, viewport)
-        }
-
-        fn update(
-            &mut self,
-            state: &mut widget::Tree,
-            event: &iced::Event,
-            layout: Layout<'_>,
-            cursor: mouse::Cursor,
-            renderer: &Renderer,
-            clipboard: &mut dyn iced::advanced::Clipboard,
-            shell: &mut iced::advanced::Shell<'_, Message>,
-            viewport: &Rectangle,
-        ) {
-            match event {
-                iced::Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-                | iced::Event::Touch(iced::touch::Event::FingerPressed { .. }) => {
-                    if let Some(_cursor_position) = cursor.position_in(layout.bounds()) {
-                        let bounds = layout.bounds();
-
-                        // Ensure overlay exists with current bounds
-                        create_overlay_input(
-                            &self.dom_id,
-                            bounds.x,
-                            bounds.y,
-                            bounds.width,
-                            bounds.height,
-                            &self.current_value,
-                        );
-
-                        // Focus the overlay
-                        focus_input(&self.dom_id);
-
-                        log::info!("FocusBridge activated overlay for: {}", self.dom_id);
-                    }
-                }
-                iced::Event::Window(iced::window::Event::RedrawRequested(_)) => {
-                    // On every frame, check if overlay value changed and sync to Iced
-                    // This is the DOM → Iced synchronization mechanism
-                    use wasm_bindgen::JsCast;
-                    use web_sys::HtmlInputElement;
-
-                    if let Some(window) = web_sys::window() {
-                        if let Some(document) = window.document() {
-                            if let Some(el) = document.get_element_by_id(&self.dom_id) {
-                                if let Ok(input) = el.dyn_into::<HtmlInputElement>() {
-                                    let overlay_value = input.value();
-                                    if overlay_value != self.current_value {
-                                        log::info!(
-                                            "Overlay value changed: '{}' -> '{}'",
-                                            self.current_value,
-                                            overlay_value
-                                        );
-                                        // Update our stored value - this will be used in next draw()
-                                        self.current_value = overlay_value;
-                                        // Request redraw to show the new text
-                                        shell.request_redraw();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                _ => {}
-            }
-
-            self.inner.as_widget_mut().update(
-                state, event, layout, cursor, renderer, clipboard, shell, viewport,
-            )
-        }
-
-        fn mouse_interaction(
-            &self,
-            state: &widget::Tree,
-            layout: Layout<'_>,
-            cursor: mouse::Cursor,
-            viewport: &Rectangle,
-            renderer: &Renderer,
-        ) -> mouse::Interaction {
-            self.inner
-                .as_widget()
-                .mouse_interaction(state, layout, cursor, viewport, renderer)
-        }
-
-        fn operate(
-            &mut self,
-            state: &mut widget::Tree,
-            layout: Layout<'_>,
-            renderer: &Renderer,
-            operation: &mut dyn widget::Operation,
-        ) {
-            self.inner
-                .as_widget_mut()
-                .operate(state, layout, renderer, operation)
-        }
-    }
-
-    impl<'a, Message: 'static, Theme: 'a, Renderer> From<FocusBridge<'a, Message, Theme, Renderer>>
-        for Element<'a, Message, Theme, Renderer>
-    where
-        Renderer: renderer::Renderer + 'static,
-    {
-        fn from(bridge: FocusBridge<'a, Message, Theme, Renderer>) -> Self {
-            Self::new(bridge)
-        }
     }
 }

@@ -1,6 +1,6 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
     let items = vec![
@@ -49,7 +49,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
                 "Unified Identity Data Store",
                 "Cross-Device Semantic Search",
                 "Autonomous Migration logic",
-                "E2EE Sovereign Storage"
+                "E2EE Universal Storage"
             ]
         ),
     ];

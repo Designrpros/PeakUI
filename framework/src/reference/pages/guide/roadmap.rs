@@ -1,6 +1,6 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
     let items = vec![
@@ -53,7 +53,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
                 "Private Brain: Local NPU Burn/Candle support",
                 "AI Sandboxing: Secure WASM Execution layer",
                 "Visual Layout Inspector (Pro Tooling)",
-                "Unified Identity & Sovereign Key Management",
+                "Unified Identity & Universal Key Management",
             ],
         ),
     ];

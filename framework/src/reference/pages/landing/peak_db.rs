@@ -36,7 +36,7 @@ pub fn view(
                             .push(Icon::new("database").size(32.0).color(t.colors.primary))
                             .push(Text::new("PeakDB").size(48.0).bold()),
                     )
-                    .push(Text::new("Sovereign Neural Memory").size(24.0).secondary()),
+                    .push(Text::new("Universal Neural Memory").size(24.0).secondary()),
             )
             .padding(if is_mobile {
                 Padding::from(24.0)

@@ -1,6 +1,6 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
     let _ = context;
@@ -60,7 +60,7 @@ pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
                             .spacing(24.0)
                             .push(feature_item("Telemetry", "Live data streams from every hardware node in the swarm.", "bar-chart-2", ctx))
                             .push(feature_item("Command", "Direct-action interface for remote manual override.", "terminal", ctx))
-                            .push(feature_item("Analytics", "Historical audit logs for sovereign industrial safety.", "search", ctx))
+                            .push(feature_item("Analytics", "Historical audit logs for universal industrial safety.", "search", ctx))
                     )
             )
             .padding(if is_mobile { Padding::from(24.0) } else { Padding { top: 40.0, right: 80.0, bottom: 80.0, left: 80.0 } })

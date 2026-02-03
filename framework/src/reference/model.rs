@@ -275,7 +275,7 @@ impl Page {
             // Landing
             Page::Landing => "/landing".to_string(),
             // Guide
-            Page::Introduction => "/".to_string(),
+            Page::Introduction => "/guide/introduction".to_string(),
             Page::Roadmap => "/guide/roadmap".to_string(),
             Page::Community => "/guide/community".to_string(),
             Page::Intelligence => "/intelligence".to_string(),
@@ -376,6 +376,7 @@ impl Page {
             "/landing" => Page::Landing,
             "/" | "" => Page::Introduction,
 
+            "/guide/introduction" => Page::Introduction,
             "/guide/roadmap" => Page::Roadmap,
             "/guide/community" => Page::Community,
             "/intelligence" => Page::Intelligence,

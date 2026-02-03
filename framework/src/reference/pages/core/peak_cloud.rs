@@ -1,6 +1,6 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
     let items = vec![
@@ -25,7 +25,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
                 "WebRTC/libp2p Hole Punching",
                 "TURN/STUN Fallback System",
                 "Decentralized Relay Network",
-                "E2EE Sovereign Key Pairing",
+                "E2EE Universal Key Pairing",
             ],
         ),
         TimelineItem::new(
@@ -44,7 +44,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             "Phase 4: Global PeakNet",
             "Q4 2026+",
             "future",
-            "The final evolution of a sovereign, global-scale decentralized infrastructure.",
+            "The final evolution of a universal, global-scale decentralized infrastructure.",
             vec![
                 "PeakNet Domain Resolution",
                 "Universal Asset Persistence",

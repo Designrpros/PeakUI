@@ -159,7 +159,6 @@ impl ContentView {
                         Message::Search(s)
                     })
                     .variant(Variant::Ghost)
-                    .dom_id("header-search-input")
                     .neural("header-search")
                     .view(context);
 
@@ -221,6 +220,7 @@ impl ContentView {
             // Transparent Floating Header Container
             container(header_row)
                 .width(Length::Fill)
+                .height(Length::Shrink) // ✅ Only take space needed, don't block clicks below
                 .style(move |_| container::Style {
                     background: None,
                     border: Border::default(),
@@ -331,26 +331,46 @@ impl ContentView {
         }
 
         // --- 4. Final Assembly ---
-        let mut layers = stack![
-            split_view.view(&content_context),
-            // Always show Bottom Dock (Tabbar)
-            Element::from(
+        // Responsive Assembly: Mobile uses a Column (non-blocking) while Desktop uses a Stack (hovering).
+        // This ensures the sidebar is fully interactive on narrow viewports while maintaining the premium look on desktop.
+        let mut final_view: Element<'static, Message> = if is_mobile {
+            iced::widget::column![
+                container(split_view.view(&content_context))
+                    .width(Length::Fill)
+                    .height(Length::FillPortion(1)),
                 container(tabbar.view(context))
                     .width(Length::Fill)
                     .align_x(Alignment::Center)
+                    .padding(Padding {
+                        top: 12.0,
+                        right: 20.0,
+                        bottom: 24.0,
+                        left: 20.0,
+                    })
+            ]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+        } else {
+            // Desktop: Floating dock using zstack (ORIGINAL DESIGN - DO NOT CHANGE)
+            iced::widget::stack![
+                split_view.view(&content_context),
+                container(tabbar.view(context))
+                    .width(Length::Fill)
+                    .height(Length::Fill) // Need full height for align_y to position at bottom
+                    .align_x(Alignment::Center)
+                    .align_y(Alignment::End)
                     .padding(Padding {
                         top: 0.0,
                         right: 20.0,
                         bottom: 32.0,
                         left: 20.0,
                     })
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .align_y(Alignment::End),
-            )
-        ];
+            ]
+            .into()
+        };
 
-        // Mobile Inspector Overlay
+        // Mobile Inspector Overlay - These remain as stacks because they are true overlays
         if let Some(inspector) = final_inspector {
             let radius = context.radius(16.0);
             let bg_color = context.theme.colors.surface_variant;
@@ -367,13 +387,12 @@ impl ContentView {
                     ..Default::default()
                 });
 
-            layers = layers.push(
+            final_view = iced::widget::stack![
+                final_view,
                 container(iced::widget::column![
-                    // Push content down
                     iced::widget::Space::new()
                         .width(Length::Fill)
                         .height(Length::FillPortion(1)),
-                    // The Inspector Sheet
                     sheet.height(Length::FillPortion(1))
                 ])
                 .width(Length::Fill)
@@ -389,10 +408,9 @@ impl ContentView {
                     ..Default::default()
                 })
                 .align_y(iced::alignment::Vertical::Bottom),
-            );
+            ]
+            .into();
         }
-
-        let final_view: Element<'static, Message> = layers.into();
 
         final_view
     }

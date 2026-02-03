@@ -523,7 +523,21 @@ impl Default for App {
             ai_provider: settings.ai_provider,
             peak_id: String::new(),
             icon_limit: 50,
-            window_width: 1024.0, // Default assume desktop until resized
+            window_width: {
+                #[cfg(target_arch = "wasm32")]
+                {
+                    let w = web_sys::window()
+                        .and_then(|w| w.inner_width().ok())
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(1024.0) as f32;
+                    log::info!("Initial window_width captured: {}", w);
+                    w
+                }
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    1024.0
+                }
+            },
             localization: Localization::default(),
             pending_sudo_action: None,
             is_thinking: false,
@@ -531,7 +545,7 @@ impl Default for App {
             db,
 
             // Typewriter defaults
-            typewriter_text: "How do I use the layout lab?".to_string(),
+            typewriter_text: "Say hello".to_string(),
             typewriter_index: 0,
             typewriter_phrase_index: 0,
             is_deleting: false,
@@ -550,10 +564,10 @@ impl App {
                 }
 
                 let phrases = [
-                    "How do I use the layout lab?",
-                    "Try 'change theme to dark matrix'...",
-                    "Try 'navigate to button lab'...",
-                    "Try 'set button variant to compact'...",
+                    "Say hello",
+                    "Change tone to dark",
+                    "Navigate to button lab",
+                    "Set button variant to compact",
                 ];
 
                 let current_phrase = phrases[self.typewriter_phrase_index % phrases.len()];
@@ -637,6 +651,15 @@ impl App {
             Message::EnterApp => {
                 self.show_landing = false;
                 self.show_sidebar = true;
+
+                if !self.search_query.trim().is_empty() {
+                    let query = self.search_query.clone();
+                    self.search_query.clear();
+                    self.show_inspector = true;
+                    self.inspector_tab = InspectorTab::App;
+                    return self.start_ai_chat(query);
+                }
+
                 Task::none()
             }
             Message::SetLanguage(lang, resources) => {
@@ -673,20 +696,45 @@ impl App {
                     let _ = web_sys::window().and_then(|w| w.location().set_hash(&path).ok());
                 }
 
+                // Sync window width from browser on every navigation for reliability
+                #[cfg(target_arch = "wasm32")]
+                {
+                    if let Some(w) = web_sys::window()
+                        .and_then(|w| w.inner_width().ok())
+                        .and_then(|v| v.as_f64())
+                    {
+                        self.window_width = w as f32;
+                    }
+                }
+
+                log::info!(
+                    "SetTab: {:?}, window_width: {}, show_sidebar: {}",
+                    tab,
+                    self.window_width,
+                    self.show_sidebar
+                );
+
                 // Mobile Navigation Protocol: Auto-close sidebar on navigation if on mobile
                 if self.window_width < 900.0 {
+                    log::info!(" -> Mobile Mode: Auto-closing sidebar");
                     self.show_sidebar = false;
                 }
 
                 // Landing/Details visibility logic
                 match tab {
                     Page::Landing
+                    | Page::Introduction
                     | Page::PeakOSDetail
                     | Page::PeakUIDetail
                     | Page::PeakDBDetail
                     | Page::PeakRelayDetail
                     | Page::PeakHubDetail => {
                         self.show_landing = true;
+                        // On mobile, the landing/home view should show the menu (sidebar)
+                        if self.window_width < 900.0 && self.active_tab == Page::Landing {
+                            log::info!(" -> Landing on Mobile: Auto-showing sidebar");
+                            self.show_sidebar = true;
+                        }
                     }
                     _ => {
                         self.show_landing = false;
@@ -710,6 +758,7 @@ impl App {
             }
             Message::ToggleSidebar => {
                 self.show_sidebar = !self.show_sidebar;
+                log::info!("ToggleSidebar: show_sidebar is now {}", self.show_sidebar);
                 Task::none()
             }
             Message::ToggleUserProfile => {
@@ -731,6 +780,13 @@ impl App {
                     "Settings" => Page::Appearance,
                     _ => self.active_tab.clone(),
                 };
+
+                // Mobile Navigation Protocol: Auto-close sidebar on navigation if on mobile
+                if self.window_width < 900.0 {
+                    log::info!(" -> Mobile Mode (SetNavigationMode): Auto-closing sidebar");
+                    self.show_sidebar = false;
+                }
+
                 Task::none()
             }
             Message::ToggleSection(section) => {
@@ -992,6 +1048,30 @@ impl App {
                 Task::none()
             }
             Message::WindowResized(size) => {
+                let was_desktop = self.window_width >= 900.0;
+                let is_desktop = size.width >= 900.0;
+
+                log::info!(
+                    "WindowResized: {}x{} (was_desktop: {}, is_desktop: {})",
+                    size.width,
+                    size.height,
+                    was_desktop,
+                    is_desktop
+                );
+
+                // Mobile Navigation Protocol: Auto-close sidebar when resizing from desktop to slim
+                if was_desktop && !is_desktop {
+                    log::info!(" -> Resized to Slim: Auto-closing sidebar");
+                    self.show_sidebar = false;
+                }
+
+                // Desktop Navigation Protocol: Auto-show sidebar when resizing from slim to desktop
+                // This ensures NavigationSplitView behaves like SwiftUI with proper adaptive layout
+                if !was_desktop && is_desktop {
+                    log::info!(" -> Resized to Desktop: Auto-showing sidebar");
+                    self.show_sidebar = true;
+                }
+
                 self.window_width = size.width;
                 Task::none()
             }
@@ -1035,81 +1115,8 @@ impl App {
                 ChatViewMessage::SendPressed => {
                     let content = self.chat_input.trim().to_string();
                     if !content.is_empty() {
-                        self.chat_messages.push(ChatMessage {
-                            role: ChatRole::User,
-                            content: content.clone(),
-                        });
                         self.chat_input.clear();
-
-                        // TOKEN OPTIMIZATION & SAFETY SWITCH
-
-                        // 8k context window (~32k chars) is a safe upper bound for many models,
-                        // but to be safe with rate limits, let's aim for 4k tokens (~16k chars).
-                        const MAX_CONTEXT_CHARS: usize = 16_000;
-                        const MAX_HISTORY_MESSAGES: usize = 20; // Hard cap on count
-
-                        let system_prompt = self.get_system_prompt();
-                        let system_chars = system_prompt.len();
-
-                        // SAFETY SWITCH: If system prompt alone is too huge, abort.
-                        if system_chars > MAX_CONTEXT_CHARS {
-                            self.chat_messages.push(ChatMessage {
-                                role: ChatRole::System,
-                                content: format!(
-                                    "Error: Context is too large ({} chars). Please reduce the complexity of the current view.",
-                                    system_chars
-                                ),
-                            });
-                            return Task::none();
-                        }
-
-                        let mut available_chars = MAX_CONTEXT_CHARS.saturating_sub(system_chars);
-                        let mut history_messages = Vec::new();
-
-                        // Collect messages from newest to oldest, fitting into the budget
-                        for msg in self.chat_messages.iter().rev().take(MAX_HISTORY_MESSAGES) {
-                            let msg_len = msg.content.len();
-                            if msg_len <= available_chars {
-                                history_messages.push(msg);
-                                available_chars -= msg_len;
-                            } else {
-                                // Message too long to fit, stop collecting history
-                                break;
-                            }
-                        }
-
-                        // We collected reverse, so reverse back to chronological order
-                        let mut history: Vec<crate::core::ChatCompletionMessage> = history_messages
-                            .into_iter()
-                            .rev()
-                            .map(|m| crate::core::ChatCompletionMessage {
-                                role: match m.role {
-                                    ChatRole::System => "system".to_string(),
-                                    ChatRole::User => "user".to_string(),
-                                    ChatRole::Assistant => "assistant".to_string(),
-                                },
-                                content: m.content.clone(),
-                            })
-                            .collect();
-
-                        // Inject REAL system context at the front
-                        history.insert(
-                            0,
-                            crate::core::ChatCompletionMessage {
-                                role: "system".to_string(),
-                                content: self.get_system_prompt(),
-                            },
-                        );
-
-                        self.is_thinking = true;
-                        let stream = self.intelligence.chat_stream(history);
-
-                        use iced::futures::StreamExt;
-                        let mapped_stream = stream.map(|res| Message::ChatStreamUpdate(res)).chain(
-                            iced::futures::stream::once(async { Message::AIChatComplete }),
-                        );
-
-                        return Task::stream(mapped_stream);
+                        return self.start_ai_chat(content);
                     }
                     Task::none()
                 }
@@ -1196,6 +1203,78 @@ impl App {
                 Task::none()
             }
         }
+    }
+
+    pub fn start_ai_chat(&mut self, content: String) -> Task<Message> {
+        self.chat_messages.push(ChatMessage {
+            role: ChatRole::User,
+            content: content.clone(),
+        });
+
+        // TOKEN OPTIMIZATION & SAFETY SWITCH
+        const MAX_CONTEXT_CHARS: usize = 16_000;
+        const MAX_HISTORY_MESSAGES: usize = 20;
+
+        let system_prompt = self.get_system_prompt();
+        let system_chars = system_prompt.len();
+
+        if system_chars > MAX_CONTEXT_CHARS {
+            self.chat_messages.push(ChatMessage {
+                role: ChatRole::System,
+                content: format!(
+                    "Error: Context is too large ({} chars). Please reduce the complexity of the current view.",
+                    system_chars
+                ),
+            });
+            return Task::none();
+        }
+
+        let mut available_chars = MAX_CONTEXT_CHARS.saturating_sub(system_chars);
+        let mut history_messages = Vec::new();
+
+        for msg in self.chat_messages.iter().rev().take(MAX_HISTORY_MESSAGES) {
+            let msg_len = msg.content.len();
+            if msg_len <= available_chars {
+                history_messages.push(msg);
+                available_chars -= msg_len;
+            } else {
+                break;
+            }
+        }
+
+        let mut history: Vec<crate::core::ChatCompletionMessage> = history_messages
+            .into_iter()
+            .rev()
+            .map(|m| crate::core::ChatCompletionMessage {
+                role: match m.role {
+                    ChatRole::System => "system".to_string(),
+                    ChatRole::User => "user".to_string(),
+                    ChatRole::Assistant => "assistant".to_string(),
+                },
+                content: m.content.clone(),
+            })
+            .collect();
+
+        history.insert(
+            0,
+            crate::core::ChatCompletionMessage {
+                role: "system".to_string(),
+                content: system_prompt,
+            },
+        );
+
+        self.is_thinking = true;
+        let stream = self.intelligence.chat_stream(history);
+
+        use iced::futures::StreamExt;
+        let mapped_stream =
+            stream
+                .map(|res| Message::ChatStreamUpdate(res))
+                .chain(iced::futures::stream::once(async {
+                    Message::AIChatComplete
+                }));
+
+        Task::stream(mapped_stream)
     }
 
     pub fn process_assistant_actions(&mut self, text: &str) -> Task<Message> {
@@ -1313,8 +1392,18 @@ impl App {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        log::info!("App::view called. show_landing: {}", self.show_landing);
-        let mode = if self.window_width < 800.0 {
+        let mode = if self.window_width < 900.0 {
+            "Mobile"
+        } else {
+            "Desktop"
+        };
+        log::info!(
+            "App::view: {} Mode, width: {}, show_sidebar: {}",
+            mode,
+            self.window_width,
+            self.show_sidebar
+        );
+        let mode = if self.window_width < 900.0 {
             ShellMode::Mobile
         } else {
             ShellMode::Desktop
