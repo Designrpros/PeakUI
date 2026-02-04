@@ -1,16 +1,14 @@
-# PeakUI – Universell grensesnitt-infrastruktur for autonome systemer
+# PeakUI – Strategisk Digital Infrastruktur for Europeisk Konkurranseevne
 
-**Prosjektsammendrag for Innovasjon Norge**  
-**Innsending: EU Konkurranseevnefond – Digital satsing**  
+**Innspill til Digitaliserings- og forvaltningsdepartementet (DFD)**  
+**Tema: EUs Konkurranseevnefond – Digitalt Lederskap (DL)**  
 **Dato: Februar 2026**
 
 ---
 
-## Sammendrag
+## Sammendrag: Digitalt Lederskap i praksis
 
-PeakUI er et norskutviklet,open-source UI-rammeverk som transformerer hvordan programvare kommuniserer med kunstig intelligens. Bygget i Rust tilbyr det et **universelt grensesnittlag** som distribuerer samme kildekode til alle større plattformer (Linux, macOS, WASM, kommende mobil), samtidig som det eksponerer et maskinlesbart **Semantisk Tre** for AI-agenter.
-
-I motsetning til tradisjonelle løsninger som krever bildebehandling, leverer PeakUI strukturert data direkte fra UI-laget til AI-en. Dette reduserer energiforbruket med **opptil 99 %** sammenlignet med pikselbasert analysemetoder – en revolusjon for grønn AI.
+PeakUI er et norskutviklet, open-source UI-rammeverk som posisjonerer Europa for **Digitalt Lederskap** ved å transformere hvordan programvare kommuniserer med kunstig intelligens. PeakUI tilbyr en **strategisk teknologi** i form av et universelt grensesnittlag som sikrer **geopolitisk robusthet** ved å redusere avhengigheten av proprietære, utenlandske "computer vision"-modeller for AI-interaksjon.
 
 ---
 
@@ -162,14 +160,14 @@ Globale aktører (Tesla, Siemens, ABB) leter etter AI-klare grensesnittløsninge
 
 PeakUI representerer et paradigmeskifte i hvordan programvare og kunstig intelligens kommuniserer. Ved å erstatte energikrevende bildebehandling med **semantisk serialisering**, tilbyr rammeverket:
 
-1. **99 % reduksjon i AI-energiforbruk** (grønn digitalisering)
-2. **Universell plattformkompatibilitet** (WASM, native, kommende mobil/spatial)
-3. **Industriell sikkerhet** (Rust + Neural Sudo)
-4. **Norsk teknologisk suverenitet** i AI-infrastruktur
+1. **99 % reduksjon i AI-energiforbruk** (Grønn Digitalisering)
+2. **Strategisk autonomi og geopolitisk robusthet** (Europeisk-eid kjerneinfrastruktur)
+3. **Universell plattformkomparelbilitet** (Fremtidssikret for Spatial Computing og AI-agenter)
+4. **Markedsklar teknologi** (Fra forskning til anvendt løsning)
 
 ## Anbefaling
 
-"For å sikre europeisk konkurransekraft i den autonome økonomien, anbefaler jeg at EUs Konkurranseevnefond aktivt støtter utvikling av semantiske universale brukergrensesnitt-standarder. Dette vil posisjonere Europa som global leder i AI-native programvareinfrastruktur, med Norge som teknologisk drivkraft."
+For å sikre europeisk konkurransekraft og **Digitalt Lederskap**, anbefaler jeg at norske myndigheter støtter inkluderingen av åpne, semantiske grensesnitt-standarder i EUs Konkurranseevnefond. Dette vil sikre at Europa ikke bare produserer AI, men også kontrollerer den **strategiske infrastrukturen** som AI-en bruker for å samhandle med den fysiske og digitale verden.
 
 ---
 
