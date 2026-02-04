@@ -1,8 +1,9 @@
 use crate::atoms::Text;
 use crate::controls::Button;
-use crate::core::{Backend, Context, View};
+use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::Variant;
+use crate::navigation::ViewExt;
 use crate::views::{CodeBlock, MarkdownView};
 use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
@@ -187,6 +188,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 Length::Shrink,
                 None,
                 false,
+                ScrollDirection::Horizontal,
                 ctx,
             )
         };
@@ -199,22 +201,23 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                     VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(crate::containers::Card::<Message, B>::new_generic(
-                            crate::core::ProxyView::new(move |ctx| {
-                                let preview_view = preview.view(ctx);
-                                // B::scroll_view needed or generic container?
-                                // Let's assume content fits or internal scrolling.
-                                // If we need scrolling, we use B::scroll_view
-                                B::scroll_view(
-                                    preview_view,
-                                    Length::Fill,
-                                    Length::Fill,
-                                    None,
-                                    false,
-                                    ctx,
-                                )
-                            }),
-                        )),
+                        .push(
+                            crate::containers::Card::<Message, B>::new_generic(
+                                crate::core::ProxyView::new(move |ctx| {
+                                    let preview_view = preview.view(ctx);
+                                    B::scroll_view(
+                                        preview_view,
+                                        Length::Fill,
+                                        Length::Fill,
+                                        None,
+                                        false,
+                                        ScrollDirection::Vertical,
+                                        ctx,
+                                    )
+                                }),
+                            )
+                            .height(Length::Fixed(400.0)),
+                        ),
                 )
             }
             crate::reference::app::RenderMode::Terminal => {
@@ -228,7 +231,14 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                     VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(CodeBlock::<Message>::new(ansi)),
+                        .push(
+                            crate::containers::Card::<Message, B>::new_generic(
+                                VStack::<Message, B>::new_generic()
+                                    .padding(24)
+                                    .push(CodeBlock::<Message>::new(ansi)),
+                            )
+                            .background(iced::Color::from_rgb8(30, 30, 30)),
+                        ),
                 )
             }
             crate::reference::app::RenderMode::Neural => {
@@ -243,7 +253,14 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                     VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(CodeBlock::<Message>::new(json)),
+                        .push(
+                            crate::containers::Card::<Message, B>::new_generic(
+                                VStack::<Message, B>::new_generic()
+                                    .padding(24)
+                                    .push(CodeBlock::<Message>::new(json)),
+                            )
+                            .background(iced::Color::from_rgb8(20, 20, 20)),
+                        ),
                 )
             }
             crate::reference::app::RenderMode::Spatial => {
@@ -253,29 +270,34 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                     VStack::<Message, B>::new_generic()
                         .spacing(24.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
-                        .push(crate::core::ProxyView::new(move |ctx| {
-                            if let Some(node) = &spatial_node {
-                                crate::core::View::<Message, B>::view(
-                                    &crate::reference::views::SimulatorView::<Message>::new(
-                                        node.clone(),
-                                    ),
-                                    ctx,
-                                )
-                            } else {
-                                B::text(
-                                    "No spatial representation available.".to_string(),
-                                    14.0,
-                                    None,
-                                    false,
-                                    true,
-                                    None,
-                                    None,
-                                    Length::Shrink,
-                                    iced::Alignment::Center,
-                                    ctx,
-                                )
-                            }
-                        })),
+                        .push(
+                            crate::containers::Card::<Message, B>::new_generic(
+                                crate::core::ProxyView::new(move |ctx| {
+                                    if let Some(node) = &spatial_node {
+                                        crate::core::View::<Message, B>::view(
+                                            &crate::reference::views::SimulatorView::<Message>::new(
+                                                node.clone(),
+                                            ),
+                                            ctx,
+                                        )
+                                    } else {
+                                        B::text(
+                                            "No spatial representation available.".to_string(),
+                                            14.0,
+                                            None,
+                                            false,
+                                            true,
+                                            None,
+                                            None,
+                                            Length::Shrink,
+                                            iced::Alignment::Center,
+                                            ctx,
+                                        )
+                                    }
+                                }),
+                            )
+                            .height(Length::Fixed(400.0)),
+                        ),
                 )
             }
         }
@@ -296,9 +318,9 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
         let mut doc_content = VStack::<Message, B>::new_generic()
             .spacing(40.0)
             .padding(Padding {
-                top: context.safe_area.top.max(48.0),
+                top: context.safe_area.top + 24.0, // Small gap after header-safe-area
                 right: if context.is_slim() { 24.0 } else { 48.0 },
-                bottom: context.safe_area.bottom.max(48.0),
+                bottom: context.safe_area.bottom + 48.0, // Gap for dock
                 left: if context.is_slim() { 24.0 } else { 48.0 },
             })
             .width(Length::Fill)

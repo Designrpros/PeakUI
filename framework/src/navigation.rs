@@ -1,5 +1,5 @@
 use crate::atoms::{Icon, Text};
-use crate::core::{Backend, Context, IcedBackend, SemanticNode, View};
+use crate::core::{Backend, Context, IcedBackend, ScrollDirection, SemanticNode, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::{Intent, Variant};
 use iced::{Alignment, Color, Length, Padding};
@@ -241,7 +241,16 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
 
     fn describe(&self, _context: &Context) -> SemanticNode {
         SemanticNode {
-            accessibility: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Link,
+                label: self.label.clone(),
+                states: if self.is_active {
+                    vec!["selected".to_string()]
+                } else {
+                    Vec::new()
+                },
+                ..Default::default()
+            }),
             role: "navigation_link".to_string(),
             label: Some(self.label.clone()),
             content: None,
@@ -398,12 +407,24 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
             context,
         );
 
-        B::scroll_view(inner, Length::Fill, Length::Fill, None, false, context)
+        B::scroll_view(
+            inner,
+            Length::Fill,
+            Length::Fill,
+            None,
+            false,
+            ScrollDirection::Vertical,
+            context,
+        )
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
         SemanticNode {
-            accessibility: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::List,
+                label: self.title.clone(),
+                ..Default::default()
+            }),
             role: "sidebar".to_string(),
             label: Some(self.title.clone()),
             content: None,

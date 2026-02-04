@@ -1,5 +1,5 @@
 use crate::atoms::Icon;
-use crate::core::{Backend, Context, TextSpan, View};
+use crate::core::{Backend, Context, ScrollDirection, TextSpan, View};
 use crate::modifiers::Variant;
 use iced::{Color, Length};
 
@@ -146,6 +146,7 @@ where
             Length::Shrink,
             None,
             true,
+            ScrollDirection::Horizontal,
             context,
         );
         // Note: scroll_view usually enables scrolling if content overflows.

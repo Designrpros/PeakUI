@@ -3,6 +3,7 @@ use crate::modifiers::Intent;
 use iced::{Alignment, Color, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;
+pub mod badge;
 
 #[derive(Clone)]
 pub struct Text<B: Backend = IcedBackend> {
@@ -197,13 +198,20 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
             role: "text".to_string(),
             label: None,
             content: Some(self.content.clone()),
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Text,
+                label: self.content.clone(),
+                hint: None,
+                value: None,
+                states: Vec::new(),
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }
@@ -562,13 +570,20 @@ impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
             role: "image".to_string(),
             label: Some(self.path.clone()),
             content: None,
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Image,
+                label: format!("Image: {}", self.path),
+                hint: None,
+                value: None,
+                states: Vec::new(),
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }

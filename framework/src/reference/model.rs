@@ -33,6 +33,7 @@ pub enum Page {
     Colors,
     Typography,
     Layout,
+    Accessibility,
 
     // Components -> Atoms
     Text,
@@ -58,6 +59,7 @@ pub enum Page {
     Modal,
     NavigationSplit,
     Section,
+    DataTable,
 
     // API Schema
     ApiSchema,
@@ -122,6 +124,7 @@ impl ToString for Page {
             Page::Colors => "Colors".to_string(),
             Page::Typography => "Typography".to_string(),
             Page::Layout => "Layout".to_string(),
+            Page::Accessibility => "Accessibility".to_string(),
 
             Page::Text => "Text".to_string(),
             Page::Icon => "Icon".to_string(),
@@ -142,6 +145,7 @@ impl ToString for Page {
             Page::Modal => "Modal".to_string(),
             Page::NavigationSplit => "NavigationSplit".to_string(),
             Page::Section => "Section".to_string(),
+            Page::DataTable => "Data Table".to_string(),
 
             Page::ApiSchema => "API Schema".to_string(),
 
@@ -222,6 +226,7 @@ impl From<String> for Page {
             "modal" => Page::Modal,
             "navigationsplit" | "navigation-split" | "navigation_split" => Page::NavigationSplit,
             "section" => Page::Section,
+            "datatable" | "table" | "data-table" => Page::DataTable,
 
             "api schema" | "apischema" | "api-schema" => Page::ApiSchema,
 
@@ -289,6 +294,7 @@ impl Page {
             Page::Colors => "/docs/colors".to_string(),
             Page::Typography => "/docs/typography".to_string(),
             Page::Layout => "/docs/layout".to_string(),
+            Page::Accessibility => "/docs/accessibility".to_string(),
 
             // Components (Atoms)
             Page::Text => "/components/text".to_string(),
@@ -314,6 +320,7 @@ impl Page {
             Page::Modal => "/components/modal".to_string(),
             Page::NavigationSplit => "/components/navigation-split".to_string(),
             Page::Section => "/components/section".to_string(),
+            Page::DataTable => "/components/data-table".to_string(),
 
             Page::ApiSchema => "/api-schema".to_string(),
 
@@ -389,6 +396,7 @@ impl Page {
             "/docs/colors" => Page::Colors,
             "/docs/typography" => Page::Typography,
             "/docs/layout" => Page::Layout,
+            "/docs/accessibility" => Page::Accessibility,
 
             "/components/text" => Page::Text,
             "/components/icon" => Page::Icon,
@@ -411,6 +419,7 @@ impl Page {
             "/components/modal" => Page::Modal,
             "/components/navigation-split" => Page::NavigationSplit,
             "/components/section" => Page::Section,
+            "/components/data-table" => Page::DataTable,
 
             "/api-schema" => Page::ApiSchema,
 
@@ -470,6 +479,7 @@ impl Page {
             | Page::BasicSizing
             | Page::Colors
             | Page::Layout
+            | Page::Accessibility
             | Page::Intelligence
             | Page::PeakOSDetail
             | Page::PeakUIDetail
@@ -497,6 +507,7 @@ impl Page {
             | Page::Modal
             | Page::NavigationSplit
             | Page::Section
+            | Page::DataTable
             | Page::ShowcaseButtons
             | Page::ShowcaseInputs
             | Page::ShowcaseToggles
@@ -536,6 +547,7 @@ impl Page {
             Page::BasicSizing,
             Page::Colors,
             Page::Layout,
+            Page::Accessibility,
             Page::Text,
             Page::Icon,
             Page::Divider,
@@ -555,6 +567,7 @@ impl Page {
             Page::Modal,
             Page::NavigationSplit,
             Page::Section,
+            Page::DataTable,
             Page::PeakDB,
             Page::PeakCloud,
             Page::PeakHub,

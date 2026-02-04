@@ -1,4 +1,4 @@
-use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
+use crate::core::{Backend, Context, IcedBackend, ScrollDirection, TermBackend, View};
 use iced::Length;
 
 /// A scrollable container that wraps content and provides styled scrollbars.
@@ -79,12 +79,14 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
 
 impl<Message: 'static, B: Backend> View<Message, B> for ScrollView<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let nested_context = context.clone().with_nested_scroll();
         B::scroll_view(
-            self.content.view(context),
+            self.content.view(&nested_context),
             self.width,
             self.height,
             self.id,
             self.show_indicators,
+            ScrollDirection::Vertical,
             context,
         )
     }

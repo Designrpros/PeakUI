@@ -32,8 +32,17 @@ macro_rules! zstack {
     };
 }
 
+#[macro_export]
+macro_rules! data_table {
+    ($($method:ident($($arg:expr),* $(,)?)),* $(,)?) => {
+        $crate::views::data_table::DataTable::new()
+            $(.$method($($arg),*))*
+    };
+}
+
 pub mod assets;
 pub mod atoms;
+pub mod benchmark;
 pub mod catalog;
 pub mod console;
 pub mod containers;
@@ -51,7 +60,8 @@ pub mod views;
 
 pub mod prelude {
     pub use crate::atoms::{
-        Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text, Video, WebView,
+        badge::Badge, Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text,
+        Video, WebView,
     };
     pub use crate::catalog::{Catalog, CatalogItem, CatalogMessage};
     pub use crate::console::Console;
@@ -77,6 +87,7 @@ pub mod prelude {
     pub use crate::segmented_picker::SegmentedPicker;
     pub use crate::toolbar::{ToolbarGroup, ToolbarItem};
     pub use crate::views::code_block::CodeBlock;
+    pub use crate::views::data_table::{DataTable, DataTablePreset};
     pub use crate::views::markdown::MarkdownView;
     pub use crate::{hstack, vstack, zstack};
     pub use peak_theme::ThemeTone;

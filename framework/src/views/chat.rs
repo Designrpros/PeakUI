@@ -1,4 +1,4 @@
-use crate::core::{Backend, Context, SemanticNode, View};
+use crate::core::{Backend, Context, ScrollDirection, SemanticNode, View};
 use crate::modifiers::{Intent, Variant};
 use crate::reference::intelligence::{Action, ActionParser, ContentPart};
 use crate::views::MarkdownView;
@@ -91,6 +91,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
             Length::Fill,
             Some("chat_scroll"),
             true,
+            ScrollDirection::Vertical,
             context,
         );
 

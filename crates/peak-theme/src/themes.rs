@@ -79,6 +79,7 @@ impl PeakTheme {
             ShellMode::SmartHome => PeakTheme::Mono,
             ShellMode::Kiosk => PeakTheme::Mono,
             ShellMode::Server => PeakTheme::Mono,
+            ShellMode::Spatial => PeakTheme::Mono,
         }
     }
 

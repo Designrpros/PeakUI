@@ -139,6 +139,12 @@ impl SidebarView {
                 Page::Layout,
                 *active_tab == Page::Layout,
             ))
+            .push(sidebar_item(
+                "Accessibility",
+                "accessibility",
+                Page::Accessibility,
+                *active_tab == Page::Accessibility,
+            ))
     }
 
     fn view_components_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
@@ -238,6 +244,12 @@ impl SidebarView {
                 "package",
                 Page::Section,
                 *active_tab == Page::Section,
+            ))
+            .push(sidebar_item(
+                "Data Table",
+                "table",
+                Page::DataTable,
+                *active_tab == Page::DataTable,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("FEEDBACK"))
@@ -463,7 +475,7 @@ impl View<Message, IcedBackend> for SidebarItem {
         let theme = context.theme;
         let active = self.active;
         let page_clone = self.page.clone();
-        let label_clone = self.label.clone();
+        let _label_clone = self.label.clone();
 
         log::trace!(
             "📱 SidebarItem::view - Rendering: {} (active: {})",

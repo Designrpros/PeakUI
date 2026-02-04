@@ -6,11 +6,19 @@ use iced::{Alignment, Color, Length, Padding, Renderer, Shadow, Size, Theme, Vec
 pub use nalgebra::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector3};
 pub use peak_core::registry::ShellMode;
 
+/// The core entry point for a PeakUI application.
+///
+/// This trait defines the standard lifecycle of an application, including initialization,
+/// state updates, and view rendering. It abstractly decouples the application logic
+/// from the underlying rendering backend.
 pub trait App: Sized {
     type Message: Send + Clone + std::fmt::Debug + 'static;
     type Flags: Clone + Send + 'static;
 
+    /// Initializes a new instance of the application.
     fn new(flags: Self::Flags) -> (Self, Task<Self::Message>);
+
+    /// Processes application messages and returns a task for side effects.
     fn update(&mut self, message: Self::Message) -> Task<Self::Message>;
     fn view(&self) -> Element<'_, Self::Message>;
     fn subscription(&self) -> Subscription<Self::Message> {
@@ -113,6 +121,7 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     for SpatialBillboard<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
+        // Context now has safe area by default via Context::new
         let mut child_context = context.clone();
         child_context.billboarding = self.active;
         self.inner.view(&child_context)
@@ -203,18 +212,35 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 pub use peak_theme::ThemeTokens;
 use std::sync::Arc;
 
+/// Runtime context for rendering and layout.
+///
+/// `Context` provides environmental data such as the current theme, screen size,
+/// and target shell mode (e.g., Desktop vs Mobile), allowing views to adapt
+/// dynamically to their environment.
 #[derive(Clone, Debug)]
 pub struct Context {
+    /// Theme tokens for colors, spacing, and typography.
     pub theme: ThemeTokens,
+    /// The current shell environment.
     pub mode: ShellMode,
+    /// The type of hardware device.
     pub device: DeviceType,
+    /// The size of the window or container.
     pub size: Size,
+    /// Padding for safe areas (e.g. notches).
     pub safe_area: Padding,
+    /// The ID of the currently focused element.
     pub focused_id: Option<String>,
+    /// System localization settings.
     pub localization: Localization,
+    /// A unique identifier for the current Peak session.
     pub peak_id: String,
+    /// An optional override for the foreground color.
     pub foreground: Option<Color>,
+    /// Whether billboarding is active in spatial environments.
     pub billboarding: bool,
+    /// Whether we are currently inside a ScrollView (to prevent unlimited height paradox).
+    pub is_inside_scrollable: bool,
 }
 
 impl Default for Context {
@@ -230,6 +256,7 @@ impl Default for Context {
             peak_id: String::new(),
             foreground: None,
             billboarding: false,
+            is_inside_scrollable: false,
         }
     }
 }
@@ -242,6 +269,14 @@ pub enum DeviceType {
     TV,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ScrollDirection {
+    #[default]
+    Vertical,
+    Horizontal,
+    Both,
+}
+
 impl Context {
     pub fn new(
         mode: ShellMode,
@@ -252,7 +287,9 @@ impl Context {
         let device = match mode {
             ShellMode::Desktop => DeviceType::Desktop,
             ShellMode::Mobile => DeviceType::Mobile,
-            ShellMode::TV | ShellMode::Console | ShellMode::Fireplace => DeviceType::TV,
+            ShellMode::TV | ShellMode::Console | ShellMode::Fireplace | ShellMode::Spatial => {
+                DeviceType::TV
+            }
             _ => DeviceType::Desktop,
         };
 
@@ -261,12 +298,13 @@ impl Context {
             mode,
             device,
             size,
-            safe_area: Padding::default(),
+            safe_area: Self::auto_padding(mode, size),
             focused_id: None,
             localization,
             peak_id: String::new(),
             foreground: None,
             billboarding: false,
+            is_inside_scrollable: false,
         }
     }
 
@@ -281,6 +319,36 @@ impl Context {
 
     pub fn is_slim(&self) -> bool {
         self.size.width < 900.0
+    }
+
+    pub fn with_nested_scroll(mut self) -> Self {
+        self.is_inside_scrollable = true;
+        self
+    }
+
+    /// Automatically calculates standard safe area padding for different shell modes.
+    pub fn auto_padding(mode: ShellMode, size: Size) -> Padding {
+        let is_slim = size.width < 900.0;
+
+        match mode {
+            ShellMode::Desktop => {
+                Padding {
+                    top: 12.0, // Slight padding top for traffic lights
+                    right: 0.0,
+                    bottom: 12.0, // Dock remains at absolute edge
+                    left: 0.0,
+                }
+            }
+            ShellMode::Mobile => {
+                Padding {
+                    top: if is_slim { 36.0 } else { 24.0 }, // Tightened notch
+                    right: 0.0,
+                    bottom: 24.0, // Tightened mobile dock
+                    left: 0.0,
+                }
+            }
+            _ => Padding::default(),
+        }
     }
 
     pub fn is_wide(&self) -> bool {
@@ -721,6 +789,7 @@ pub trait Backend: Sized + Clone + 'static {
         height: Length,
         id: Option<&'static str>,
         show_indicators: bool,
+        direction: ScrollDirection,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -1305,6 +1374,7 @@ impl Backend for SpatialBackend {
         _height: Length,
         _id: Option<&'static str>,
         _show_indicators: bool,
+        _direction: ScrollDirection,
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -2380,46 +2450,83 @@ impl Backend for IcedBackend {
         height: Length,
         id: Option<&'static str>,
         show_indicators: bool,
+        direction: ScrollDirection,
         context: &Context,
     ) -> Self::AnyView<Message> {
         let text_color = context.theme.colors.text_primary;
+
+        // CORE FIX: Automatically bound nested ScrollViews with Fill height to prevent unlimited expansion
+        // Only apply height capping for Vertical or Both directions
+        let final_height = if context.is_inside_scrollable
+            && height == Length::Fill
+            && direction != ScrollDirection::Horizontal
+        {
+            Length::Fixed(400.0)
+        } else {
+            height
+        };
+
         let mut scroll = iced::widget::scrollable(content)
             .width(width)
-            .height(height);
-
-        if !show_indicators {
-            scroll = scroll.style(|_, _| iced::widget::scrollable::Style {
-                container: iced::widget::container::Style::default(),
-                vertical_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                horizontal_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                gap: None,
-                auto_scroll: iced::widget::scrollable::AutoScroll {
-                    background: iced::Background::Color(iced::Color::TRANSPARENT),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    icon: iced::Color::TRANSPARENT,
+            .height(final_height)
+            .direction(match direction {
+                ScrollDirection::Vertical => iced::widget::scrollable::Direction::Vertical(
+                    iced::widget::scrollable::Scrollbar::default()
+                        .width(4.0)
+                        .margin(0.0)
+                        .scroller_width(4.0),
+                ),
+                ScrollDirection::Horizontal => iced::widget::scrollable::Direction::Horizontal(
+                    iced::widget::scrollable::Scrollbar::default()
+                        .width(4.0)
+                        .margin(0.0)
+                        .scroller_width(4.0),
+                ),
+                ScrollDirection::Both => iced::widget::scrollable::Direction::Both {
+                    vertical: iced::widget::scrollable::Scrollbar::default()
+                        .width(4.0)
+                        .margin(0.0)
+                        .scroller_width(4.0),
+                    horizontal: iced::widget::scrollable::Scrollbar::default()
+                        .width(4.0)
+                        .margin(0.0)
+                        .scroller_width(4.0),
                 },
             });
-        } else {
-            scroll = scroll.style(move |_, status| {
+
+        scroll = scroll.style(move |_, status| {
+            if !show_indicators {
+                iced::widget::scrollable::Style {
+                    container: iced::widget::container::Style::default(),
+                    vertical_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color::TRANSPARENT.into(),
+                            border: iced::Border::default(),
+                        },
+                    },
+                    horizontal_rail: iced::widget::scrollable::Rail {
+                        background: None,
+                        border: iced::Border::default(),
+                        scroller: iced::widget::scrollable::Scroller {
+                            background: iced::Color::TRANSPARENT.into(),
+                            border: iced::Border::default(),
+                        },
+                    },
+                    gap: None,
+                    auto_scroll: iced::widget::scrollable::AutoScroll {
+                        background: iced::Background::Color(iced::Color::TRANSPARENT),
+                        border: iced::Border::default(),
+                        shadow: iced::Shadow::default(),
+                        icon: iced::Color::TRANSPARENT,
+                    },
+                }
+            } else {
                 let scroller_alpha = match status {
-                    iced::widget::scrollable::Status::Hovered { .. } => 0.3,
-                    iced::widget::scrollable::Status::Dragged { .. } => 0.5,
-                    _ => 0.05,
+                    iced::widget::scrollable::Status::Hovered { .. } => 0.4,
+                    iced::widget::scrollable::Status::Dragged { .. } => 0.6,
+                    _ => 0.15, // Increased from 0.05 for better visibility
                 };
 
                 iced::widget::scrollable::Style {
@@ -2464,88 +2571,8 @@ impl Backend for IcedBackend {
                         icon: iced::Color::TRANSPARENT,
                     },
                 }
-            });
-        }
-
-        if !show_indicators {
-            scroll = scroll.style(|_, _| iced::widget::scrollable::Style {
-                container: iced::widget::container::Style::default(),
-                vertical_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                horizontal_rail: iced::widget::scrollable::Rail {
-                    background: None,
-                    border: iced::Border::default(),
-                    scroller: iced::widget::scrollable::Scroller {
-                        background: iced::Color::TRANSPARENT.into(),
-                        border: iced::Border::default(),
-                    },
-                },
-                gap: None,
-                auto_scroll: iced::widget::scrollable::AutoScroll {
-                    background: iced::Background::Color(iced::Color::TRANSPARENT),
-                    border: iced::Border::default(),
-                    shadow: iced::Shadow::default(),
-                    icon: iced::Color::TRANSPARENT,
-                },
-            });
-        } else {
-            scroll = scroll.style(move |_, status| {
-                let scroller_alpha = match status {
-                    iced::widget::scrollable::Status::Hovered { .. } => 0.3,
-                    iced::widget::scrollable::Status::Dragged { .. } => 0.5,
-                    _ => 0.05,
-                };
-
-                iced::widget::scrollable::Style {
-                    container: iced::widget::container::Style::default(),
-                    vertical_rail: iced::widget::scrollable::Rail {
-                        background: None,
-                        border: iced::Border::default(),
-                        scroller: iced::widget::scrollable::Scroller {
-                            background: iced::Color {
-                                a: scroller_alpha,
-                                ..text_color
-                            }
-                            .into(),
-                            border: iced::Border {
-                                radius: 2.0.into(),
-                                width: 0.0,
-                                ..Default::default()
-                            },
-                        },
-                    },
-                    horizontal_rail: iced::widget::scrollable::Rail {
-                        background: None,
-                        border: iced::Border::default(),
-                        scroller: iced::widget::scrollable::Scroller {
-                            background: iced::Color {
-                                a: scroller_alpha,
-                                ..text_color
-                            }
-                            .into(),
-                            border: iced::Border {
-                                radius: 2.0.into(),
-                                width: 0.0,
-                                ..Default::default()
-                            },
-                        },
-                    },
-                    gap: None,
-                    auto_scroll: iced::widget::scrollable::AutoScroll {
-                        background: iced::Background::Color(iced::Color::TRANSPARENT),
-                        border: iced::Border::default(),
-                        shadow: iced::Shadow::default(),
-                        icon: iced::Color::TRANSPARENT,
-                    },
-                }
-            });
-        }
+            }
+        });
 
         if let Some(id) = id {
             scroll = scroll.id(Id::new(id));
@@ -2618,22 +2645,30 @@ impl Backend for IcedBackend {
             left: padding.left * scale,
         };
 
-        container(content)
+        let scaled_width = scale_length(width, scale);
+        let scaled_height = scale_length(height, scale);
+
+        let mut c = container(content)
             .padding(padding)
-            .width(scale_length(width, scale))
-            .height(scale_length(height, scale))
-            .center_y(Length::Fill)
-            .style(move |_| container::Style {
-                background: Some(bg.into()),
-                border: iced::Border {
-                    radius,
-                    color: Color::from_rgba(1.0, 1.0, 1.0, 0.15),
-                    width: 1.0 * scale,
-                },
-                shadow,
-                ..Default::default()
-            })
-            .into()
+            .width(scaled_width)
+            .height(scaled_height);
+
+        // Only center if height is not shrink, otherwise it might collapse during layout
+        if height != Length::Shrink {
+            c = c.center_y(scaled_height);
+        }
+
+        c.style(move |_| container::Style {
+            background: Some(bg.into()),
+            border: iced::Border {
+                radius,
+                color: Color::from_rgba(1.0, 1.0, 1.0, 0.15),
+                width: 1.0 * scale,
+            },
+            shadow,
+            ..Default::default()
+        })
+        .into()
     }
 
     fn section<Message: 'static>(
@@ -2985,6 +3020,7 @@ impl Backend for TermBackend {
         _height: Length,
         _id: Option<&'static str>,
         _show_indicators: bool,
+        _direction: ScrollDirection,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -3012,7 +3048,11 @@ impl Backend for TermBackend {
 }
 
 /// A View describes *what* to render, given a Context.
+///
+/// The `View` trait is the fundamental building block of PeakUI. It is backend-agnostic,
+/// allowing the same UI logic to be rendered by different backends (e.g., Iced, TUI, or AI).
 pub trait View<Message: 'static, B: Backend = IcedBackend> {
+    /// Renders the view into a backend-specific representation.
     fn view(&self, context: &Context) -> B::AnyView<Message>;
 
     fn neural(self, tag: impl Into<String>) -> NeuralView<Message, B, Self>
@@ -3117,31 +3157,47 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
     }
 }
 
-/// A semantic representation of a UI component for AI agents.
+/// A semantic representation of a UI component for AI agents and Accessibility.
+///
+/// `SemanticNode` is a simplified, structured graph of the UI that AI models can
+/// consume directly. It eliminates the need for expensive computer vision by
+/// exposing roles, labels, and state in a dense JSON format.
 #[derive(Debug, Clone, serde::Serialize, Default)]
 pub struct SemanticNode {
+    /// The role of the component (e.g., "button", "text_field").
     #[serde(rename = "r")]
     pub role: String,
+    /// An optional stable identifier for the component.
     #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
+    /// A human-readable label or name for the component.
     #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
+    /// The primary text content or value of the component.
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    /// Hierarchical children of this node.
     #[serde(rename = "ch", skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<SemanticNode>,
+    /// A unique tag for AI-triggered actions.
     #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
     pub neural_tag: Option<String>,
+    /// Developer-provided documentation for this component.
     #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
     pub documentation: Option<String>,
+    /// Metadata specifically for platform accessibility APIs.
     #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<AccessibilityNode>,
+    /// Whether this component requires elevated "Neural Sudo" permissions to interact with.
     #[serde(rename = "p", skip_serializing_if = "is_false")]
     pub is_protected: bool,
+    /// The reason why this component is protected.
     #[serde(rename = "pr", skip_serializing_if = "Option::is_none")]
     pub protection_reason: Option<String>,
+    /// The Z-depth of the component in spatial/volumetric environments.
     #[serde(rename = "z", skip_serializing_if = "Option::is_none")]
     pub depth: Option<f32>,
+    /// The 3D scale of the component.
     #[serde(rename = "s", skip_serializing_if = "Option::is_none")]
     pub scale: Option<[f32; 3]>,
 }
@@ -3240,10 +3296,54 @@ pub trait IntelligenceProvider: Send + Sync {
     }
 }
 
+/// Standard roles for accessibility nodes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
+pub enum AccessibilityRole {
+    #[default]
+    Unknown,
+    Button,
+    CheckBox,
+    Header,
+    Link,
+    SearchBox,
+    Slider,
+    SpinButton,
+    Switch,
+    TextField,
+    Label,
+    List,
+    ListItem,
+    Menu,
+    MenuItem,
+    ProgressBar,
+    RadioButton,
+    Tab,
+    TabList,
+    TabPanel,
+    Toolbar,
+    Tooltip,
+    Window,
+    Dialog,
+    Image,
+    Graphic,
+    Video,
+    Status,
+    Icon,
+    Text,
+    WebView,
+    Group,
+}
+
+impl std::fmt::Display for AccessibilityRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
 #[derive(Debug, Clone, serde::Serialize, Default)]
 pub struct AccessibilityNode {
     #[serde(rename = "r")]
-    pub role: String,
+    pub role: AccessibilityRole,
     #[serde(rename = "l")]
     pub label: String,
     #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
@@ -3252,6 +3352,10 @@ pub struct AccessibilityNode {
     pub value: Option<String>,
     #[serde(rename = "s", skip_serializing_if = "Vec::is_empty")]
     pub states: Vec<String>,
+    #[serde(rename = "hd", skip_serializing_if = "is_false")]
+    pub is_hidden: bool,
+    #[serde(rename = "dis", skip_serializing_if = "is_false")]
+    pub is_disabled: bool,
 }
 
 /// An AI-focused backend that renders UIs into semantic data.
@@ -3714,6 +3818,7 @@ impl Backend for AIBackend {
         _height: Length,
         _id: Option<&'static str>,
         _show_indicators: bool,
+        _direction: ScrollDirection,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content

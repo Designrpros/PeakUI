@@ -94,23 +94,19 @@ impl ContentView {
         let tabbar = TabBarView::new(self.navigation_mode.clone());
 
         // --- 2. Main Layout (Three-Column Split) ---
-        // We inject this into the context so ScrollViews can respect it.
-        let mut content_context = context.clone();
+        // Render page base result
+        let mut page = canvas_manager.render_page(context);
 
-        // Define standard safe areas
-        // Traffic lights are ~30px, plus we want space.
-        let top_safe = 120.0; // Boosted globally for maximum breathing room
-        let bottom_safe = 140.0; // Standardized for extra scrollspace below the dock
-
-        content_context = content_context.with_safe_area(Padding {
-            top: top_safe,       // Protect from the notch bar / top edge / traffic lights
-            bottom: bottom_safe, // Protect from the floating dock / bottom edge
-            ..context.safe_area
+        // Wrap the page view in a ProxyView that applies the content-specific safe area offsets.
+        // This ensures the sidebar and header (shell) stay tight to the edges,
+        // while the page content naturally clears them.
+        let inner_page_view = page.view;
+        let content_view = crate::core::ProxyView::new(move |ctx| {
+            let mut content_context = ctx.clone();
+            content_context.safe_area.top += 48.0; // Clear floating header
+            content_context.safe_area.bottom += 80.0; // Clear floating dock
+            inner_page_view.view(&content_context)
         });
-
-        // Render page with the safe-area-aware context
-        // Render page with the safe-area-aware context
-        let mut page = canvas_manager.render_page(&content_context);
 
         // --- 3. Integrated Header --
         let _ = (); // Discard old notch content logic variable
@@ -125,11 +121,12 @@ impl ContentView {
             let query = query.clone();
 
             // Main Header Row (Single Row for Left Alignment)
-            // Mobile: Add extra top padding to clear traffic lights (approx 20px extra)
-            let top_pad = if is_mobile { 32.0 } else { 12.0 };
+            // Use the dynamic safe area top padding
+            let top_pad = context.safe_area.top;
+
             let mut header_row = iced::widget::row!()
                 .padding(Padding {
-                    top: top_pad,
+                    top: top_pad, // Use safe area directly
                     right: 24.0,
                     bottom: 12.0,
                     left: 24.0,
@@ -233,7 +230,7 @@ impl ContentView {
         let content_layout = crate::layout::ZStack::<Message, IcedBackend>::new_generic()
             .width(Length::Fill)
             .height(Length::Fill)
-            .push(ScrollView::from_boxed(page.view))
+            .push(ScrollView::new(content_view))
             .push(header_view);
 
         let mut split_view = NavigationSplitView::new(sidebar, content_layout)
@@ -327,7 +324,7 @@ impl ContentView {
         // --- 4. Final Assembly ---
         // Unified Floating Dock: Both mobile and desktop use stack layout for a consistent floating dock experience
         let final_view: Element<'static, Message> = iced::widget::stack![
-            split_view.view(&content_context),
+            split_view.view(context),
             container(tabbar.view(context))
                 .width(Length::Fill)
                 .height(Length::Fill) // Need full height for align_y to position at bottom
@@ -336,7 +333,7 @@ impl ContentView {
                 .padding(Padding {
                     top: 0.0,
                     right: 20.0,
-                    bottom: if is_mobile { 24.0 } else { 32.0 },
+                    bottom: context.safe_area.bottom,
                     left: 20.0,
                 })
         ]

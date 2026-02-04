@@ -1,4 +1,4 @@
-use crate::core::{Backend, Context, TextSpan, View};
+use crate::core::{Backend, Context, ScrollDirection, TextSpan, View};
 use crate::views::CodeBlock;
 use iced::{font, Length};
 use std::sync::Arc;
@@ -691,6 +691,7 @@ fn render_table<Message: Clone + 'static, B: Backend>(
         Length::Shrink,
         None,
         true,
+        ScrollDirection::Horizontal,
         context,
     )
 }

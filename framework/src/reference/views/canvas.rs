@@ -61,6 +61,7 @@ impl CanvasView {
             ReferencePage::ProjectStructure => {
                 pages::docs::project_structure::view(context, is_mobile)
             }
+            ReferencePage::Accessibility => pages::docs::accessibility::view(context, is_mobile),
 
             ReferencePage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             ReferencePage::Intelligence => {
@@ -126,6 +127,7 @@ impl CanvasView {
             ReferencePage::Modal => pages::components::modal_doc::view(context),
             ReferencePage::NavigationSplit => pages::components::navigation_split::view(context),
             ReferencePage::Section => pages::components::section::view(context),
+            ReferencePage::DataTable => pages::components::data_table::view(context),
 
             // Showcase Gallery (Deprecated / Redirects)
             ReferencePage::ShowcaseButtons => {
@@ -185,11 +187,7 @@ impl CanvasView {
 impl View<Message, IcedBackend> for CanvasView {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let page = self.render_page(context);
-
-        container(ScrollView::from_boxed(page.view).view(context))
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into()
+        page.view.view(context)
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {

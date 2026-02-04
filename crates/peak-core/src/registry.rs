@@ -98,6 +98,7 @@ pub enum ShellMode {
     Server,
     SmartHome,
     TV,
+    Spatial,
 }
 
 impl std::fmt::Display for ShellMode {
@@ -113,6 +114,7 @@ impl std::fmt::Display for ShellMode {
             ShellMode::Server => write!(f, "Server"),
             ShellMode::SmartHome => write!(f, "Home"),
             ShellMode::TV => write!(f, "TV"),
+            ShellMode::Spatial => write!(f, "Spatial"),
         }
     }
 }

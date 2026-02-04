@@ -153,6 +153,7 @@ pub struct App {
     pub typewriter_index: usize,
     pub typewriter_phrase_index: usize,
     pub is_deleting: bool,
+    pub a11y: crate::accessibility::AccessibilityBridge,
 }
 
 #[derive(Debug, Clone)]
@@ -527,15 +528,15 @@ impl Default for App {
                 #[cfg(target_arch = "wasm32")]
                 {
                     let w = web_sys::window()
-                        .and_then(|w| w.inner_width().ok())
-                        .and_then(|v| v.as_f64())
-                        .unwrap_or(1024.0) as f32;
-                    log::info!("Initial window_width captured: {}", w);
+                        .and_then(|w| w.document())
+                        .and_then(|d| d.body())
+                        .map(|b| b.client_width() as f32)
+                        .unwrap_or(1200.0);
                     w
                 }
                 #[cfg(not(target_arch = "wasm32"))]
                 {
-                    1024.0
+                    1200.0
                 }
             },
             localization: Localization::default(),
@@ -543,12 +544,11 @@ impl Default for App {
             is_thinking: false,
             intelligence,
             db,
-
-            // Typewriter defaults
-            typewriter_text: "Say hello".to_string(),
+            typewriter_text: String::new(),
             typewriter_index: 0,
             typewriter_phrase_index: 0,
             is_deleting: false,
+            a11y: crate::accessibility::AccessibilityBridge::new(),
         }
     }
 }
@@ -1376,6 +1376,8 @@ impl App {
         );
         let view = crate::reference::views::ContentView::new(self);
         let tree = view.describe(&ctx);
+        // Call the accessibility bridge to update platform/log data
+        self.a11y.update(&tree);
         // MINIFICATION: Use to_string instead of to_string_pretty
         let ui_json = serde_json::to_string(&tree).unwrap_or_default();
 
@@ -1391,11 +1393,6 @@ impl App {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        let mode = if self.window_width < 900.0 {
-            "Mobile"
-        } else {
-            "Desktop"
-        };
         // Debug logging disabled for performance - was causing console spam
         // log::info!(
         //     "App::view: {} Mode, width: {}, show_sidebar: {}",

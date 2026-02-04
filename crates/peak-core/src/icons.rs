@@ -165,6 +165,7 @@ pub fn get_mode_icon_name(mode: crate::registry::ShellMode) -> &'static str {
         ShellMode::Robot => "robot",
         ShellMode::Server => "cpu",
         ShellMode::SmartHome => "apps",
+        ShellMode::Spatial => "layers",
     }
 }
 

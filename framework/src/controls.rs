@@ -182,6 +182,14 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             children: vec![content_node],
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Button,
+                label: label,
+                hint: None,
+                value: None,
+                states: Vec::new(),
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }
@@ -224,13 +232,28 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Tog
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
             role: "toggle".to_string(),
             label: Some(self.label.clone()),
             content: Some(self.is_active.to_string()),
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Switch,
+                label: self.label.clone(),
+                hint: Some("Double tap to toggle".to_string()),
+                value: Some(if self.is_active {
+                    "on".to_string()
+                } else {
+                    "off".to_string()
+                }),
+                states: if self.is_active {
+                    vec!["selected".to_string()]
+                } else {
+                    Vec::new()
+                },
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }
@@ -280,13 +303,24 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
             role: "slider".to_string(),
             label: None,
             content: Some(self.value.to_string()),
             children: Vec::new(),
             neural_tag: None,
             documentation: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Slider,
+                label: "Slider".to_string(),
+                hint: Some(format!(
+                    "Range: {:?} - {:?}",
+                    self.range.start(),
+                    self.range.end()
+                )),
+                value: Some(format!("{:.2}", self.value)),
+                states: Vec::new(),
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }
@@ -397,7 +431,13 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::SpinButton,
+                label: self.label.clone(),
+                hint: Some("Use +/- to adjust value".to_string()),
+                value: Some(self.value.to_string()),
+                ..Default::default()
+            }),
             role: "stepper".to_string(),
             label: Some(self.label.clone()),
             content: Some(self.value.to_string()),
@@ -504,7 +544,16 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
         crate::core::SemanticNode {
-            accessibility: None,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::TextField,
+                label: self.placeholder.clone(),
+                value: Some(if self.is_secure {
+                    "********".to_string()
+                } else {
+                    self.value.clone()
+                }),
+                ..Default::default()
+            }),
             role: "text_input".to_string(),
             label: Some(self.placeholder.clone()),
             content: Some(if self.is_secure {

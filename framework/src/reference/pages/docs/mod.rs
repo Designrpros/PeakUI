@@ -1,3 +1,4 @@
+pub mod accessibility;
 pub mod api_schema;
 pub mod architecture;
 pub mod colors;

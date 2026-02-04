@@ -122,6 +122,11 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
             label: Some(format!("{:?}", self.style)),
             content: None,
             children,
+            accessibility: Some(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::Group,
+                label: "Form".to_string(),
+                ..Default::default()
+            }),
             ..Default::default()
         }
     }
