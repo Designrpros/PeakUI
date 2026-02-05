@@ -8,6 +8,7 @@ pub struct ScrollView<Message: 'static, B: Backend = IcedBackend> {
     height: Length,
     id: Option<&'static str>,
     show_indicators: bool,
+    direction: ScrollDirection,
 }
 
 impl<Message: 'static> ScrollView<Message, IcedBackend> {
@@ -24,6 +25,7 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
             height: Length::Fill,
             id: None,
             show_indicators: true,
+            direction: ScrollDirection::Vertical,
         }
     }
 }
@@ -44,6 +46,7 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
             height: Length::Fill,
             id: None,
             show_indicators: true,
+            direction: ScrollDirection::Vertical,
         }
     }
 
@@ -56,6 +59,12 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
     /// Sets the height of the `ScrollView`.
     pub fn height(mut self, height: Length) -> Self {
         self.height = height;
+        self
+    }
+
+    /// Sets the scroll direction.
+    pub fn direction(mut self, direction: ScrollDirection) -> Self {
+        self.direction = direction;
         self
     }
 
@@ -86,7 +95,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ScrollView<Message, B> {
             self.height,
             self.id,
             self.show_indicators,
-            ScrollDirection::Vertical,
+            self.direction,
             context,
         )
     }

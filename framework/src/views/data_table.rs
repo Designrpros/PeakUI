@@ -157,7 +157,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
             if self.show_grid && i < col_count - 1 {
                 header_row = header_row.push(
                     container(iced::widget::Space::new())
-                        .width(1.0)
+                        .width(Length::Fixed(1.0))
                         .height(Length::Fill)
                         .style(move |_| container::Style {
                             background: Some(grid_color.into()),
@@ -183,7 +183,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
         rows_column = rows_column.push(
             container(iced::widget::Space::new())
                 .width(Length::Fill)
-                .height(1.0)
+                .height(Length::Fixed(1.0))
                 .style(move |_| container::Style {
                     background: Some(grid_color.into()),
                     ..Default::default()
@@ -205,7 +205,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
                 if self.show_grid && j < col_count - 1 {
                     row_ui = row_ui.push(
                         container(iced::widget::Space::new())
-                            .width(1.0)
+                            .width(Length::Fixed(1.0))
                             .height(Length::Fill)
                             .style(move |_| container::Style {
                                 background: Some(grid_color.into()),
@@ -234,7 +234,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
                 rows_column = rows_column.push(
                     container(iced::widget::Space::new())
                         .width(Length::Fill)
-                        .height(1.0)
+                        .height(Length::Fixed(1.0))
                         .style(move |_| container::Style {
                             background: Some(grid_color.into()),
                             ..Default::default()

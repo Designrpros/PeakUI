@@ -102,10 +102,10 @@ impl SidebarView {
                 .sudo("Accessing vision-critical roadmap data"),
             )
             .push(sidebar_item(
-                "Community",
-                "users",
-                Page::Community,
-                *active_tab == Page::Community,
+                "PeakSuite",
+                "layout-grid",
+                Page::PeakSuite,
+                *active_tab == Page::PeakSuite,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("FOUNDATIONS"))

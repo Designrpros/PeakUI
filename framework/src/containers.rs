@@ -6,6 +6,10 @@ pub struct Card<Message: 'static, B: Backend = IcedBackend> {
     padding: Padding,
     width: Length,
     height: Length,
+    background: Option<iced::Color>,
+    radius: f32,
+    border_width: f32,
+    border_color: Option<iced::Color>,
 }
 
 impl<Message: 'static> Card<Message, IcedBackend> {
@@ -27,6 +31,10 @@ impl<Message: 'static, B: Backend> Card<Message, B> {
             padding: Padding::from(16),
             width: Length::Fill,
             height: Length::Shrink,
+            background: None,
+            radius: 8.0,
+            border_width: 0.0,
+            border_color: None,
         }
     }
 
@@ -44,6 +52,22 @@ impl<Message: 'static, B: Backend> Card<Message, B> {
         self.padding = padding.into();
         self
     }
+
+    pub fn background(mut self, color: impl Into<iced::Color>) -> Self {
+        self.background = Some(color.into());
+        self
+    }
+
+    pub fn radius(mut self, radius: f32) -> Self {
+        self.radius = radius;
+        self
+    }
+
+    pub fn border(mut self, width: f32, color: impl Into<iced::Color>) -> Self {
+        self.border_width = width;
+        self.border_color = Some(color.into());
+        self
+    }
 }
 
 impl<Message: 'static, B: Backend> View<Message, B> for Card<Message, B> {
@@ -54,10 +78,10 @@ impl<Message: 'static, B: Backend> View<Message, B> for Card<Message, B> {
             self.padding,
             self.width,
             self.height,
-            None,
-            0.0,
-            0.0,
-            None,
+            self.background,
+            self.radius,
+            self.border_width,
+            self.border_color,
             None,
             iced::Alignment::Start,
             iced::Alignment::Start,

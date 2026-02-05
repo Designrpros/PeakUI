@@ -2,7 +2,7 @@ use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
     let items = vec![
         TimelineItem::new(
             "Phase 1: Foundation & Primaries",
@@ -58,7 +58,62 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
         ),
     ];
 
-    PageResult::new(RoadmapPage { items }).sidebar_toggle(Message::ToggleSidebar)
+    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+        let t = ctx.theme;
+        let is_narrow = is_mobile || ctx.size.width < 1000.0;
+
+        // --- 1. Hero Section (No Buttons) ---
+        let hero = VStack::<Message, IcedBackend>::new_generic()
+            .spacing(12.0)
+            .align_x(iced::Alignment::Start)
+            .width(Length::Fill)
+            .push(
+                Text::<IcedBackend>::new("Roadmap")
+                    .size(if is_narrow { 32.0 } else { 48.0 })
+                    .bold()
+                    .align_start()
+                    .width(Length::Fill)
+                    .color(t.colors.text_primary),
+            )
+            .push(
+                Text::<IcedBackend>::new(
+                    "The journey toward a unified, AI-native universal design system.",
+                )
+                .size(20.0)
+                .align_start()
+                .width(Length::Fill)
+                .color(t.colors.text_secondary),
+            );
+
+        // --- Roadmap Rendering ---
+        let count = items.len();
+        let mut roadmap_col = VStack::<Message, IcedBackend>::new_generic()
+            .width(Length::Fill)
+            .spacing(0.0);
+
+        for (i, item) in items.iter().enumerate() {
+            roadmap_col = roadmap_col.push(TimelineRow::new(item.clone(), i == 0, i == count - 1));
+        }
+
+        // --- Final Assembly ---
+        VStack::new_generic()
+            .width(Length::Fill)
+            .spacing(64.0)
+            .padding(Padding {
+                top: ctx.safe_area.top,
+                right: if is_narrow { 24.0 } else { 48.0 },
+                bottom: ctx.safe_area.bottom,
+                left: if is_narrow { 24.0 } else { 48.0 },
+            })
+            .align_x(iced::Alignment::Start)
+            .push(hero)
+            .push(roadmap_col)
+            .push(Space::<IcedBackend>::new(
+                Length::Fill,
+                Length::Fixed(120.0),
+            ))
+            .view(ctx)
+    }))
 }
 
 #[derive(Clone)]
@@ -79,61 +134,6 @@ impl TimelineItem {
             description: description.to_string(),
             features: features.into_iter().map(|s| s.to_string()).collect(),
         }
-    }
-}
-
-struct RoadmapPage {
-    items: Vec<TimelineItem>,
-}
-
-impl View<Message, IcedBackend> for RoadmapPage {
-    fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
-        let is_mobile = context.is_slim();
-
-        // Root container for the whole page
-        let mut page_col = VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .padding(Padding {
-                top: context.safe_area.top,
-                right: if is_mobile { 24.0 } else { 48.0 },
-                bottom: context.safe_area.bottom,
-                left: if is_mobile { 24.0 } else { 48.0 },
-            })
-            .spacing(48.0);
-
-        // Header
-        page_col = page_col.push(
-            VStack::<Message, IcedBackend>::new_generic()
-                .width(Length::Fill)
-                .spacing(12.0)
-                .push(
-                    Text::<IcedBackend>::new("PeakUI Framework Roadmap")
-                        .large_title()
-                        .bold()
-                        .width(Length::Fill),
-                )
-                .push(
-                    Text::<IcedBackend>::new(
-                        "The journey toward a unified, AI-native universal design system.",
-                    )
-                    .body()
-                    .secondary()
-                    .width(Length::Fill),
-                ),
-        );
-
-        // Roadmap content
-        let count = self.items.len();
-        let mut roadmap_col = VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .spacing(0.0);
-
-        for (i, item) in self.items.iter().enumerate() {
-            roadmap_col = roadmap_col.push(TimelineRow::new(item.clone(), i == 0, i == count - 1));
-        }
-
-        page_col.push(roadmap_col).view(context)
     }
 }
 

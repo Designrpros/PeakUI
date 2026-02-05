@@ -105,7 +105,29 @@ impl ContentView {
             let mut content_context = ctx.clone();
             content_context.safe_area.top += 48.0; // Clear floating header
             content_context.safe_area.bottom += 80.0; // Clear floating dock
-            inner_page_view.view(&content_context)
+
+            let view = inner_page_view.view(&content_context);
+
+            // Apply safe area as physical padding
+            IcedBackend::container(
+                view,
+                Padding {
+                    top: content_context.safe_area.top,
+                    bottom: content_context.safe_area.bottom,
+                    left: 0.0,
+                    right: 0.0,
+                },
+                Length::Fill,
+                Length::Shrink,
+                None,
+                0.0,
+                0.0,
+                None,
+                None,
+                Alignment::Start,
+                Alignment::Start,
+                &content_context,
+            )
         });
 
         // --- 3. Integrated Header --

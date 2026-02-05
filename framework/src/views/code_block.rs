@@ -6,6 +6,8 @@ use iced::{Color, Length};
 pub struct CodeBlock<Message = ()> {
     code: String,
     language: String,
+    height: Length,
+    is_transparent: bool,
     on_copy: Option<Box<dyn Fn(String) -> Message>>,
 }
 
@@ -14,6 +16,8 @@ impl<Message> CodeBlock<Message> {
         Self {
             code: code.into(),
             language: "rust".to_string(),
+            height: Length::Shrink,
+            is_transparent: false,
             on_copy: None,
         }
     }
@@ -22,6 +26,8 @@ impl<Message> CodeBlock<Message> {
         Self {
             code: code.into(),
             language: "rust".to_string(),
+            height: Length::Shrink,
+            is_transparent: false,
             on_copy: None,
         }
     }
@@ -36,6 +42,16 @@ impl<Message> CodeBlock<Message> {
 
     pub fn language(mut self, language: impl Into<String>) -> Self {
         self.language = language.into();
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn transparent(mut self) -> Self {
+        self.is_transparent = true;
         self
     }
 }
@@ -128,7 +144,11 @@ where
             iced::Padding::ZERO,
             Length::Fill,
             Length::Shrink,
-            Some(header_bg),
+            Some(if self.is_transparent {
+                Color::TRANSPARENT
+            } else {
+                header_bg
+            }),
             0.0, // Top radius handled by outer container? Or 0 here.
             0.0,
             None,
@@ -143,20 +163,25 @@ where
         let scroll_area = B::scroll_view(
             raw_code_view,
             Length::Fill,
-            Length::Shrink,
+            self.height,
             None,
             true,
-            ScrollDirection::Horizontal,
+            ScrollDirection::Both,
             context,
         );
-        // Note: scroll_view usually enables scrolling if content overflows.
+        // Note: scroll_view usually enables scrolling if
+        use crate::prelude::*;
 
         let code_container = B::container(
             scroll_area,
             iced::Padding::from(16),
             Length::Fill,
             Length::Shrink,
-            Some(bg_color),
+            Some(if self.is_transparent {
+                Color::TRANSPARENT
+            } else {
+                bg_color
+            }),
             0.0,
             0.0,
             None,
@@ -172,7 +197,7 @@ where
             0.0,
             iced::Padding::ZERO,
             Length::Fill,
-            Length::Shrink,
+            self.height,
             iced::Alignment::Start,
             iced::Alignment::Start,
             context,
@@ -182,11 +207,19 @@ where
             col,
             iced::Padding::ZERO,
             Length::Fill,
-            Length::Shrink,
-            Some(bg_color), // Background of the whole block
+            self.height,
+            Some(if self.is_transparent {
+                Color::TRANSPARENT
+            } else {
+                bg_color
+            }), // Background of the whole block
             8.0,
-            1.0,
-            Some(border_color),
+            if self.is_transparent { 0.0 } else { 1.0 },
+            Some(if self.is_transparent {
+                Color::TRANSPARENT
+            } else {
+                border_color
+            }),
             None,
             iced::Alignment::Start,
             iced::Alignment::Start,

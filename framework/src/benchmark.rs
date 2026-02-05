@@ -1,3 +1,6 @@
+use crate::core::{Backend, Context, IcedBackend, View};
+use crate::dsl::*;
+use crate::modifiers::{Intent, Variant};
 use crate::prelude::*;
 
 #[cfg(test)]

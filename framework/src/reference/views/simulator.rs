@@ -22,14 +22,24 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for SimulatorView<Me
         // Recursively render nodes as boxes
         self.render_node::<B>(&self.node, 0.0, 0.0, 1.0, &mut elements, context);
 
-        B::vstack(
+        let content = B::vstack(
             elements,
-            10.0,
-            Padding::new(20.0),
+            12.0,
+            Padding::new(24.0),
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Center,
+            iced::Alignment::Start,
+            context,
+        );
+
+        B::scroll_view(
+            content,
             Length::Fill,
             Length::Fill,
-            iced::Alignment::Center,
-            iced::Alignment::Center,
+            None,
+            true,
+            crate::core::ScrollDirection::Vertical,
             context,
         )
     }
@@ -63,9 +73,9 @@ impl<Message> SimulatorView<Message> {
         elements.push(B::container(
             B::text(
                 format!("{}: z={:.1}", node.role, z),
-                10.0 * scale,
-                Some(Color::BLACK),
-                false,
+                11.0 * scale,
+                Some(Color::WHITE),
+                true, // Bold for readability
                 false,
                 None,
                 None,
@@ -73,13 +83,17 @@ impl<Message> SimulatorView<Message> {
                 iced::Alignment::Center,
                 context,
             ),
-            Padding::new(5.0 * scale),
-            Length::Fixed(100.0 * scale),
-            Length::Fixed(40.0 * scale),
-            Some(color),
-            4.0 * scale,
-            1.0,
-            Some(Color::BLACK),
+            Padding::new(8.0 * scale),
+            Length::Fixed(140.0 * scale),
+            Length::Fixed(50.0 * scale),
+            Some({
+                let mut c = color;
+                c.a = 0.85; // Slight transparency
+                c
+            }),
+            8.0 * scale,
+            1.5 * scale,
+            Some(Color::WHITE), // Bright border
             None,
             iced::Alignment::Center,
             iced::Alignment::Center,

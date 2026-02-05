@@ -81,7 +81,7 @@ impl CanvasView {
 
             // Legacy
             ReferencePage::ApiSchema => pages::core::peak_os_core::view(context, is_mobile), // Redirect to new page
-            ReferencePage::Community => pages::guide::community::view(context, is_mobile),
+            ReferencePage::PeakSuite => pages::guide::peak_suite::view(context, is_mobile),
 
             // Concepts (Overview is legacy/fallback)
             ReferencePage::Overview => pages::guide::introduction::view(context, is_mobile),

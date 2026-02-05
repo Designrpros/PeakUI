@@ -19,8 +19,8 @@ pub enum Page {
     Introduction,
     #[serde(alias = "roadmap", alias = "Roadmap")]
     Roadmap,
-    #[serde(alias = "community", alias = "Community")]
-    Community,
+    #[serde(alias = "peaksuite", alias = "PeakSuite")]
+    PeakSuite,
     #[serde(alias = "intelligence", alias = "Intelligence")]
     Intelligence,
 
@@ -114,7 +114,7 @@ impl ToString for Page {
             Page::Landing => "Landing".to_string(),
             Page::Introduction => "Introduction".to_string(),
             Page::Roadmap => "Roadmap".to_string(),
-            Page::Community => "Community".to_string(),
+            Page::PeakSuite => "PeakSuite".to_string(),
             Page::Intelligence => "Intelligence".to_string(),
             Page::Overview => "Overview".to_string(),
             Page::Architecture => "Architecture".to_string(),
@@ -192,7 +192,7 @@ impl From<String> for Page {
             "landing" => Page::Landing,
             "introduction" | "intro" | "start" => Page::Introduction,
             "roadmap" => Page::Roadmap,
-            "community" => Page::Community,
+            "peaksuite" | "community" => Page::PeakSuite,
             "intelligence" | "ai_overview" => Page::Intelligence,
             "overview" => Page::Overview,
             "architecture" => Page::Architecture,
@@ -282,7 +282,7 @@ impl Page {
             // Guide
             Page::Introduction => "/guide/introduction".to_string(),
             Page::Roadmap => "/guide/roadmap".to_string(),
-            Page::Community => "/guide/community".to_string(),
+            Page::PeakSuite => "/guide/peak-suite".to_string(),
             Page::Intelligence => "/intelligence".to_string(),
 
             // Docs
@@ -385,7 +385,7 @@ impl Page {
 
             "/guide/introduction" => Page::Introduction,
             "/guide/roadmap" => Page::Roadmap,
-            "/guide/community" => Page::Community,
+            "/guide/peak-suite" | "/guide/community" => Page::PeakSuite,
             "/intelligence" => Page::Intelligence,
 
             "/docs/overview" => Page::Overview,
@@ -473,7 +473,7 @@ impl Page {
             | Page::Architecture
             | Page::ProjectStructure
             | Page::Roadmap
-            | Page::Community
+            | Page::PeakSuite
             | Page::Typography
             | Page::Customizations
             | Page::BasicSizing
@@ -538,7 +538,7 @@ impl Page {
             Page::Landing,
             Page::Introduction,
             Page::Roadmap,
-            Page::Community,
+            Page::PeakSuite,
             Page::Architecture,
             Page::ProjectStructure,
             Page::Intelligence,
