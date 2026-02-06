@@ -1,11 +1,6 @@
-use crate::core::{Backend, Context, IcedBackend, View};
-use crate::dsl::*;
-use crate::modifiers::{Intent, Variant};
-use crate::prelude::*;
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::prelude::*;
 
     #[test]
     fn benchmark_green_ai_reduction() {

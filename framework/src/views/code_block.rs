@@ -1,6 +1,4 @@
-use crate::atoms::Icon;
-use crate::core::{Backend, Context, ScrollDirection, TextSpan, View};
-use crate::modifiers::Variant;
+use crate::core::{Backend, Context, TextSpan, View};
 use iced::{Color, Length};
 
 pub struct CodeBlock<Message = ()> {

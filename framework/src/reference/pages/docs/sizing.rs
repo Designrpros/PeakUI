@@ -3,7 +3,6 @@ use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode, SizingLabState, SizingType};
 
-use std::sync::Arc;
 
 pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> PageResult<Message> {
     let mode = ctx.theme.colors;

@@ -2697,7 +2697,7 @@ impl Backend for IcedBackend {
         height: Length,
         context: &Context,
     ) -> Self::AnyView<Message> {
-        use iced::widget::{column, container, text};
+        use iced::widget::{column, text};
         let scale = context.theme.scaling;
 
         column![

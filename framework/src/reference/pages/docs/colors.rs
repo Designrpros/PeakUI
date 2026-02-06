@@ -1,4 +1,4 @@
-use crate::core::{AIBackend, Backend, ScrollDirection, SpatialBackend};
+use crate::core::{AIBackend, Backend, ScrollDirection};
 use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};

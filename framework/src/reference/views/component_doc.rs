@@ -3,7 +3,6 @@ use crate::controls::Button;
 use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::layout::{HStack, VStack};
 use crate::modifiers::Variant;
-use crate::navigation::ViewExt;
 use crate::views::{CodeBlock, MarkdownView};
 use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
