@@ -62,7 +62,7 @@ In **PeakUI**, typography is semantic. Instead of choosing raw font sizes for ev
 }
 
 fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
-    let mut text_item = Text::<B>::new(lab.text.clone());
+    let mut text_item = crate::dsl::text(lab.text.clone());
 
     if lab.is_bold {
         text_item = text_item.bold();
@@ -76,37 +76,39 @@ fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
         text_item = text_item.size(lab.size);
     }
 
-    VStack::new_generic()
+    vstack::<Message, B>()
         .spacing(24.0)
         .push(
-            vstack![
-                Text::<B>::new("Sample Render").caption2().secondary(),
-                text_item
-            ]
-            .spacing(8.0),
+            vstack::<Message, B>()
+                .spacing(8.0)
+                .push(text::<B>("Sample Render").caption2().secondary())
+                .push(text_item),
         )
-        .push(Divider::new())
+        .push(divider::<B>())
         .push(
-            vstack![
-                Text::<B>::new("Available Roles").caption2().secondary(),
-                vstack![
-                    Text::<B>::new("Large Title").large_title(),
-                    Text::<B>::new("Title 1").title1(),
-                    Text::<B>::new("Headline").headline(),
-                    Text::<B>::new("Body text with default styling.").body(),
-                    Text::<B>::new("Caption text is smaller and dimmer.").caption1(),
-                    hstack![
-                        Text::<B>::new("Primary").body().primary(),
-                        Text::<B>::new("Secondary").body().secondary(),
-                        Text::<B>::new("Danger")
-                            .body()
-                            .intent(crate::modifiers::Intent::Danger)
-                    ]
-                    .spacing(16.0)
-                ]
-                .spacing(12.0)
-            ]
-            .spacing(16.0),
+            vstack::<Message, B>()
+                .spacing(16.0)
+                .push(text::<B>("Available Roles").caption2().secondary())
+                .push(
+                    vstack::<Message, B>()
+                        .spacing(12.0)
+                        .push(text::<B>("Large Title").large_title())
+                        .push(text::<B>("Title 1").title1())
+                        .push(text::<B>("Headline").headline())
+                        .push(text::<B>("Body text with default styling.").body())
+                        .push(text::<B>("Caption text is smaller and dimmer.").caption1())
+                        .push(
+                            hstack::<Message, B>()
+                                .spacing(16.0)
+                                .push(text::<B>("Primary").body().primary())
+                                .push(text::<B>("Secondary").body().secondary())
+                                .push(
+                                    text::<B>("Danger")
+                                        .body()
+                                        .intent(crate::modifiers::Intent::Danger),
+                                ),
+                        ),
+                ),
         )
 }
 

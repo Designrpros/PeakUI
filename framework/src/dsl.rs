@@ -1,4 +1,6 @@
-use crate::atoms::{Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text};
+use crate::atoms::{
+    Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text, Video, WebView,
+};
 use crate::containers::{GlassCard, Section};
 use crate::controls::{Button, Slider, TextInput, Toggle};
 use crate::core::Backend;
@@ -21,6 +23,14 @@ pub fn divider<B: Backend>() -> Divider<B> {
 
 pub fn image<B: Backend>(name: impl Into<String>) -> Image<B> {
     Image::new(name)
+}
+
+pub fn video<B: Backend>(path: impl Into<String>) -> Video<B> {
+    Video::new(path)
+}
+
+pub fn web_view<B: Backend>(url: impl Into<String>) -> WebView<B> {
+    WebView::new(url)
 }
 
 pub fn space<B: Backend>(width: impl Into<Length>, height: impl Into<Length>) -> Space<B> {

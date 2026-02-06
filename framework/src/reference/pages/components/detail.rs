@@ -1,11 +1,11 @@
-use crate::reference::app::Message;
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::Message;
 
 pub fn view(name: &str, context: &Context, _is_mobile: bool) -> PageResult<Message> {
     let name = name.to_string();
     PageResult::new(
-        VStack::new_generic()
+        vstack::<Message, IcedBackend>()
             .width(Length::Fill)
             .spacing(24.0)
             .padding(Padding {
@@ -15,52 +15,56 @@ pub fn view(name: &str, context: &Context, _is_mobile: bool) -> PageResult<Messa
                 left: 20.0,
             })
             .push(
-                Text::<IcedBackend>::new(format!("Component: {}", name))
+                text::<IcedBackend>(format!("Component: {}", name))
                     .large_title()
                     .bold(),
             )
             .push(
-                Text::<IcedBackend>::new("This component is part of the PeakUI Standard Library.")
+                text::<IcedBackend>("This component is part of the PeakUI Standard Library.")
                     .title3()
                     .secondary(),
             )
-            .push(Divider::<IcedBackend>::new())
+            .push(divider::<IcedBackend>())
             .push(
-                Text::<IcedBackend>::new("Interactive Playground")
+                text::<IcedBackend>("Interactive Playground")
                     .title3()
                     .bold(),
             )
             .push(
-                VStack::new_generic()
+                vstack::<Message, IcedBackend>()
                     .spacing(20.0)
                     .push(
-                        HStack::new_generic()
+                        hstack::<Message, IcedBackend>()
                             .spacing(12.0)
                             .align_y(Alignment::Center)
-                            .push(Button::label("Primary Button"))
-                            .push(Button::label("Secondary").variant(Variant::Outline))
-                            .push(Button::label("Ghost").variant(Variant::Ghost)),
+                            .push(button_label::<Message, IcedBackend>("Primary Button"))
+                            .push(
+                                button_label::<Message, IcedBackend>("Secondary")
+                                    .variant(Variant::Outline),
+                            )
+                            .push(
+                                button_label::<Message, IcedBackend>("Ghost")
+                                    .variant(Variant::Ghost),
+                            ),
                     )
                     .push(
-                        VStack::new_generic()
+                        vstack::<Message, IcedBackend>()
                             .spacing(12.0)
-                            .push(Text::<IcedBackend>::new("Form Controls").callout().bold())
-                            .push(Toggle::<Message, IcedBackend>::new(
+                            .push(text::<IcedBackend>("Form Controls").callout().bold())
+                            .push(toggle::<Message, IcedBackend>(
                                 "Example Toggle",
                                 true,
                                 |_| Message::ToggleSearch,
                             ))
-                            .push(Slider::<Message, IcedBackend>::new(
-                                0.0..=100.0,
-                                50.0,
-                                |_| Message::ToggleSearch,
-                            )),
+                            .push(slider::<Message, IcedBackend>(0.0..=100.0, 50.0, |_| {
+                                Message::ToggleSearch
+                            })),
                     ),
             )
-            .push(Divider::<IcedBackend>::new())
-            .push(Text::<IcedBackend>::new("Best Practices").title3().bold())
+            .push(divider::<IcedBackend>())
+            .push(text::<IcedBackend>("Best Practices").title3().bold())
             .push(
-                Text::<IcedBackend>::new(
+                text::<IcedBackend>(
                     "Use consistent spacing and prioritize readability in your component layouts.",
                 )
                 .secondary(),

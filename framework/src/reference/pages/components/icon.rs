@@ -42,33 +42,36 @@ pub fn view(
             let name_str = name.to_string();
             let is_selected = lab.selected_icon == name_str;
 
-            let button_content = vstack![
-                Icon::new(name_str.clone())
-                    .size(48.0)
-                    .color(if is_selected {
-                        ctx.theme.colors.on_primary
-                    } else {
-                        ctx.theme.colors.primary
-                    }),
-                Text::new(name_str.clone())
-                    .size(11.0)
-                    .dim()
-                    .align_center()
-                    .width(Length::Fill)
-                    .color(if is_selected {
-                        ctx.theme.colors.on_primary
-                    } else {
-                        ctx.theme.colors.text_secondary
-                    })
-            ]
-            .spacing(8.0)
-            .padding(12)
-            .align_x(iced::Alignment::Center)
-            .width(Length::Fill)
-            .height(Length::Fixed(140.0));
+            let button_content = vstack::<Message, IcedBackend>()
+                .push(
+                    icon::<IcedBackend>(name_str.clone())
+                        .size(48.0)
+                        .color(if is_selected {
+                            ctx.theme.colors.on_primary
+                        } else {
+                            ctx.theme.colors.primary
+                        }),
+                )
+                .push(
+                    text::<IcedBackend>(name_str.clone())
+                        .size(11.0)
+                        .dim()
+                        .align_center()
+                        .width(Length::Fill)
+                        .color(if is_selected {
+                            ctx.theme.colors.on_primary
+                        } else {
+                            ctx.theme.colors.text_secondary
+                        }),
+                )
+                .spacing(8.0)
+                .padding(12)
+                .align_x(iced::Alignment::Center)
+                .width(Length::Fill)
+                .height(Length::Fixed(140.0));
 
             grid = grid.push(
-                Button::new(button_content)
+                button::<Message, IcedBackend>(button_content)
                     .variant(if is_selected {
                         Variant::Solid
                     } else {
@@ -80,29 +83,33 @@ pub fn view(
             );
         }
 
-        let section_content = vstack![
-            Text::<IcedBackend>::new(format!("Icon Library ({} icons found)", total_count))
-                .title2()
-                .bold(),
-            if total_count == 0 {
-                Text::<IcedBackend>::new("No icons found matching your search.")
+        let section_content = vstack::<Message, IcedBackend>()
+            .push(
+                text::<IcedBackend>(format!("Icon Library ({} icons found)", total_count))
+                    .title2()
+                    .bold(),
+            )
+            .push(if total_count == 0 {
+                text::<IcedBackend>("No icons found matching your search.")
                     .secondary()
                     .into_box()
             } else {
                 grid.into_box()
-            }
-        ]
-        .spacing(24.0);
+            })
+            .spacing(24.0);
 
         if total_count > icon_limit {
-            let footer = hstack![Button::<Message, IcedBackend>::label(format!(
-                "Load More ({} remaining)",
-                total_count - icon_limit
-            ))
-            .on_press(Message::LoadMoreIcons)
-            .variant(Variant::Solid)]
-            .width(Length::Fill)
-            .align_x(iced::Alignment::Center);
+            let footer = hstack::<Message, IcedBackend>()
+                .push(
+                    button_label::<Message, IcedBackend>(format!(
+                        "Load More ({} remaining)",
+                        total_count - icon_limit
+                    ))
+                    .on_press(Message::LoadMoreIcons)
+                    .variant(Variant::Solid),
+                )
+                .width(Length::Fill)
+                .align_x(iced::Alignment::Center);
 
             crate::containers::Section::new(
                 "Library",
@@ -152,20 +159,21 @@ fn create_preview<B: Backend>(lab: &IconLabState) -> VStack<Message, B> {
         .width(Length::Fill)
         .align_x(Alignment::Center)
         .push(
-            vstack![
-                Text::<B>::new(format!("Preview: {}", lab.selected_icon))
-                    .caption2()
-                    .secondary(),
-                crate::core::ProxyView::new(move |ctx| {
+            vstack::<Message, B>()
+                .push(
+                    text::<B>(format!("Preview: {}", lab.selected_icon))
+                        .caption2()
+                        .secondary(),
+                )
+                .push(crate::core::ProxyView::new(move |ctx| {
                     if !has_color {
                         icon.clone().primary().view(ctx)
                     } else {
                         icon.view(ctx)
                     }
-                })
-            ]
-            .spacing(16.0)
-            .align_x(Alignment::Center),
+                }))
+                .spacing(16.0)
+                .align_x(Alignment::Center),
         )
 }
 

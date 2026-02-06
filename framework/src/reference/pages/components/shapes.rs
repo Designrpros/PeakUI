@@ -1,117 +1,77 @@
-use crate::reference::app::Message;
+use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::{Message, RenderMode};
+use crate::reference::views::ComponentDoc;
+use std::sync::Arc;
 
-pub fn view(context: &Context, _is_mobile: bool) -> PageResult<Message> {
-    let mut page_col = VStack::<Message, IcedBackend>::new_generic()
-        .width(Length::Fill)
-        .padding(Padding {
-            top: context.safe_area.top.max(32.0),
-            right: 32.0,
-            bottom: 32.0,
-            left: 32.0,
-        })
-        .spacing(32.0);
+pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+    // --- 1. Preview Construction ---
+    let preview_view = create_preview::<IcedBackend>(ctx);
+    let terminal_preview = create_preview::<TermBackend>(ctx).view(ctx);
+    let neural_preview = create_preview::<AIBackend>(ctx).view(ctx);
+    let spatial_preview = create_preview::<SpatialBackend>(ctx).view(ctx);
 
-    // Header
-    page_col = page_col.push(
-        VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .spacing(12.0)
-            .push(
-                Text::<IcedBackend>::new("Shapes")
-                    .large_title()
-                    .bold()
-                    .width(Length::Fill),
-            )
-            .push(
-                Text::<IcedBackend>::new(
-                    "Primary geometric atoms that can be used for indicators, progress, and custom UI elements.",
-                )
-                .body()
-                .secondary()
-                .width(Length::Fill),
-            ),
+    // --- 2. Code Snippet ---
+    let code_snippet =
+        "Circle::new(20.0).color(colors.primary)\nRectangle::new(100.0, 40.0).radius(8.0)"
+            .to_string();
+
+    // --- 3. Component Documentation Object ---
+    let doc = ComponentDoc::new(
+        "Shapes",
+        "Primary geometric atoms that can be used for indicators, progress trackers, and custom UI elements.",
+        code_snippet,
+        Arc::new(preview_view),
+    )
+    .terminal(terminal_preview)
+    .neural(neural_preview)
+    .spatial(spatial_preview)
+    .render_mode(render_mode)
+    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .theory(
+       "### Geometric Foundation\nShapes are the lowest-level visual primitives in PeakUI. They allow for the construction of complex components without leaving the framework's semantic model.\n\n- **Performance**: Rendered directly by the kernel's drawing pipeline (CPU/GPU/TUI).\n- **Intent Driven**: Shapes easily adopt theme colors via the `.color()` modifier, supporting both raw values and semantic tokens."
+    )
+    .props_table(
+        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `Circle::new(r)` | `f32` | Creates a circular element. |\n| `Rectangle::new(w, h)` | `Length` | Creates a rectangular surface. |\n| `.radius(r)` | `f32` | Adds rounded corners to rectangles. |\n| `.color(c)` | `Color` | Sets the fill color. |"
     );
 
-    // Circle Section
-    page_col = page_col.push(
-        VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .spacing(16.0)
-            .push(Text::new("Circle").title3().bold())
-            .push(
-                HStack::<Message, IcedBackend>::new_generic()
-                    .spacing(20.0)
-                    .push(Circle::new(10.0).color(context.theme.colors.primary))
-                    .push(Circle::new(20.0).color(context.theme.colors.success))
-                    .push(Circle::new(30.0).color(context.theme.colors.danger))
-                    .push(Circle::new(40.0).color(context.theme.colors.warning)),
-            ),
-    );
+    PageResult::new(doc)
+}
 
-    // Capsule Section
-    page_col = page_col.push(
-        VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .spacing(16.0)
-            .push(Text::new("Capsule").title3().bold())
-            .push(
-                HStack::<Message, IcedBackend>::new_generic()
-                    .spacing(20.0)
-                    .push(
-                        Capsule::new(Length::Fixed(100.0), Length::Fixed(40.0))
-                            .color(context.theme.colors.primary),
-                    )
-                    .push(
-                        Capsule::new(Length::Fixed(60.0), Length::Fixed(40.0))
-                            .color(context.theme.colors.success),
-                    )
-                    .push(
-                        Capsule::new(Length::Fixed(200.0), Length::Fixed(20.0))
-                            .color(context.theme.colors.text_secondary.scale_alpha(0.2)),
-                    ),
-            ),
-    );
-
-    // Timeline Integration (Example)
-    page_col = page_col.push(
-        VStack::<Message, IcedBackend>::new_generic()
-            .width(Length::Fill)
-            .spacing(16.0)
-            .push(Text::new("Usage in Timeline").title3().bold())
-            .push(
-                Text::new("Shapes are ideal for creating connected components like timelines.")
-                    .caption1()
-                    .secondary(),
-            )
-            .push(
-                HStack::<Message, IcedBackend>::new_generic()
-                    .spacing(16.0)
-                    .push(
-                        VStack::<Message, IcedBackend>::new_generic()
-                            .width(Length::Fixed(20.0))
-                            .align_x(Alignment::Center)
-                            .push(
-                                Rectangle::new(2.0.into(), Length::Fixed(20.0))
-                                    .color(context.theme.colors.border),
-                            )
-                            .push(Circle::new(6.0).color(context.theme.colors.primary))
-                            .push(
-                                Rectangle::new(2.0.into(), Length::Fixed(20.0))
-                                    .color(context.theme.colors.border),
-                            ),
-                    )
-                    .push(
-                        VStack::new()
-                            .padding(Padding {
-                                top: 12.0,
-                                ..Default::default()
-                            })
-                            .push(Text::new("Active State Indicator").bold()),
-                    ),
-            ),
-    );
-
-    page_col.sidebar_toggle(Message::ToggleSidebar)
+fn create_preview<B: Backend>(ctx: &Context) -> VStack<Message, B> {
+    vstack::<Message, B>()
+        .spacing(32.0)
+        .push(
+            vstack::<Message, B>()
+                .spacing(8.0)
+                .push(text::<B>("Circles").caption2().secondary())
+                .push(
+                    hstack::<Message, B>()
+                        .spacing(20.0)
+                        .push(circle::<B>(10.0).color(ctx.theme.colors.primary))
+                        .push(circle::<B>(20.0).color(ctx.theme.colors.success))
+                        .push(circle::<B>(30.0).color(ctx.theme.colors.danger)),
+                ),
+        )
+        .push(
+            vstack::<Message, B>()
+                .spacing(8.0)
+                .push(text::<B>("Rectangles").caption2().secondary())
+                .push(
+                    hstack::<Message, B>()
+                        .spacing(20.0)
+                        .width(Length::Fill)
+                        .push(
+                            rectangle::<B>(60.0, 40.0)
+                                .radius(8.0)
+                                .color(ctx.theme.colors.surface_variant),
+                        )
+                        .push(
+                            rectangle::<B>(Length::Fill, 40.0)
+                                .radius(20.0)
+                                .color(ctx.theme.colors.primary),
+                        ),
+                ),
+        )
 }

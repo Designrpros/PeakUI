@@ -1,81 +1,54 @@
-use crate::reference::app::Message;
+use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 use crate::navigation::PageResult;
 use crate::prelude::*;
+use crate::reference::app::{Message, RenderMode};
+use crate::reference::views::ComponentDoc;
+use std::sync::Arc;
 
-pub fn view(_context: &Context) -> PageResult<Message> {
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
-        let content = iced::widget::column![
-            Text::<IcedBackend>::new("Images")
-                .large_title()
-                .color(ctx.theme.colors.text_primary)
-                .view(ctx),
-            Text::<IcedBackend>::new("A responsive image component that adapts to its container and supports light/dark alternate sources.")
-                .body()
-                .color(ctx.theme.colors.text_secondary)
-                .view(ctx),
-            Section::<Message, IcedBackend>::new(
-                "BASIC USAGE",
-                VStack::<Message, IcedBackend>::new_generic()
-                    .spacing(20.0)
-                    .push(
-                        Text::<IcedBackend>::new("Standard image loaded from path.")
-                            .subheadline()
-                    )
-                    .push(
-                        Image::<IcedBackend>::new("assets/mountain_sunset_warm.jpg")
-                            .width(Length::Fill)
-                            .height(Length::Fixed(200.0))
-                            .radius(12.0)
-                    )
-            )
-            .view(ctx),
-            Section::<Message, IcedBackend>::new(
-                "STYLING OPTIONS",
-                ResponsiveGrid::<Message, IcedBackend>::new_generic()
-                    .spacing(20.0)
-                    .push(
-                        VStack::<Message, IcedBackend>::new_generic()
-                            .spacing(10.0)
-                            .push(Text::<IcedBackend>::new("Rounded Corners").caption1())
-                            .push(
-                                Image::<IcedBackend>::new("assets/poolsuite_luxury-kopi.jpg")
-                                    .width(Length::Fill)
-                                    .height(Length::Fixed(150.0))
-                                    .radius(24.0)
-                            )
-                    )
-                    .push(
-                        VStack::<Message, IcedBackend>::new_generic()
-                            .spacing(10.0)
-                            .push(Text::<IcedBackend>::new("Fixed Size").caption1())
-                            .push(
-                                Image::<IcedBackend>::new("assets/poolsuite_luxury-kopi.jpg")
-                                    .width(Length::Fixed(150.0))
-                                    .height(Length::Fixed(150.0))
-                                    .radius(8.0)
-                            )
-                    )
-            )
-            .view(ctx),
-            Section::<Message, IcedBackend>::new(
-                "RESPONSIVE DESIGN",
-                VStack::<Message, IcedBackend>::new_generic()
-                    .spacing(20.0)
-                    .push(
-                        Text::<IcedBackend>::new("Full width image that fills its container, similar to Next.js Image component behavior.")
-                            .subheadline()
-                    )
-                    .push(
-                        Image::<IcedBackend>::new("assets/mountain_sunset_warm.jpg")
-                            .width(Length::Fill)
-                            .height(Length::Fixed(300.0))
-                            .radius(16.0)
-                    )
-            )
-            .view(ctx)
-        ]
-        .spacing(40);
+pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+    // --- 1. Preview Construction ---
+    let preview_view = create_preview::<IcedBackend>();
+    let terminal_preview = create_preview::<TermBackend>().view(ctx);
+    let neural_preview = create_preview::<AIBackend>().view(ctx);
+    let spatial_preview = create_preview::<SpatialBackend>().view(ctx);
 
-        container(content).width(Length::Fill).padding(40).into()
-    }))
+    // --- 2. Code Snippet ---
+    let code_snippet = "Image::new(\"assets/landscape.jpg\")\n    .width(Length::Fill)\n    .height(Length::Fixed(200.0))\n    .radius(12.0)".to_string();
+
+    // --- 3. Component Documentation Object ---
+    let doc = ComponentDoc::new(
+        "Image",
+        "A responsive image component that adapts to its container and supports light/dark alternate sources.",
+        code_snippet,
+        Arc::new(preview_view),
+    )
+    .terminal(terminal_preview)
+    .neural(neural_preview)
+    .spatial(spatial_preview)
+    .render_mode(render_mode)
+    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .theory(
+       "### Multi-Kernel Imaging\nImages in PeakUI are more than just bitmapped data. They are responsive assets that adapt their representation based on the active kernel.\n\n- **Canvas (GUI)**: Renders high-resolution textures with optional hardware acceleration.\n- **Terminal (TUI)**: Automatically converts image color and luminance into high-density ASCII or ANSI block characters.\n- **Neural (AI)**: Provides semantic metadata (like ALT text or AI-generated descriptions) to the LLM instead of raw pixels."
+    )
+    .props_table(
+        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `.new(path)` | `&str` | Path to the image asset. |\n| `.width(len)` | `Length` | Horizontal sizing. |\n| `.height(len)` | `Length` | Vertical sizing. |\n| `.radius(r)` | `f32` | Corner rounding (where supported). |"
+    );
+
+    PageResult::new(doc)
+}
+
+fn create_preview<B: Backend>() -> VStack<Message, B> {
+    vstack::<Message, B>()
+        .spacing(16.0)
+        .push(
+            image::<B>("assets/mountain_sunset_warm.jpg")
+                .width(Length::Fill)
+                .height(Length::Fixed(240.0))
+                .radius(16.0),
+        )
+        .push(
+            text::<B>("Mountain Sunset (Standard)")
+                .caption2()
+                .secondary(),
+        )
 }

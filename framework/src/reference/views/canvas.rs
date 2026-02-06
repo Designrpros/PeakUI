@@ -121,27 +121,35 @@ impl CanvasView {
             ReferencePage::Button => {
                 pages::components::button::view(context, &self.button_lab, self.render_mode)
             }
-            ReferencePage::Shapes => pages::components::shapes::view(context, is_mobile),
-            ReferencePage::Image => pages::components::image::view(context),
-            ReferencePage::Video => pages::components::video::view(context),
-            ReferencePage::WebView => pages::components::web_view::view(context),
-            ReferencePage::Divider => pages::components::divider::view(context),
+            ReferencePage::Shapes => pages::components::shapes::view(context, self.render_mode),
+            ReferencePage::Image => pages::components::image::view(context, self.render_mode),
+            ReferencePage::Video => pages::components::video::view(context, self.render_mode),
+            ReferencePage::WebView => pages::components::web_view::view(context, self.render_mode),
+            ReferencePage::Divider => pages::components::divider::view(context, self.render_mode),
 
             // Containers (Phase 4)
-            ReferencePage::VStack => pages::components::vstack::view(context),
-            ReferencePage::HStack => pages::components::hstack::view(context),
-            ReferencePage::ZStack => pages::components::zstack::view(context),
-            ReferencePage::Overlay => pages::components::overlay::view(context),
-            ReferencePage::ScrollView => pages::components::scroll_view::view(context),
-            ReferencePage::Card => pages::components::card::view(context),
+            ReferencePage::VStack => pages::components::vstack::view(context, self.render_mode),
+            ReferencePage::HStack => pages::components::hstack::view(context, self.render_mode),
+            ReferencePage::ZStack => pages::components::zstack::view(context, self.render_mode),
+            ReferencePage::Overlay => pages::components::overlay::view(context, self.render_mode),
+            ReferencePage::ScrollView => {
+                pages::components::scroll_view::view(context, self.render_mode)
+            }
+            ReferencePage::Card => pages::components::card::view(context, self.render_mode),
 
             // Navigation (Phase 4)
-            ReferencePage::Sidebar => pages::components::sidebar_doc::view(context),
-            ReferencePage::Tabbar => pages::components::tabbar_doc::view(context),
-            ReferencePage::Modal => pages::components::modal_doc::view(context),
-            ReferencePage::NavigationSplit => pages::components::navigation_split::view(context),
-            ReferencePage::Section => pages::components::section::view(context),
-            ReferencePage::DataTable => pages::components::data_table::view(context),
+            ReferencePage::Sidebar => {
+                pages::components::sidebar_doc::view(context, self.render_mode)
+            }
+            ReferencePage::Tabbar => pages::components::tabbar_doc::view(context, self.render_mode),
+            ReferencePage::Modal => pages::components::modal_doc::view(context, self.render_mode),
+            ReferencePage::NavigationSplit => {
+                pages::components::navigation_split::view(context, self.render_mode)
+            }
+            ReferencePage::Section => pages::components::section::view(context, self.render_mode),
+            ReferencePage::DataTable => {
+                pages::components::data_table::view(context, self.render_mode)
+            }
 
             // Showcase Gallery (Deprecated / Redirects)
             ReferencePage::ShowcaseButtons => {

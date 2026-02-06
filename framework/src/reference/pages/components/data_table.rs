@@ -1,10 +1,58 @@
-use crate::data_table;
+use crate::core::{AIBackend, Context, IcedBackend, SpatialBackend};
 use crate::navigation::PageResult;
 use crate::prelude::*;
-use crate::reference::app::Message;
+use crate::reference::app::{Message, RenderMode};
+use crate::reference::views::ComponentDoc;
+use std::sync::Arc;
 
-pub fn view(context: &Context) -> PageResult<Message> {
-    // --- Sample Data Helper ---
+pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+    // --- 1. Preview Construction ---
+    let preview_view = create_canvas_preview(ctx);
+    let terminal_preview = "DataTable[Rows: 3, Columns: 3]".to_string();
+    let neural_preview = vstack::<Message, AIBackend>()
+        .push(text("DataTable"))
+        .describe(ctx);
+    let spatial_preview = vstack::<Message, SpatialBackend>()
+        .push(text("DataTable"))
+        .view(ctx);
+
+    // --- 2. Code Snippet ---
+    let code_snippet = r#"data_table![
+    preset(DataTablePreset::Professional),
+    column("ID", Length::Fixed(60.0)),
+    column("Name", Length::Fill),
+    column("Status", Length::Fixed(120.0)),
+    row(vec![
+        Box::new(Text::new("001")),
+        Box::new(Text::new("Primary Node").bold()),
+        Box::new(Badge::new("Active").intent(Intent::Success)),
+    ])
+]"#
+    .to_string();
+
+    // --- 3. Component Documentation Object ---
+    let doc = ComponentDoc::new(
+        "DataTable",
+        "A highly-optimized grid for displaying structured data with support for presets, column emphasis, and multi-kernel adapted rendering.",
+        code_snippet,
+        Arc::new(preview_view),
+    )
+    .terminal(terminal_preview)
+    .neural(neural_preview)
+    .spatial(spatial_preview)
+    .render_mode(render_mode)
+    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .theory(
+       "### High-Density Data\nData tables in PeakUI are more than just grids. They are semantic structures that handle complex layout logic across different display kernels.\n\n- **Kernel Agnostic**: The same `data_table!` DSL manifests as a rich interactive grid on Canvas, a character-based table in Terminal, and a structured array in Neural mode.\n- **Performance**: Built with virtualization in mind (planned) to handle thousands of rows without dropping frames."
+    )
+    .props_table(
+        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `show_grid(b)` | `bool` | Toggles internal grid lines. |"
+    );
+
+    PageResult::new(doc)
+}
+
+fn create_canvas_preview(_ctx: &Context) -> VStack<Message, IcedBackend> {
     let sample_rows = || {
         vec![
             ("001", "Primary Node C", "Active", "99.9%", Intent::Success),
@@ -13,166 +61,28 @@ pub fn view(context: &Context) -> PageResult<Message> {
         ]
     };
 
-    let title = "Data Table & Multi-Kernel DSL";
-    let description = "PeakUI uses an expressive DSL to build professional interfaces that automatically adapt across UI, TUI, Semantic, and Spatial kernels.";
-    let code_snippet = r#"data_table![
-    preset(DataTablePreset::Professional),
-    column("ID", Length::Fixed(60.0)),
-    column("Name", Length::Fill),
-    row(vec![...])
-]"#;
+    vstack::<Message, IcedBackend>().spacing(32.0).push(
+        vstack::<Message, IcedBackend>()
+            .spacing(8.0)
+            .push(text::<IcedBackend>("Sample Render").caption2().secondary())
+            .push({
+                let mut table = crate::data_table![
+                    preset(DataTablePreset::Professional),
+                    min_width(400.0),
+                    column("ID", Length::Fixed(60.0)),
+                    column("Name", Length::Fill),
+                    column("Status", Length::Fixed(100.0)),
+                ];
 
-    let preview = VStack::<Message, IcedBackend>::new_generic()
-        .spacing(48.0)
-        .width(Length::Fill)
-        .push(
-            VStack::new_generic()
-                .spacing(24.0)
-                .push(Text::new("1. Professional Preset (DSL Syntax)").title3())
-                .push(Text::new("Using the `data_table!` macro for a clean, declarative declaration.").secondary())
-                .push({
-                    let mut table = data_table![
-                        preset(DataTablePreset::Professional),
-                        min_width(600.0),
-                        column("ID", Length::Fixed(60.0)),
-                        column("Name", Length::Fill),
-                        column("Status", Length::Fixed(120.0)),
-                        column("Uptime", Length::Fixed(100.0)),
-                    ];
-
-                    for (id, name, status, uptime, intent) in sample_rows() {
-                        table = table.row(vec![
-                            Box::new(Text::new(id).secondary()) as Box<dyn View<Message, IcedBackend>>,
-                            Box::new(Text::new(name).bold()),
-                            Box::new(Badge::new(status).intent(intent)),
-                            Box::new(Text::new(uptime).footnote()),
-                        ]);
-                    }
-                    table
-                })
-        )
-        .push(
-            VStack::new_generic()
-                .spacing(24.0)
-                .push(Text::new("2. Multi-Kernel View Logic").title3())
-                .push(Text::new("The same DSL adaptively renders based on the active Kernel mode.").secondary())
-                .push(
-                    ResponsiveGrid::new()
-                        .columns(2)
-                        .spacing(20.0)
-                        .push(kernel_card("UI Mode", "Rich graphics and glassmorphism (Desktop).", "monitor", context.mode == ShellMode::Desktop))
-                        .push(kernel_card("TUI Mode", "High-performance terminal rendering (Console).", "terminal", context.mode == ShellMode::Console))
-                        .push(kernel_card("Semantic Mode", "Direct neural/AI mapping (Server/LLM).", "brain", context.mode == ShellMode::Server))
-                        .push(kernel_card("Spatial (AR/VR)", "Volumetric layouts (Spatial).", "layers", context.mode == ShellMode::Spatial))
-                )
-        )
-        .push(
-            VStack::new_generic()
-                .spacing(24.0)
-                .push(Text::new("3. Building Grids").title3())
-                .push(Text::new("Using `ResponsiveGrid` for auto-layout cards that adapt to screen size.").secondary())
-                .push(
-                    ResponsiveGrid::new()
-                        .columns(3)
-                        .mobile_columns(1)
-                        .spacing(16.0)
-                        .push(GlassCard::new(Text::new("Grid Item 1").center()).padding(24.0))
-                        .push(GlassCard::new(Text::new("Grid Item 2").center()).padding(24.0))
-                        .push(GlassCard::new(Text::new("Grid Item 3").center()).padding(24.0))
-                )
-        )
-        .push(
-            VStack::new_generic()
-                .spacing(24.0)
-                .push(Text::new("4. Custom Grid & Emphasis").title3())
-                .push(Text::new("Granular control over grid lines and column emphasis for high-density data.").secondary())
-                .push({
-                    let mut table = data_table![
-                        preset(DataTablePreset::Minimal),
-                        show_grid(true),
-                        emphasize_first_column(true),
-                        min_width(600.0),
-                        column("ID", Length::Fixed(60.0)),
-                        column("Name", Length::Fill),
-                        column("Status", Length::Fixed(120.0)),
-                    ];
-
-                    for (id, name, status, _, intent) in sample_rows() {
-                        table = table.row(vec![
-                            Box::new(Text::new(id).secondary()) as Box<dyn View<Message, IcedBackend>>,
-                            Box::new(Text::new(name).bold()),
-                            Box::new(Badge::new(status).intent(intent)),
-                        ]);
-                    }
-                    table
-                })
-        );
-
-    // Terminal representation for "The Lab"
-    let terminal =
-        "DataTable[\n  Filter: Active\n  Columns: [ID, Name, Status, Uptime]\n  Rows: 3\n]"
-            .to_string();
-
-    // Neural representation for "The Lab"
-    let neural = crate::core::SemanticNode {
-        role: "data_table".to_string(),
-        label: Some("Node Status Table".to_string()),
-        children: vec![
-            crate::core::SemanticNode {
-                role: "row".to_string(),
-                content: Some("Primary Node C (Active)".to_string()),
-                ..Default::default()
-            },
-            crate::core::SemanticNode {
-                role: "row".to_string(),
-                content: Some("Secondary Relay (Standby)".to_string()),
-                ..Default::default()
-            },
-        ],
-        ..Default::default()
-    };
-
-    PageResult::new(
-        crate::reference::views::ComponentDoc::new(
-            title,
-            description,
-            code_snippet,
-            std::sync::Arc::new(preview),
-        )
-        .terminal(terminal)
-        .neural(neural)
-        .on_render_mode_change(Message::SetRenderMode)
-        .render_mode(
-            context
-                .is_inside_scrollable
-                .then(|| crate::reference::app::RenderMode::Canvas)
-                .unwrap_or(crate::reference::app::RenderMode::Canvas),
-        ), // This is a bit hacky but works
+                for (id, name, status, _, intent) in sample_rows() {
+                    table = table.row(vec![
+                        Box::new(text::<IcedBackend>(id).secondary())
+                            as Box<dyn View<Message, IcedBackend>>,
+                        Box::new(text::<IcedBackend>(name).bold()),
+                        Box::new(Badge::new(status).intent(intent)),
+                    ]);
+                }
+                table
+            }),
     )
-}
-
-fn kernel_card(
-    title: &str,
-    desc: &str,
-    icon: &str,
-    active: bool,
-) -> impl View<Message, IcedBackend> {
-    let card_icon = Icon::new(icon).size(24.0);
-
-    let content = HStack::new()
-        .spacing(16.0)
-        .align_y(Alignment::Center)
-        .push(if active {
-            Box::new(card_icon.primary_color()) as Box<dyn View<Message, IcedBackend>>
-        } else {
-            Box::new(card_icon) as Box<dyn View<Message, IcedBackend>>
-        })
-        .push(
-            VStack::new()
-                .spacing(4.0)
-                .push(Text::new(title).bold())
-                .push(Text::new(desc).caption2().secondary()),
-        );
-
-    GlassCard::new(content).padding(16.0)
 }

@@ -6,7 +6,7 @@ use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
 fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
-    Button::<Message, B>::label(lab.label.clone())
+    button_label::<Message, B>(lab.label.clone())
         .variant(lab.variant)
         .intent(lab.intent)
         .size(lab.size)
@@ -40,11 +40,14 @@ pub fn view(
 
     // 1. Canvas View (Standard GUI)
     let button = create_button::<IcedBackend>(lab);
-    let canvas_preview = vstack![button].width(if lab.is_full_width {
-        Length::Fixed(400.0)
-    } else {
-        Length::Shrink
-    });
+    let canvas_preview =
+        vstack::<Message, IcedBackend>()
+            .push(button)
+            .width(if lab.is_full_width {
+                Length::Fixed(400.0)
+            } else {
+                Length::Shrink
+            });
 
     // 2. Terminal View (ANSI Text)
     let terminal_preview = create_button::<TermBackend>(lab).view(context);
@@ -147,13 +150,14 @@ impl View<Message, IcedBackend> for ButtonInspector {
                     left: 20.0,
                 })
                 .push(
-                    vstack![
-                        text("Label").caption2().bold().secondary(),
-                        TextInput::<Message>::new(self.lab.label.clone(), "Button label", |s| {
-                            Message::UpdateButtonLabel(s)
-                        }),
-                    ]
-                    .spacing(8.0),
+                    vstack::<Message, IcedBackend>()
+                        .push(text("Label").caption2().bold().secondary())
+                        .push(TextInput::<Message>::new(
+                            self.lab.label.clone(),
+                            "Button label",
+                            |s| Message::UpdateButtonLabel(s),
+                        ))
+                        .spacing(8.0),
                 )
                 .push(
                     vstack![
