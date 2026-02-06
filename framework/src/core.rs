@@ -414,6 +414,13 @@ impl BoundingBox3D {
         Self::new(Point3::origin(), Point3::origin())
     }
 
+    pub fn from_size(width: f32, height: f32, depth: f32) -> Self {
+        Self::new(
+            Point3::new(-width / 2.0, -height / 2.0, -depth / 2.0),
+            Point3::new(width / 2.0, height / 2.0, depth / 2.0),
+        )
+    }
+
     pub fn size(&self) -> Vector3<f32> {
         self.max - self.min
     }
@@ -847,22 +854,24 @@ impl Backend for SpatialBackend {
         _context: &Context,
     ) -> Self::AnyView<Message> {
         let mut y_offset = 0.0;
+        let mut max_width = 0.0f32;
         let mut nodes = Vec::new();
 
         for mut child in children {
             child.transform.position.y = y_offset;
-            child.transform.position.z = 1.0; // Restoring hierarchical step
+            child.transform.position.z = 1.0;
             y_offset += child.height + spacing;
+            max_width = max_width.max(child.width);
             nodes.push(child);
         }
 
         SpatialNode {
             role: "vstack".to_string(),
-            width: 0.0,
+            width: max_width,
             height: y_offset,
-            depth: 0.0,
+            depth: 1.0,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(max_width, y_offset, 1.0),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: false,
@@ -882,22 +891,24 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         let mut x_offset = 0.0;
+        let mut max_height = 0.0f32;
         let mut nodes = Vec::new();
 
         for mut child in children {
             child.transform.position.x = x_offset;
-            child.transform.position.z = 1.0; // Restoring hierarchical step
+            child.transform.position.z = 1.0;
             x_offset += child.width + spacing;
+            max_height = max_height.max(child.height);
             nodes.push(child);
         }
 
         SpatialNode {
             role: "hstack".to_string(),
             width: x_offset,
-            height: 0.0,
-            depth: 0.0,
+            height: max_height,
+            depth: 1.0,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(x_offset, max_height, 1.0),
             layout: Layout::Horizontal,
             is_focused: false,
             billboarding: context.billboarding,
@@ -961,8 +972,8 @@ impl Backend for SpatialBackend {
     }
 
     fn text<Message: Clone + 'static>(
-        _content: String,
-        _size: f32,
+        content: String,
+        size: f32,
         _color: Option<Color>,
         _is_bold: bool,
         _is_dim: bool,
@@ -972,34 +983,39 @@ impl Backend for SpatialBackend {
         _alignment: Alignment,
         context: &Context,
     ) -> Self::AnyView<Message> {
+        // Heuristic text bounds
+        let width = content.len() as f32 * size * 0.6;
+        let height = size;
+        let depth = 0.1;
+
         SpatialNode {
             role: "text".to_string(),
-            width: 0.0,
-            height: 0.0,
-            depth: 0.0,
+            width,
+            height,
+            depth,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(width, height, depth),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: context.billboarding,
             on_press: None,
-            children: vec![], // SpatialBackend doesn't store text content in children
+            children: vec![],
         }
     }
 
     fn icon<Message: Clone + 'static>(
         _name: String,
-        _size: f32,
+        size: f32,
         _color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
             role: "icon".to_string(),
-            width: 0.0,
-            height: 0.0,
-            depth: 0.0,
+            width: size,
+            height: size,
+            depth: 0.1,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(size, size, 0.1),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: context.billboarding,
@@ -1045,17 +1061,18 @@ impl Backend for SpatialBackend {
     }
 
     fn circle<Message: 'static>(
-        _radius: f32,
+        radius: f32,
         _color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message> {
+        let size = radius * 2.0;
         SpatialNode {
             role: "circle".to_string(),
-            width: 0.0,
-            height: 0.0,
-            depth: 0.0,
+            width: size,
+            height: size,
+            depth: 0.1,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(size, size, 0.1),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: context.billboarding,
@@ -1086,21 +1103,30 @@ impl Backend for SpatialBackend {
     }
 
     fn rectangle<Message: 'static>(
-        _width: Length,
-        _height: Length,
+        width: Length,
+        height: Length,
         _color: Option<Color>,
         _radius: f32,
         _border_width: f32,
         _border_color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message> {
+        let w = match width {
+            Length::Fixed(f) => f,
+            _ => 100.0,
+        };
+        let h = match height {
+            Length::Fixed(f) => f,
+            _ => 100.0,
+        };
+
         SpatialNode {
             role: "rectangle".to_string(),
-            width: 0.0,
-            height: 0.0,
-            depth: 0.0,
+            width: w,
+            height: h,
+            depth: 0.1,
             transform: Transform3D::default(),
-            bounds: BoundingBox3D::zero(),
+            bounds: BoundingBox3D::from_size(w, h, 0.1),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: context.billboarding,
