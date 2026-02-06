@@ -1378,19 +1378,27 @@ impl App {
                     }));
                 }
                 Action::SetButtonVariant(variant) => {
-                    self.button_lab.variant = variant;
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::UpdateButtonVariant(variant)
+                    }));
                 }
                 Action::SetButtonIntent(intent) => {
-                    self.button_lab.intent = intent;
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::UpdateButtonIntent(intent)
+                    }));
                 }
                 Action::SetThemeKind(kind) => {
-                    self.theme = kind;
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::SetThemeKind(kind)
+                    }));
                 }
                 Action::SetThemeTone(tone) => {
-                    self.theme_tone = tone;
+                    tasks.push(Task::perform(async {}, move |_| Message::SetTheme(tone)));
                 }
                 Action::SetLabMode(mode) => {
-                    self.render_mode = mode;
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::SetRenderMode(mode)
+                    }));
                 }
                 Action::Shell(_) => {
                     // Handled by Neural Sudo Interception above

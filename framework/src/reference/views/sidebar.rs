@@ -322,6 +322,12 @@ impl SidebarView {
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAK HUB"))
             .push(sidebar_item(
+                "PeakOS Core",
+                "cpu",
+                Page::PeakOSCore,
+                *active_tab == Page::PeakOSCore,
+            ))
+            .push(sidebar_item(
                 "Peak Hub",
                 "activity",
                 Page::PeakHub,
