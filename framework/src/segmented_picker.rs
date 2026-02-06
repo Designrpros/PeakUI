@@ -205,32 +205,23 @@ where
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        let children = self
+        let children: Vec<crate::core::SemanticNode> = self
             .options
             .iter()
             .enumerate()
-            .map(|(idx, opt)| crate::core::SemanticNode {
-                accessibility: None,
-                role: "segment_option".to_string(),
-                label: Some(opt.label.clone()),
-                content: if idx == self.active_index {
-                    Some("ACTIVE".to_string())
-                } else {
-                    None
-                },
-                children: Vec::new(),
-                neural_tag: None,
-                documentation: None,
-                ..Default::default()
+            .map(|(idx, opt)| {
+                crate::core::SemanticNode::new("segment_option")
+                    .with_label(opt.label.clone())
+                    .with_content(if idx == self.active_index {
+                        "ACTIVE"
+                    } else {
+                        ""
+                    })
             })
             .collect();
 
-        crate::core::SemanticNode {
-            role: "segmented_picker".to_string(),
-            label: None,
-            content: Some(format!("active_index: {}", self.active_index)),
-            children,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("segmented_picker")
+            .with_content(format!("active_index: {}", self.active_index))
+            .extend_children(children)
     }
 }

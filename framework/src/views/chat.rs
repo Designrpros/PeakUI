@@ -214,16 +214,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            accessibility: None,
-            role: "ai_chat".to_string(),
-            label: Some("AI Assistant".to_string()),
-            content: None,
-            children: vec![],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("ai_chat").with_label("AI Assistant")
     }
 }
 
@@ -343,16 +334,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Messa
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            accessibility: None,
-            role: "chat_bubble".to_string(),
-            content: Some(self.message.content.clone()),
-            label: None,
-            children: vec![],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("chat_bubble").with_content(self.message.content.clone())
     }
 }
 
@@ -469,11 +451,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "tool_card".to_string(),
-            label: Some(format!("{:?}", self.action)),
-            ..Default::default()
-        }
+        SemanticNode::new("tool_card").with_label(format!("{:?}", self.action))
     }
 }
 
@@ -547,10 +525,6 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ThinkingBubble {
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "thinking_indicator".to_string(),
-            content: Some("AI is thinking...".to_string()),
-            ..Default::default()
-        }
+        SemanticNode::new("thinking_indicator").with_content("AI is thinking...")
     }
 }

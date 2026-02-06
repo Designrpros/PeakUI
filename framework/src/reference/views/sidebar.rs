@@ -418,12 +418,9 @@ impl View<Message, IcedBackend> for SidebarView {
             _ => self.base_sidebar(context),
         };
 
-        crate::core::SemanticNode {
-            role: "sidebar".to_string(),
-            label: Some(self.navigation_mode.clone()),
-            children: vec![content.describe(context)],
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("sidebar")
+            .with_label(self.navigation_mode.clone())
+            .push_child(content.describe(context))
     }
 }
 
@@ -522,15 +519,8 @@ impl View<Message, IcedBackend> for SidebarItem {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "sidebar_item".to_string(),
-            label: Some(format!("{} (page={:?})", self.label, self.page)),
-            content: if self.active {
-                Some("ACTIVE".to_string())
-            } else {
-                None
-            },
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("sidebar_item")
+            .with_label(format!("{} (page={:?})", self.label, self.page))
+            .with_content(if self.active { "ACTIVE" } else { "" })
     }
 }

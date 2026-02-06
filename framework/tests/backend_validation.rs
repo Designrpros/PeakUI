@@ -25,23 +25,23 @@ fn test_semantic_consistency() {
     let spatial_desc = spatial_view.describe(&ctx);
 
     // Verify that all backends produce semantically equivalent trees
-    assert_eq!(iced_desc.role, "vstack");
+    assert_eq!(iced_desc.role, "vstack".into());
     assert_eq!(iced_desc.children.len(), 2);
 
-    assert_eq!(term_desc.role, "vstack");
+    assert_eq!(term_desc.role, "vstack".into());
     assert_eq!(term_desc.children.len(), 2);
 
-    assert_eq!(ai_desc.role, "vstack");
+    assert_eq!(ai_desc.role, "vstack".into());
     assert_eq!(ai_desc.children.len(), 2);
 
-    assert_eq!(spatial_desc.role, "vstack");
+    assert_eq!(spatial_desc.role, "vstack".into());
     assert_eq!(spatial_desc.children.len(), 2);
 
     // Verify leaf node consistency
-    assert_eq!(iced_desc.children[0].role, "text");
-    assert_eq!(term_desc.children[0].role, "text");
-    assert_eq!(ai_desc.children[0].role, "text");
-    assert_eq!(spatial_desc.children[0].role, "text");
+    assert_eq!(iced_desc.children[0].role, "text".into());
+    assert_eq!(term_desc.children[0].role, "text".into());
+    assert_eq!(ai_desc.children[0].role, "text".into());
+    assert_eq!(spatial_desc.children[0].role, "text".into());
 }
 
 #[test]
@@ -50,10 +50,16 @@ fn test_semantic_serialization() {
     let ui = VStack::<(), TermBackend>::new().push(Text::new("PeakUI"));
 
     let desc = ui.describe(&ctx);
-    let json = serde_json::to_string(&desc).unwrap();
+    let json = serde_json::to_string_pretty(&desc).unwrap();
 
-    // Verify essential structure is in JSON
-    assert!(json.contains("\"r\":\"vstack\""));
-    assert!(json.contains("\"r\":\"text\""));
-    assert!(json.contains("\"l\":\"PeakUI\""));
+    // Live Semantic Dump for the user
+    println!(
+        "\n=== LIVE SEMANTIC DUMP (BRAIN VIEW) ===\n{}\n======================================\n",
+        json
+    );
+
+    // Verify essential structure is in JSON (using optimized short keys)
+    assert!(json.contains("\"r\": \"vstack\""));
+    assert!(json.contains("\"r\": \"text\""));
+    assert!(json.contains("\"c\": \"PeakUI\"")); // Content for Text nodes is "c"
 }

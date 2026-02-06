@@ -103,10 +103,7 @@ mod tests {
             node.is_protected,
             "Neural Sudo must mark the node as protected"
         );
-        assert_eq!(
-            node.protection_reason,
-            Some("Irreversible action".to_string())
-        );
+        assert_eq!(node.protection_reason, Some("Irreversible action".into()));
 
         let json = serde_json::to_string(&node).unwrap();
         assert!(

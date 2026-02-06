@@ -279,23 +279,16 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "data_table".to_string(),
-            label: Some(format!(
+        let rows = self.rows.iter().map(|r| {
+            SemanticNode::new("row").extend_children(r.cells.iter().map(|c| c.describe(context)))
+        });
+
+        SemanticNode::new("data_table")
+            .with_label(format!(
                 "Table with {} columns and {} rows",
                 self.columns.len(),
                 self.rows.len()
-            )),
-            children: self
-                .rows
-                .iter()
-                .map(|r| SemanticNode {
-                    role: "row".to_string(),
-                    children: r.cells.iter().map(|c| c.describe(context)).collect(),
-                    ..Default::default()
-                })
-                .collect(),
-            ..Default::default()
-        }
+            ))
+            .extend_children(rows)
     }
 }

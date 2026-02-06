@@ -1539,7 +1539,7 @@ impl App {
             tokens.clone(),
             self.localization.clone(),
             move |mut context| {
-                context.peak_id = peak_id.clone();
+                context.peak_id = peak_id.clone().into();
                 // Main App Content
                 let base_content = iced::widget::container(content.view(&context))
                     .width(Length::Fill)

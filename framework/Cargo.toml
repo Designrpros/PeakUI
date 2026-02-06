@@ -17,7 +17,7 @@ peak-icons = { path = "../crates/peak-icons" }
 peak-os-intelligence = { path = "../../PeakOS/crates/peak-intelligence", default-features = false }
 peak-db = { path = "../../PeakOS/crates/peak-db", optional = true }
 iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
-serde = { version = "1.0", features = ["derive"] }
+serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 schemars = "0.8"
 nalgebra = { version = "0.33", features = ["serde-serialize"] }

@@ -90,16 +90,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Card<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "card".to_string(),
-            label: None,
-            content: None,
-            children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("card").push_child(self.content.describe(context))
     }
 }
 
@@ -161,16 +152,9 @@ impl<Message: 'static, B: Backend> View<Message, B> for Section<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "section".to_string(),
-            label: Some(self.title.clone()),
-            content: None,
-            children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("section")
+            .with_label(self.title.clone())
+            .push_child(self.content.describe(context))
     }
 }
 
@@ -214,15 +198,6 @@ impl<Message: 'static, B: Backend> View<Message, B> for GlassCard<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "glass_card".to_string(),
-            label: None,
-            content: None,
-            children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("glass_card").push_child(self.content.describe(context))
     }
 }

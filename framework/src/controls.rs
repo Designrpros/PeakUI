@@ -181,25 +181,11 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             .content
             .clone()
             .or(content_node.label.clone())
-            .unwrap_or_default();
+            .unwrap_or_else(|| "".into());
 
-        crate::core::SemanticNode {
-            role: "button".to_string(),
-            label: Some(label.clone()),
-            content: None,
-            children: vec![content_node],
-            neural_tag: None,
-            documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::Button,
-                label: label,
-                hint: None,
-                value: None,
-                states: Vec::new(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("button")
+            .with_label(label)
+            .push_child(content_node)
     }
 }
 
@@ -239,31 +225,9 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Tog
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "toggle".to_string(),
-            label: Some(self.label.clone()),
-            content: Some(self.is_active.to_string()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::Switch,
-                label: self.label.clone(),
-                hint: Some("Double tap to toggle".to_string()),
-                value: Some(if self.is_active {
-                    "on".to_string()
-                } else {
-                    "off".to_string()
-                }),
-                states: if self.is_active {
-                    vec!["selected".to_string()]
-                } else {
-                    Vec::new()
-                },
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("toggle")
+            .with_label(self.label.clone())
+            .with_content(if self.is_active { "on" } else { "off" })
     }
 }
 
@@ -310,27 +274,18 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "slider".to_string(),
-            label: None,
-            content: Some(self.value.to_string()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
+        crate::core::SemanticNode::new("slider")
+            .with_content(self.value.to_string())
+            .with_accessibility(crate::core::AccessibilityNode {
                 role: crate::core::AccessibilityRole::Slider,
-                label: "Slider".to_string(),
-                hint: Some(format!(
-                    "Range: {:?} - {:?}",
-                    self.range.start(),
-                    self.range.end()
-                )),
-                value: Some(format!("{:.2}", self.value)),
+                label: "Slider".into(),
+                hint: Some(
+                    format!("Range: {:?} - {:?}", self.range.start(), self.range.end()).into(),
+                ),
+                value: Some(format!("{:.2}", self.value).into()),
                 states: Vec::new(),
                 ..Default::default()
-            }),
-            ..Default::default()
-        }
+            })
     }
 }
 
@@ -440,22 +395,16 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: Some(crate::core::AccessibilityNode {
+        crate::core::SemanticNode::new("stepper")
+            .with_label(self.label.clone())
+            .with_content(self.value.to_string())
+            .with_accessibility(crate::core::AccessibilityNode {
                 role: crate::core::AccessibilityRole::SpinButton,
-                label: self.label.clone(),
-                hint: Some("Use +/- to adjust value".to_string()),
-                value: Some(self.value.to_string()),
+                label: self.label.clone().into(),
+                hint: Some("Use +/- to adjust value".into()),
+                value: Some(self.value.to_string().into()),
                 ..Default::default()
-            }),
-            role: "stepper".to_string(),
-            label: Some(self.label.clone()),
-            content: Some(self.value.to_string()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+            })
     }
 }
 pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBackend> {
@@ -553,28 +502,20 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: Some(crate::core::AccessibilityNode {
+        let value: Arc<str> = if self.is_secure {
+            "********".into()
+        } else {
+            self.value.as_str().into()
+        };
+
+        crate::core::SemanticNode::new("text_input")
+            .with_label(self.placeholder.clone())
+            .with_content(value.clone())
+            .with_accessibility(crate::core::AccessibilityNode {
                 role: crate::core::AccessibilityRole::TextField,
-                label: self.placeholder.clone(),
-                value: Some(if self.is_secure {
-                    "********".to_string()
-                } else {
-                    self.value.clone()
-                }),
+                label: self.placeholder.clone().into(),
+                value: Some(value),
                 ..Default::default()
-            }),
-            role: "text_input".to_string(),
-            label: Some(self.placeholder.clone()),
-            content: Some(if self.is_secure {
-                "********".to_string()
-            } else {
-                self.value.clone()
-            }),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+            })
     }
 }

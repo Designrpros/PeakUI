@@ -62,10 +62,6 @@ impl<M: 'static + Clone> View<M, IcedBackend> for Badge {
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "badge".to_string(),
-            label: Some(self.label.clone()),
-            ..Default::default()
-        }
+        SemanticNode::new("badge").with_label(self.label.clone())
     }
 }

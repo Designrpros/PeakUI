@@ -241,25 +241,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::Link,
-                label: self.label.clone(),
-                states: if self.is_active {
-                    vec!["selected".to_string()]
-                } else {
-                    Vec::new()
-                },
-                ..Default::default()
-            }),
-            role: "navigation_link".to_string(),
-            label: Some(self.label.clone()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("navigation_link").with_label(self.label.clone())
     }
 }
 
@@ -306,16 +288,7 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
-        SemanticNode {
-            accessibility: None,
-            role: "detail_view".to_string(),
-            label: None,
-            content: None,
-            children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("detail_view").push_child(self.content.describe(context))
     }
 }
 
@@ -420,20 +393,9 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
     }
 
     fn describe(&self, context: &Context) -> SemanticNode {
-        SemanticNode {
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::List,
-                label: self.title.clone(),
-                ..Default::default()
-            }),
-            role: "sidebar".to_string(),
-            label: Some(self.title.clone()),
-            content: None,
-            children: self.items.iter().map(|i| i.describe(context)).collect(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("sidebar")
+            .with_label(self.title.clone())
+            .extend_children(self.items.iter().map(|i| i.describe(context)))
     }
 }
 

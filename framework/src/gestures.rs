@@ -41,11 +41,8 @@ where
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "gesture_detector".to_string(),
-            children: vec![self.content.describe(context)],
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("gesture_detector")
+            .push_child(self.content.describe(context))
     }
 }
 pub struct TapGesture<Message: 'static, B: crate::core::Backend, V: View<Message, B>> {
@@ -82,7 +79,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend, V: View<Message, B>> Vie
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let mut node = self.content.describe(context);
-        node.role = "tap_gesture".to_string();
+        node.role = "tap_gesture".into();
         node
     }
 }

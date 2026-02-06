@@ -344,12 +344,9 @@ where
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "article".to_string(),
-            label: Some("Markdown Content".to_string()),
-            content: Some(self.content.chars().take(100).collect()),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("article")
+            .with_label("Markdown Content")
+            .with_content(self.content.chars().take(100).collect::<String>())
     }
 }
 
@@ -381,7 +378,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
             // Text before **
             if start > 0 {
                 spans.push(TextSpan {
-                    content: remaining[..start].to_string(),
+                    content: remaining[..start].into(),
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
@@ -390,7 +387,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
             if let Some(end) = remaining[start + 2..].find("**") {
                 let bold_text = &remaining[start + 2..start + 2 + end];
                 spans.push(TextSpan {
-                    content: bold_text.to_string(),
+                    content: bold_text.into(),
                     color: Some(theme.colors.text_primary),
                     font: Some(font::Font {
                         weight: font::Weight::Bold,
@@ -401,7 +398,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
                 remaining = &remaining[start + 2 + end + 2..];
             } else {
                 spans.push(TextSpan {
-                    content: remaining[..].to_string(),
+                    content: remaining[..].into(),
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
@@ -411,7 +408,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
         } else if let Some(start) = remaining.find('`') {
             if start > 0 {
                 spans.push(TextSpan {
-                    content: remaining[..start].to_string(),
+                    content: remaining[..start].into(),
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
@@ -420,7 +417,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
             if let Some(end) = remaining[start + 1..].find('`') {
                 let code_text = &remaining[start + 1..start + 1 + end];
                 spans.push(TextSpan {
-                    content: format!(" {} ", code_text),
+                    content: format!(" {} ", code_text).into(),
                     color: Some(theme.colors.primary),
                     font: Some(font::Font::MONOSPACE),
                     size: None,
@@ -428,7 +425,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
                 remaining = &remaining[start + 1 + end + 1..];
             } else {
                 spans.push(TextSpan {
-                    content: remaining[..].to_string(),
+                    content: remaining[..].into(),
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
@@ -437,7 +434,7 @@ fn render_rich_text<Message: Clone + 'static, B: Backend>(
             }
         } else {
             spans.push(TextSpan {
-                content: remaining.to_string(),
+                content: remaining.into(),
                 color: Some(theme.colors.text_secondary),
                 font: None,
                 size: None,

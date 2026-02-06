@@ -197,23 +197,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "text".to_string(),
-            label: None,
-            content: Some(self.content.clone()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::Text,
-                label: self.content.clone(),
-                hint: None,
-                value: None,
-                states: Vec::new(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("text").with_content(self.content.clone())
     }
 }
 
@@ -276,16 +260,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Rectangle<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "rectangle".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("rectangle")
     }
 }
 
@@ -317,16 +292,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Circle<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "circle".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("circle")
     }
 }
 
@@ -360,16 +326,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Capsule<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "capsule".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("capsule")
     }
 }
 
@@ -396,16 +353,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Space<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "space".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("space")
     }
 }
 
@@ -428,16 +376,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Divider<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "divider".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("divider")
     }
 }
 
@@ -509,16 +448,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "icon".to_string(),
-            label: Some(self.name.clone()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("icon").with_label(self.name.clone())
     }
 }
 
@@ -569,23 +499,13 @@ impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "image".to_string(),
-            label: Some(self.path.clone()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            accessibility: Some(crate::core::AccessibilityNode {
+        crate::core::SemanticNode::new("image")
+            .with_label(self.path.clone())
+            .with_accessibility(crate::core::AccessibilityNode {
                 role: crate::core::AccessibilityRole::Image,
-                label: format!("Image: {}", self.path),
-                hint: None,
-                value: None,
-                states: Vec::new(),
+                label: format!("Image: {}", self.path).into(),
                 ..Default::default()
-            }),
-            ..Default::default()
-        }
+            })
     }
 }
 
@@ -636,16 +556,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "video".to_string(),
-            label: Some(self.path.clone()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("video").with_label(self.path.clone())
     }
 }
 
@@ -696,16 +607,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "web_view".to_string(),
-            label: Some(self.url.clone()),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("web_view").with_label(self.url.clone())
     }
 }
 
@@ -821,15 +723,6 @@ impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "container".to_string(),
-            label: None,
-            content: None,
-            children: vec![self.content.describe(context)],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("container").push_child(self.content.describe(context))
     }
 }

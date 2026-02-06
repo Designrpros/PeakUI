@@ -96,17 +96,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        let children = self.children.iter().map(|c| c.describe(context)).collect();
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "vstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("vstack")
+            .extend_children(self.children.iter().map(|c| c.describe(context)))
     }
 }
 
@@ -205,17 +196,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        let children = self.children.iter().map(|c| c.describe(context)).collect();
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "hstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("hstack")
+            .extend_children(self.children.iter().map(|c| c.describe(context)))
     }
 }
 
@@ -279,17 +261,8 @@ impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        let children = self.children.iter().map(|c| c.describe(context)).collect();
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "zstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("zstack")
+            .extend_children(self.children.iter().map(|c| c.describe(context)))
     }
 }
 
@@ -421,17 +394,9 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
             self.items_per_row
         };
 
-        let children = self.children.iter().map(|c| c.describe(context)).collect();
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "grid".to_string(),
-            label: Some(format!("responsive_columns: {}", items_per_row)),
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("grid")
+            .with_label(format!("responsive_columns: {}", items_per_row))
+            .extend_children(self.children.iter().map(|c| c.describe(context)))
     }
 }
 
@@ -538,16 +503,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Wrap<Message, B> {
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        let children = self.children.iter().map(|c| c.describe(context)).collect();
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "wrap".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("wrap")
+            .extend_children(self.children.iter().map(|c| c.describe(context)))
     }
 }

@@ -5,6 +5,7 @@ use iced::{widget::Id, Element, Subscription, Task};
 use iced::{Alignment, Color, Length, Padding, Renderer, Shadow, Size, Theme, Vector};
 pub use nalgebra::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector3};
 pub use peak_core::registry::ShellMode;
+use std::sync::Arc;
 
 /// The core entry point for a PeakUI application.
 ///
@@ -57,7 +58,7 @@ pub enum Headset {
 
 pub struct NeuralView<Message: 'static, B: Backend, V: View<Message, B>> {
     inner: V,
-    tag: String,
+    tag: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
@@ -70,20 +71,20 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
-        node.neural_tag = Some(self.tag.clone());
+        node.neural_tag = Some(self.tag.clone().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
-        node.neural_tag = Some(self.tag.clone());
+        node.neural_tag = Some(self.tag.clone().into());
         node
     }
 }
 
 pub struct DocumentedView<Message: 'static, B: Backend, V: View<Message, B>> {
     inner: V,
-    documentation: String,
+    documentation: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
@@ -100,13 +101,13 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
-        node.documentation = Some(self.documentation.clone());
+        node.documentation = Some(self.documentation.clone().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
-        node.documentation = Some(self.documentation.clone());
+        node.documentation = Some(self.documentation.clone().into());
         node
     }
 }
@@ -129,21 +130,27 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
-        node.neural_tag = Some(format!(
-            "{}:spatial:billboard:{}",
-            node.neural_tag.as_deref().unwrap_or_default(),
-            self.active
-        ));
+        node.neural_tag = Some(
+            format!(
+                "{}:spatial:billboard:{}",
+                node.neural_tag.as_deref().unwrap_or_default(),
+                self.active
+            )
+            .into(),
+        );
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
-        node.neural_tag = Some(format!(
-            "{}:spatial:billboard:{}",
-            node.neural_tag.as_deref().unwrap_or_default(),
-            self.active
-        ));
+        node.neural_tag = Some(
+            format!(
+                "{}:spatial:billboard:{}",
+                node.neural_tag.as_deref().unwrap_or_default(),
+                self.active
+            )
+            .into(),
+        );
         node
     }
 }
@@ -183,7 +190,7 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
 pub struct NeuralSudo<Message: 'static, B: Backend, V: View<Message, B>> {
     inner: V,
-    reason: String,
+    reason: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
@@ -197,20 +204,19 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
         node.is_protected = true;
-        node.protection_reason = Some(self.reason.clone());
+        node.protection_reason = Some(self.reason.clone().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
         node.is_protected = true;
-        node.protection_reason = Some(self.reason.clone());
+        node.protection_reason = Some(self.reason.clone().into());
         node
     }
 }
 
 pub use peak_theme::ThemeTokens;
-use std::sync::Arc;
 
 /// Runtime context for rendering and layout.
 ///
@@ -230,11 +236,11 @@ pub struct Context {
     /// Padding for safe areas (e.g. notches).
     pub safe_area: Padding,
     /// The ID of the currently focused element.
-    pub focused_id: Option<String>,
+    pub focused_id: Option<Arc<str>>,
     /// System localization settings.
     pub localization: Localization,
     /// A unique identifier for the current Peak session.
-    pub peak_id: String,
+    pub peak_id: Arc<str>,
     /// An optional override for the foreground color.
     pub foreground: Option<Color>,
     /// Whether billboarding is active in spatial environments.
@@ -253,7 +259,7 @@ impl Default for Context {
             safe_area: iced::Padding::ZERO,
             focused_id: None,
             localization: Localization::default(),
-            peak_id: String::new(),
+            peak_id: "".into(),
             foreground: None,
             billboarding: false,
             is_inside_scrollable: false,
@@ -301,7 +307,7 @@ impl Context {
             safe_area: Self::auto_padding(mode, size),
             focused_id: None,
             localization,
-            peak_id: String::new(),
+            peak_id: "".into(),
             foreground: None,
             billboarding: false,
             is_inside_scrollable: false,
@@ -312,7 +318,7 @@ impl Context {
         self.focused_id.as_deref() == Some(id)
     }
 
-    pub fn with_focus(mut self, id: impl Into<String>) -> Self {
+    pub fn with_focus(mut self, id: impl Into<Arc<str>>) -> Self {
         self.focused_id = Some(id.into());
         self
     }
@@ -489,7 +495,7 @@ pub struct RayHit<Message = ()> {
 #[derive(Debug, Clone, serde::Serialize)]
 #[serde(bound = "")]
 pub struct SpatialNode<Message = ()> {
-    pub role: String,
+    pub role: Arc<str>,
     pub width: f32,
     pub height: f32,
     pub depth: f32,
@@ -590,7 +596,7 @@ pub struct SpatialBackend;
 
 #[derive(Debug, Clone)]
 pub struct TextSpan {
-    pub content: String,
+    pub content: Arc<str>,
     pub color: Option<Color>,
     pub font: Option<iced::Font>,
     pub size: Option<f32>,
@@ -811,7 +817,7 @@ pub trait Backend: Sized + Clone + 'static {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        tooltip: String,
+        tooltip: Arc<str>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -866,7 +872,7 @@ impl Backend for SpatialBackend {
         }
 
         SpatialNode {
-            role: "vstack".to_string(),
+            role: "vstack".into(),
             width: max_width,
             height: y_offset,
             depth: 1.0,
@@ -903,7 +909,7 @@ impl Backend for SpatialBackend {
         }
 
         SpatialNode {
-            role: "hstack".to_string(),
+            role: "hstack".into(),
             width: x_offset,
             height: max_height,
             depth: 1.0,
@@ -935,7 +941,7 @@ impl Backend for SpatialBackend {
         }
 
         SpatialNode {
-            role: "wrap".to_string(),
+            role: "wrap".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -957,7 +963,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "rich_text".to_string(),
+            role: "rich_text".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -989,7 +995,7 @@ impl Backend for SpatialBackend {
         let depth = 0.1;
 
         SpatialNode {
-            role: "text".to_string(),
+            role: "text".into(),
             width,
             height,
             depth,
@@ -1010,7 +1016,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "icon".to_string(),
+            role: "icon".into(),
             width: size,
             height: size,
             depth: 0.1,
@@ -1026,7 +1032,7 @@ impl Backend for SpatialBackend {
 
     fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "divider".to_string(),
+            role: "divider".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1046,7 +1052,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "space".to_string(),
+            role: "space".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1067,7 +1073,7 @@ impl Backend for SpatialBackend {
     ) -> Self::AnyView<Message> {
         let size = radius * 2.0;
         SpatialNode {
-            role: "circle".to_string(),
+            role: "circle".into(),
             width: size,
             height: size,
             depth: 0.1,
@@ -1088,7 +1094,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "capsule".to_string(),
+            role: "capsule".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1121,7 +1127,7 @@ impl Backend for SpatialBackend {
         };
 
         SpatialNode {
-            role: "rectangle".to_string(),
+            role: "rectangle".into(),
             width: w,
             height: h,
             depth: 0.1,
@@ -1146,7 +1152,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "button".to_string(),
+            role: "button".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1167,7 +1173,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "sidebar_item".to_string(),
+            role: "sidebar_item".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1193,7 +1199,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "text_input".to_string(),
+            role: "text_input".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1214,7 +1220,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "slider".to_string(),
+            role: "slider".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1235,7 +1241,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "toggle".to_string(),
+            role: "toggle".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1266,7 +1272,7 @@ impl Backend for SpatialBackend {
         }
 
         SpatialNode {
-            role: "zstack".to_string(),
+            role: "zstack".into(),
             width: 0.0,
             height: 0.0,
             depth: z_offset,
@@ -1287,7 +1293,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "grid".to_string(),
+            role: "grid".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1309,7 +1315,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "image".to_string(),
+            role: "image".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1331,7 +1337,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "video".to_string(),
+            role: "video".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1353,7 +1359,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "web_view".to_string(),
+            role: "web_view".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1382,7 +1388,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "container".to_string(),
+            role: "container".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1406,7 +1412,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "scroll_view".to_string(),
+            role: "scroll_view".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1428,7 +1434,7 @@ impl Backend for SpatialBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
-            role: "mouse_area".to_string(),
+            role: "mouse_area".into(),
             width: 0.0,
             height: 0.0,
             depth: 0.0,
@@ -1444,7 +1450,7 @@ impl Backend for SpatialBackend {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        _tooltip: String,
+        _tooltip: Arc<str>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -1636,7 +1642,7 @@ impl Backend for IcedBackend {
         let iced_spans: Vec<Span<'static, ()>> = spans
             .into_iter()
             .map(|s| {
-                let mut span = Span::new(s.content);
+                let mut span = Span::new(s.content.to_string());
                 if let Some(c) = s.color {
                     span = span.color(c);
                 }
@@ -2649,7 +2655,7 @@ impl Backend for IcedBackend {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        tooltip_text: String,
+        tooltip_text: Arc<str>,
         context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::tooltip;
@@ -2657,7 +2663,7 @@ impl Backend for IcedBackend {
 
         tooltip(
             content,
-            iced::widget::text(tooltip_text).size(14.0 * scale),
+            iced::widget::text(tooltip_text.to_string()).size(14.0 * scale),
             tooltip::Position::Bottom,
         )
         .into()
@@ -2772,7 +2778,7 @@ impl Backend for TermBackend {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        tooltip: String,
+        tooltip: Arc<str>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("{} (Tooltip: {})", content, tooltip)
@@ -3103,7 +3109,7 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     /// Renders the view into a backend-specific representation.
     fn view(&self, context: &Context) -> B::AnyView<Message>;
 
-    fn neural(self, tag: impl Into<String>) -> NeuralView<Message, B, Self>
+    fn neural(self, tag: impl Into<Arc<str>>) -> NeuralView<Message, B, Self>
     where
         Self: Sized + 'static,
     {
@@ -3136,7 +3142,7 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         }
     }
 
-    fn document(self, message: impl Into<String>) -> DocumentedView<Message, B, Self>
+    fn document(self, message: impl Into<Arc<str>>) -> DocumentedView<Message, B, Self>
     where
         Self: Sized + 'static,
     {
@@ -3148,10 +3154,7 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     }
 
     fn describe(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "view".to_string(),
-            ..Default::default()
-        }
+        SemanticNode::new("view")
     }
 
     /// Generates a semantic description of the view for AI agents, specifically for Iced backend.
@@ -3159,13 +3162,10 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     /// but `iced::Element` cannot be easily converted to `SemanticNode` without knowing its internal structure.
     /// This method should ideally be removed once `describe` can be made to work with `iced::Element` directly.
     fn describe_iced(&self, _context: &Context) -> SemanticNode {
-        SemanticNode {
-            role: "iced_view".to_string(),
-            ..Default::default()
-        }
+        SemanticNode::new("iced_view")
     }
 
-    fn sudo(self, reason: impl Into<String>) -> NeuralSudo<Message, B, Self>
+    fn sudo(self, reason: impl Into<Arc<str>>) -> NeuralSudo<Message, B, Self>
     where
         Self: Sized + 'static,
     {
@@ -3210,38 +3210,44 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
 /// `SemanticNode` is a simplified, structured graph of the UI that AI models can
 /// consume directly. It eliminates the need for expensive computer vision by
 /// exposing roles, labels, and state in a dense JSON format.
-#[derive(Debug, Clone, serde::Serialize, Default)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct SemanticNode {
     /// The role of the component (e.g., "button", "text_field").
     #[serde(rename = "r")]
-    pub role: String,
+    pub role: Arc<str>,
     /// An optional stable identifier for the component.
     #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<String>,
+    pub id: Option<Arc<str>>,
     /// A human-readable label or name for the component.
     #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
-    pub label: Option<String>,
+    pub label: Option<Arc<str>>,
     /// The primary text content or value of the component.
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
-    pub content: Option<String>,
+    pub content: Option<Arc<str>>,
     /// Hierarchical children of this node.
     #[serde(rename = "ch", skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<SemanticNode>,
     /// A unique tag for AI-triggered actions.
     #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
-    pub neural_tag: Option<String>,
+    pub neural_tag: Option<Arc<str>>,
     /// Developer-provided documentation for this component.
     #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
-    pub documentation: Option<String>,
+    pub documentation: Option<Arc<str>>,
     /// Metadata specifically for platform accessibility APIs.
     #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<AccessibilityNode>,
+    /// Whether this component is disabled.
+    #[serde(rename = "dis", skip_serializing_if = "is_false")]
+    pub is_disabled: bool,
+    /// Whether this component is hidden.
+    #[serde(rename = "hid", skip_serializing_if = "is_false")]
+    pub is_hidden: bool,
     /// Whether this component requires elevated "Neural Sudo" permissions to interact with.
     #[serde(rename = "p", skip_serializing_if = "is_false")]
     pub is_protected: bool,
     /// The reason why this component is protected.
     #[serde(rename = "pr", skip_serializing_if = "Option::is_none")]
-    pub protection_reason: Option<String>,
+    pub protection_reason: Option<Arc<str>>,
     /// The Z-depth of the component in spatial/volumetric environments.
     #[serde(rename = "z", skip_serializing_if = "Option::is_none")]
     pub depth: Option<f32>,
@@ -3255,6 +3261,38 @@ fn is_false(b: &bool) -> bool {
 }
 
 impl SemanticNode {
+    pub fn new(role: impl Into<Arc<str>>) -> Self {
+        Self {
+            role: role.into(),
+            ..Default::default()
+        }
+    }
+
+    pub fn with_label(mut self, label: impl Into<Arc<str>>) -> Self {
+        self.label = Some(label.into());
+        self
+    }
+
+    pub fn with_content(mut self, content: impl Into<Arc<str>>) -> Self {
+        self.content = Some(content.into());
+        self
+    }
+
+    pub fn push_child(mut self, child: SemanticNode) -> Self {
+        self.children.push(child);
+        self
+    }
+
+    pub fn extend_children(mut self, children: impl IntoIterator<Item = SemanticNode>) -> Self {
+        self.children.extend(children);
+        self
+    }
+
+    pub fn with_accessibility(mut self, accessibility: AccessibilityNode) -> Self {
+        self.accessibility = Some(accessibility);
+        self
+    }
+
     /// Recursively find a node that matches the predicate
     pub fn find_deep<F>(&self, predicate: &F) -> Option<&SemanticNode>
     where
@@ -3388,18 +3426,18 @@ impl std::fmt::Display for AccessibilityRole {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, Default)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct AccessibilityNode {
     #[serde(rename = "r")]
     pub role: AccessibilityRole,
     #[serde(rename = "l")]
-    pub label: String,
+    pub label: Arc<str>,
     #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
-    pub hint: Option<String>,
+    pub hint: Option<Arc<str>>,
     #[serde(rename = "v", skip_serializing_if = "Option::is_none")]
-    pub value: Option<String>,
+    pub value: Option<Arc<str>>,
     #[serde(rename = "s", skip_serializing_if = "Vec::is_empty")]
-    pub states: Vec<String>,
+    pub states: Vec<Arc<str>>,
     #[serde(rename = "hd", skip_serializing_if = "is_false")]
     pub is_hidden: bool,
     #[serde(rename = "dis", skip_serializing_if = "is_false")]
@@ -3425,7 +3463,7 @@ impl Backend for AIBackend {
 
     fn with_tooltip<Message: 'static>(
         content: Self::AnyView<Message>,
-        _tooltip: String,
+        _tooltip: Arc<str>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
@@ -3466,16 +3504,7 @@ impl Backend for AIBackend {
             child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
         }
 
-        SemanticNode {
-            accessibility: None,
-            role: "vstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("vstack").extend_children(children)
     }
 
     fn hstack<Message: 'static>(
@@ -3493,16 +3522,7 @@ impl Backend for AIBackend {
             child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
         }
 
-        SemanticNode {
-            accessibility: None,
-            role: "hstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("hstack").extend_children(children)
     }
 
     fn wrap<Message: 'static>(
@@ -3521,16 +3541,7 @@ impl Backend for AIBackend {
             child.depth = Some(child.depth.unwrap_or(0.0) + 1.0);
         }
 
-        SemanticNode {
-            accessibility: None,
-            role: "wrap".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("wrap").extend_children(children)
     }
 
     fn text<Message: Clone + 'static>(
@@ -3545,16 +3556,7 @@ impl Backend for AIBackend {
         _alignment: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "text".to_string(),
-            label: None,
-            content: Some(content),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("text").with_content(content)
     }
 
     fn icon<Message: Clone + 'static>(
@@ -3563,29 +3565,11 @@ impl Backend for AIBackend {
         _color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "icon".to_string(),
-            label: Some(name),
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("icon").with_label(name)
     }
 
     fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "divider".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("divider")
     }
 
     fn space<Message: 'static>(
@@ -3593,16 +3577,7 @@ impl Backend for AIBackend {
         _height: Length,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "space".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("space")
     }
 
     fn circle<Message: 'static>(
@@ -3610,16 +3585,7 @@ impl Backend for AIBackend {
         _color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "circle".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("circle")
     }
 
     fn capsule<Message: 'static>(
@@ -3628,16 +3594,7 @@ impl Backend for AIBackend {
         _color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "capsule".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("capsule")
     }
 
     fn rectangle<Message: 'static>(
@@ -3649,16 +3606,7 @@ impl Backend for AIBackend {
         _border_color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "rectangle".to_string(),
-            label: None,
-            content: None,
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("rectangle")
     }
 
     fn button<Message: Clone + 'static>(
@@ -3671,16 +3619,9 @@ impl Backend for AIBackend {
         _is_compact: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "button".to_string(),
-            label: Some(format!("{:?}_{:?}", variant, intent)),
-            content: None,
-            children: vec![content],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("button")
+            .with_label(format!("{:?}_{:?}", variant, intent))
+            .push_child(content)
     }
 
     fn sidebar_item<Message: Clone + 'static>(
@@ -3689,21 +3630,14 @@ impl Backend for AIBackend {
         is_selected: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "sidebar_item".to_string(),
-            label: Some(title),
-            content: Some(icon),
-            children: vec![SemanticNode {
-                role: "state".to_string(),
-                label: Some("selected".to_string()),
-                content: Some(is_selected.to_string()),
-                ..Default::default()
-            }],
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("sidebar_item")
+            .with_label(title)
+            .with_content(icon)
+            .push_child(
+                SemanticNode::new("state")
+                    .with_label("selected")
+                    .with_content(is_selected.to_string()),
+            )
     }
 
     fn text_input<Message: Clone + 'static>(
@@ -3717,16 +3651,9 @@ impl Backend for AIBackend {
         _id: Option<iced::widget::Id>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "text_input".to_string(),
-            label: Some(value.clone()),
-            content: Some(value),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("text_input")
+            .with_label(value.clone())
+            .with_content(value)
     }
 
     fn slider<Message: Clone + 'static>(
@@ -3735,16 +3662,7 @@ impl Backend for AIBackend {
         _on_change: impl Fn(f32) -> Message + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "slider".to_string(),
-            label: None,
-            content: Some(value.to_string()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("slider").with_content(value.to_string())
     }
 
     fn toggle<Message: Clone + 'static>(
@@ -3753,16 +3671,9 @@ impl Backend for AIBackend {
         _on_toggle: impl Fn(bool) -> Message + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "toggle".to_string(),
-            label: Some(label),
-            content: Some(is_active.to_string()),
-            children: Vec::new(),
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("toggle")
+            .with_label(label)
+            .with_content(is_active.to_string())
     }
 
     fn zstack<Message: 'static>(
@@ -3772,16 +3683,7 @@ impl Backend for AIBackend {
         _alignment: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "zstack".to_string(),
-            label: None,
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("zstack").extend_children(children)
     }
 
     fn grid<Message: 'static>(
@@ -3790,16 +3692,9 @@ impl Backend for AIBackend {
         _spacing: f32,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            accessibility: None,
-            role: "grid".to_string(),
-            label: Some(format!("columns: {}", columns)),
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        SemanticNode::new("grid")
+            .with_label(format!("columns: {}", columns))
+            .extend_children(children)
     }
 
     fn image<Message: 'static>(
@@ -3809,11 +3704,7 @@ impl Backend for AIBackend {
         _radius: f32,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            role: "image".to_string(),
-            label: Some(path.into()),
-            ..Default::default()
-        }
+        SemanticNode::new("image").with_label(path.into())
     }
 
     fn video<Message: 'static>(
@@ -3823,11 +3714,7 @@ impl Backend for AIBackend {
         _radius: f32,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            role: "video".to_string(),
-            label: Some(path.into()),
-            ..Default::default()
-        }
+        SemanticNode::new("video").with_label(path.into())
     }
 
     fn web_view<Message: 'static>(
@@ -3837,11 +3724,7 @@ impl Backend for AIBackend {
         _radius: f32,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        SemanticNode {
-            role: "web_view".to_string(),
-            label: Some(url),
-            ..Default::default()
-        }
+        SemanticNode::new("web_view").with_label(url)
     }
 
     fn container<Message: 'static>(

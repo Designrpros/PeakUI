@@ -272,7 +272,7 @@ where
         };
 
         spans.push(TextSpan {
-            content: token.to_string(),
+            content: token.into(),
             color: Some(color),
             font: Some(iced::Font::MONOSPACE),
             size: None, // Default size

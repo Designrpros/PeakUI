@@ -116,19 +116,9 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
     }
 
     fn describe(&self, context: &Context) -> crate::core::SemanticNode {
-        let children = self.sections.iter().map(|s| s.describe(context)).collect();
-        crate::core::SemanticNode {
-            role: "form".to_string(),
-            label: Some(format!("{:?}", self.style)),
-            content: None,
-            children,
-            accessibility: Some(crate::core::AccessibilityNode {
-                role: crate::core::AccessibilityRole::Group,
-                label: "Form".to_string(),
-                ..Default::default()
-            }),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("form")
+            .with_label(format!("{:?}", self.style))
+            .extend_children(self.sections.iter().map(|s| s.describe(context)))
     }
 }
 

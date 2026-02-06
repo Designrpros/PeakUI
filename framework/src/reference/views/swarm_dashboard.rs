@@ -79,10 +79,7 @@ impl View<Message, IcedBackend> for SwarmDashboardView {
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "swarm_dashboard".to_string(),
-            label: Some(format!("PeakID: {}", self.peak_id)),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("swarm_dashboard")
+            .with_label(format!("PeakID: {}", self.peak_id))
     }
 }

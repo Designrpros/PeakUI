@@ -532,16 +532,9 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
             children.push(inspector.describe(context));
         }
 
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "navigation_split_view".to_string(),
-            label: Some("Main Layout".to_string()),
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("navigation_split_view")
+            .with_label("Main Layout")
+            .extend_children(children)
     }
 }
 
@@ -567,15 +560,8 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, TermBackend>
             children.push(inspector.describe(context));
         }
 
-        crate::core::SemanticNode {
-            accessibility: None,
-            role: "navigation_split_view".to_string(),
-            label: Some("Main Layout".to_string()),
-            content: None,
-            children,
-            neural_tag: None,
-            documentation: None,
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("navigation_split_view")
+            .with_label("Main Layout")
+            .extend_children(children)
     }
 }

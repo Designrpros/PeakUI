@@ -410,11 +410,8 @@ impl ContentView {
             }
         }
 
-        crate::core::SemanticNode {
-            role: "content_view".to_string(),
-            label: Some(format!("Page: {:?}", self.active_tab)),
-            children: vec![split_view.describe(context)],
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("content_view")
+            .with_label(format!("Page: {:?}", self.active_tab))
+            .push_child(split_view.describe(context))
     }
 }

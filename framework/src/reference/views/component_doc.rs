@@ -359,11 +359,8 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode {
-            role: "component_doc".to_string(),
-            label: Some(self.title.clone()),
-            content: Some(self.description.clone()),
-            ..Default::default()
-        }
+        crate::core::SemanticNode::new("component_doc")
+            .with_label(self.title.clone())
+            .with_content(self.description.clone())
     }
 }
