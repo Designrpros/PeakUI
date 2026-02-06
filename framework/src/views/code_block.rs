@@ -120,6 +120,7 @@ where
                     Variant::Ghost,
                     crate::modifiers::Intent::Neutral,
                     Length::Shrink,
+                    Length::Shrink,
                     true,
                     context,
                 )

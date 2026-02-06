@@ -17,6 +17,8 @@ pub struct ContentView {
     pub typography_lab: super::super::app::TypographyLabState,
     pub layout_lab: super::super::app::LayoutLabState,
     pub sizing_lab: super::super::app::SizingLabState,
+    pub accessibility_lab: super::super::app::AccessibilityLabState,
+    pub icon_lab: super::super::app::IconLabState,
     pub render_mode: super::super::app::RenderMode,
     pub is_thinking: bool,
     pub chat_messages: Vec<crate::views::chat::ChatMessage>,
@@ -50,6 +52,8 @@ impl ContentView {
             typography_lab: app.typography_lab.clone(),
             layout_lab: app.layout_lab.clone(),
             sizing_lab: app.sizing_lab.clone(),
+            accessibility_lab: app.accessibility_lab.clone(),
+            icon_lab: app.icon_lab.clone(),
             render_mode: app.render_mode,
             is_thinking: app.is_thinking,
             chat_messages: app.chat_messages.clone(),
@@ -78,6 +82,8 @@ impl ContentView {
             self.typography_lab.clone(),
             self.layout_lab.clone(),
             self.sizing_lab.clone(),
+            self.accessibility_lab.clone(),
+            self.icon_lab.clone(),
             self.render_mode,
             self.api_key.clone(),
             self.ai_provider,
@@ -103,22 +109,23 @@ impl ContentView {
         let inner_page_view = page.view;
         let content_view = crate::core::ProxyView::new(move |ctx| {
             let mut content_context = ctx.clone();
-            content_context.safe_area.top += 48.0; // Clear floating header
+            content_context.safe_area.top += 84.0; // Optimal clear floating header
             content_context.safe_area.bottom += 80.0; // Clear floating dock
 
             let view = inner_page_view.view(&content_context);
 
-            // Apply safe area as physical padding
+            // Apply horizontal safe area as physical padding.
+            // Verticals are handled by components using ctx.safe_area.
             IcedBackend::container(
                 view,
                 Padding {
-                    top: content_context.safe_area.top,
-                    bottom: content_context.safe_area.bottom,
-                    left: 0.0,
-                    right: 0.0,
+                    top: 0.0,
+                    bottom: 0.0,
+                    left: content_context.safe_area.left,
+                    right: content_context.safe_area.right,
                 },
                 Length::Fill,
-                Length::Shrink,
+                Length::Fill,
                 None,
                 0.0,
                 0.0,
@@ -374,6 +381,8 @@ impl ContentView {
             self.typography_lab.clone(),
             self.layout_lab.clone(),
             self.sizing_lab.clone(),
+            self.accessibility_lab.clone(),
+            self.icon_lab.clone(),
             self.render_mode,
             self.api_key.clone(),
             self.ai_provider,

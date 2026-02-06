@@ -101,7 +101,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
         // 1. Header with Title and Description
         // IMPORTANT: We set width(Length::Fill) on the VStack to ensure text can expand
         let header = VStack::<Message, B>::new_generic()
-            .spacing(12.0)
+            .spacing(8.0)
             .width(Length::Fill)
             .align_x(Alignment::Start)
             .push(
@@ -199,7 +199,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
-                        .spacing(24.0)
+                        .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
                             crate::containers::Card::<Message, B>::new_generic(
@@ -216,7 +216,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                                     )
                                 }),
                             )
-                            .height(Length::Fixed(400.0)),
+                            .height(Length::Fixed(240.0)),
                         ),
                 )
             }
@@ -229,7 +229,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
-                        .spacing(24.0)
+                        .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
                             crate::containers::Card::<Message, B>::new_generic(
@@ -251,7 +251,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
-                        .spacing(24.0)
+                        .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
                             crate::containers::Card::<Message, B>::new_generic(
@@ -268,7 +268,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                 crate::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
-                        .spacing(24.0)
+                        .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
                             crate::containers::Card::<Message, B>::new_generic(
@@ -296,7 +296,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
                                     }
                                 }),
                             )
-                            .height(Length::Fixed(400.0)),
+                            .height(Length::Fixed(240.0)),
                         ),
                 )
             }
@@ -316,12 +316,12 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Mes
 
         // Assemble
         let mut doc_content = VStack::<Message, B>::new_generic()
-            .spacing(40.0)
+            .spacing(24.0)
             .padding(Padding {
-                top: context.safe_area.top + 24.0, // Small gap after header-safe-area
-                right: if context.is_slim() { 24.0 } else { 48.0 },
+                top: context.safe_area.top + 8.0, // Minimal gap after header
+                right: if context.is_slim() { 24.0 } else { 32.0 },
                 bottom: context.safe_area.bottom + 48.0, // Gap for dock
-                left: if context.is_slim() { 24.0 } else { 48.0 },
+                left: if context.is_slim() { 24.0 } else { 32.0 },
             })
             .width(Length::Fill)
             .push(header)

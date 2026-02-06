@@ -10,6 +10,8 @@ pub struct CanvasView {
     pub typography_lab: super::super::app::TypographyLabState,
     pub layout_lab: super::super::app::LayoutLabState,
     pub sizing_lab: super::super::app::SizingLabState,
+    pub accessibility_lab: super::super::app::AccessibilityLabState,
+    pub icon_lab: super::super::app::IconLabState,
     pub render_mode: super::super::app::RenderMode,
     pub api_key: String,
     pub ai_provider: super::super::app::AIProviderChoice,
@@ -28,6 +30,8 @@ impl CanvasView {
         typography_lab: super::super::app::TypographyLabState,
         layout_lab: super::super::app::LayoutLabState,
         sizing_lab: super::super::app::SizingLabState,
+        accessibility_lab: super::super::app::AccessibilityLabState,
+        icon_lab: super::super::app::IconLabState,
         render_mode: super::super::app::RenderMode,
         api_key: String,
         ai_provider: super::super::app::AIProviderChoice,
@@ -42,6 +46,8 @@ impl CanvasView {
             typography_lab,
             layout_lab,
             sizing_lab,
+            accessibility_lab,
+            icon_lab,
             render_mode,
             api_key,
             ai_provider,
@@ -61,7 +67,9 @@ impl CanvasView {
             ReferencePage::ProjectStructure => {
                 pages::docs::project_structure::view(context, is_mobile)
             }
-            ReferencePage::Accessibility => pages::docs::accessibility::view(context, is_mobile),
+            ReferencePage::Accessibility => {
+                pages::docs::accessibility::view(context, &self.accessibility_lab, self.render_mode)
+            }
 
             ReferencePage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             ReferencePage::Intelligence => {
@@ -86,24 +94,30 @@ impl CanvasView {
             // Concepts (Overview is legacy/fallback)
             ReferencePage::Overview => pages::guide::introduction::view(context, is_mobile),
             ReferencePage::Customizations => {
-                pages::docs::customizations::view(context, is_mobile, self.render_mode)
+                pages::docs::customizations::view(context, self.render_mode)
             }
             ReferencePage::BasicSizing => {
-                pages::docs::sizing::view(context, is_mobile, &self.sizing_lab, self.render_mode)
+                pages::docs::sizing::view(context, &self.sizing_lab, self.render_mode)
             }
             ReferencePage::Colors => pages::docs::colors::view(context, self.render_mode),
             ReferencePage::Typography => {
                 pages::docs::typography::view(context, &self.typography_lab, self.render_mode)
             }
             ReferencePage::Layout => {
-                pages::docs::layout::view(context, is_mobile, &self.layout_lab, self.render_mode)
+                pages::docs::layout::view(context, &self.layout_lab, self.render_mode)
             }
 
             // Atoms (Phase 3/4)
-            ReferencePage::Text => pages::components::text::view(context),
-            ReferencePage::Icon => {
-                pages::components::icon::view(context, self.search_query.clone(), self.icon_limit)
+            ReferencePage::Text => {
+                pages::components::text::view(context, &self.typography_lab, self.render_mode)
             }
+            ReferencePage::Icon => pages::components::icon::view(
+                context,
+                &self.icon_lab,
+                self.render_mode,
+                self.search_query.clone(),
+                self.icon_limit,
+            ),
             ReferencePage::Button => {
                 pages::components::button::view(context, &self.button_lab, self.render_mode)
             }

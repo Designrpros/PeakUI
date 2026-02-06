@@ -227,6 +227,7 @@ fn render_category<B: Backend>(
                 Variant::Ghost,
                 Intent::Neutral,
                 Length::Fill,
+                Length::Shrink,
                 false,
                 context,
             )

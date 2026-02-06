@@ -692,6 +692,7 @@ pub trait Backend: Sized + Clone + 'static {
         variant: Variant,
         intent: Intent,
         width: Length,
+        height: Length,
         is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message>;
@@ -1114,6 +1115,7 @@ impl Backend for SpatialBackend {
         _variant: Variant,
         _intent: Intent,
         _width: Length,
+        _height: Length,
         _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -1706,6 +1708,12 @@ impl Backend for IcedBackend {
         let theme = context.theme;
         let final_color = color.unwrap_or(theme.colors.text_primary);
 
+        let mut scale = context.theme.scaling;
+        if scale <= 0.0 {
+            scale = 1.0;
+        }
+        let scaled_size = size * scale;
+
         let hex_color = format!(
             "#{:02X}{:02X}{:02X}",
             (final_color.r * 255.0) as u8,
@@ -1724,8 +1732,8 @@ impl Backend for IcedBackend {
             return iced::widget::svg(iced::widget::svg::Handle::from_memory(
                 colored_svg.into_bytes(),
             ))
-            .width(size)
-            .height(size)
+            .width(scaled_size)
+            .height(scaled_size)
             .into();
         }
 
@@ -1733,8 +1741,8 @@ impl Backend for IcedBackend {
         if let Some(icon) = crate::assets::SystemIcon::from_name(&name) {
             let path = crate::assets::Asset::Icon(icon).path();
             return iced::widget::svg(iced::widget::svg::Handle::from_path(path))
-                .width(size)
-                .height(size)
+                .width(scaled_size)
+                .height(scaled_size)
                 .into();
         }
 
@@ -1743,7 +1751,10 @@ impl Backend for IcedBackend {
         #[cfg(not(target_arch = "wasm32"))]
         {
             let handle = peak_core::icons::get_ui_icon(&name, &hex_color);
-            iced::widget::svg(handle).width(size).height(size).into()
+            iced::widget::svg(handle)
+                .width(scaled_size)
+                .height(scaled_size)
+                .into()
         }
 
         #[cfg(target_arch = "wasm32")]
@@ -1869,6 +1880,7 @@ impl Backend for IcedBackend {
         variant: Variant,
         intent: Intent,
         width: Length,
+        height: Length,
         is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -1901,7 +1913,9 @@ impl Backend for IcedBackend {
         } else {
             Padding::from([0, 16])
         })
-        .height(if variant == Variant::Compact {
+        .height(if height != Length::Shrink {
+            height
+        } else if variant == Variant::Compact {
             Length::Shrink
         } else {
             Length::Fixed(if is_compact {
@@ -2200,10 +2214,15 @@ impl Backend for IcedBackend {
         mut children: Vec<Self::AnyView<Message>>,
         columns: usize,
         spacing: f32,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
+        let scale = context.theme.scaling;
+        let scaled_spacing = spacing * scale;
+
         if columns == 0 {
-            return iced::widget::column(children).spacing(spacing).into();
+            return iced::widget::column(children)
+                .spacing(scaled_spacing)
+                .into();
         }
         let mut rows = Vec::new();
         while !children.is_empty() {
@@ -2213,13 +2232,13 @@ impl Backend for IcedBackend {
                 .collect();
             rows.push(
                 iced::widget::row(chunk)
-                    .spacing(spacing)
+                    .spacing(scaled_spacing)
                     .width(Length::Fill)
                     .into(),
             );
         }
         iced::widget::column(rows)
-            .spacing(spacing)
+            .spacing(scaled_spacing)
             .width(Length::Fill)
             .into()
     }
@@ -2461,7 +2480,7 @@ impl Backend for IcedBackend {
             && height == Length::Fill
             && direction != ScrollDirection::Horizontal
         {
-            Length::Fixed(400.0)
+            Length::Fixed(300.0)
         } else {
             height
         };
@@ -2681,15 +2700,17 @@ impl Backend for IcedBackend {
         use iced::widget::{column, container, text};
         let scale = context.theme.scaling;
 
-        container(
-            column![
-                text(title)
-                    .size(12.0 * scale)
-                    .color(context.theme.colors.text_primary.scale_alpha(0.6)),
-                content
-            ]
-            .spacing(8.0 * scale),
-        )
+        column![
+            text(title.to_uppercase())
+                .size(10.0 * scale)
+                .font(iced::Font {
+                    weight: iced::font::Weight::Bold,
+                    ..iced::Font::DEFAULT
+                })
+                .color(context.theme.colors.text_secondary.scale_alpha(0.5)),
+            content
+        ]
+        .spacing(8.0 * scale)
         .width(scale_length(width, scale))
         .height(scale_length(height, scale))
         .into()
@@ -2888,6 +2909,7 @@ impl Backend for TermBackend {
         _variant: Variant,
         _intent: Intent,
         _width: Length,
+        _height: Length,
         _is_compact: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
@@ -3619,6 +3641,7 @@ impl Backend for AIBackend {
         variant: Variant,
         intent: Intent,
         _width: Length,
+        _height: Length,
         _is_compact: bool,
         _context: &Context,
     ) -> Self::AnyView<Message> {

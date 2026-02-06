@@ -34,6 +34,15 @@ pub enum RenderMode {
     Spatial,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub enum AccessibilityComponent {
+    #[default]
+    Button,
+    Slider,
+    Toggle,
+    Container,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum AIProviderChoice {
     Ollama,
@@ -118,6 +127,8 @@ pub struct App {
     pub typography_lab: TypographyLabState,
     pub layout_lab: LayoutLabState,
     pub sizing_lab: SizingLabState,
+    pub accessibility_lab: AccessibilityLabState,
+    pub icon_lab: IconLabState,
     pub render_mode: RenderMode,
     pub show_landing: bool,
     // Layout States
@@ -212,6 +223,28 @@ pub struct SizingLabState {
     pub fixed_height: f32,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct AccessibilityLabState {
+    pub selected_component: AccessibilityComponent,
+}
+
+#[derive(Debug, Clone)]
+pub struct IconLabState {
+    pub selected_icon: String,
+    pub size: f32,
+    pub color: Option<Color>,
+}
+
+impl Default for IconLabState {
+    fn default() -> Self {
+        Self {
+            selected_icon: "zap".to_string(),
+            size: 32.0,
+            color: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SizingType {
     Fixed,
@@ -283,6 +316,11 @@ pub enum Message {
     AIResponse(std::result::Result<String, String>),
     ChatStreamUpdate(std::result::Result<String, String>),
     AIChatComplete,
+
+    // Icon Lab
+    UpdateIconLabIcon(String),
+    UpdateIconLabSize(f32),
+    UpdateIconLabColor(Option<Color>),
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
     SetAIProvider(AIProviderChoice),
@@ -314,6 +352,9 @@ pub enum Message {
     UpdateSizingHeightType(SizingType),
     UpdateSizingFixedWidth(f32),
     UpdateSizingFixedHeight(f32),
+
+    // Accessibility Lab Messages
+    UpdateAccessibilityComponent(AccessibilityComponent),
 
     ResizeSidebar(f32),
     ResizeInspector(f32),
@@ -505,6 +546,8 @@ impl Default for App {
             typography_lab: TypographyLabState::default(),
             layout_lab: LayoutLabState::default(),
             sizing_lab: SizingLabState::default(),
+            accessibility_lab: AccessibilityLabState::default(),
+            icon_lab: IconLabState::default(),
             render_mode: RenderMode::Canvas,
             show_landing: true,
             sidebar_width: 260.0,
@@ -861,6 +904,20 @@ impl App {
                 Task::none()
             }
 
+            // Icon Lab Handlers
+            Message::UpdateIconLabIcon(icon) => {
+                self.icon_lab.selected_icon = icon;
+                Task::none()
+            }
+            Message::UpdateIconLabSize(size) => {
+                self.icon_lab.size = size;
+                Task::none()
+            }
+            Message::UpdateIconLabColor(color) => {
+                self.icon_lab.color = color;
+                Task::none()
+            }
+
             // Typography Lab Handlers
             Message::UpdateTypographyText(text) => {
                 self.typography_lab.text = text;
@@ -916,6 +973,11 @@ impl App {
             }
             Message::UpdateSizingFixedHeight(h) => {
                 self.sizing_lab.fixed_height = h;
+                Task::none()
+            }
+
+            Message::UpdateAccessibilityComponent(comp) => {
+                self.accessibility_lab.selected_component = comp;
                 Task::none()
             }
 

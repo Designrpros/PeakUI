@@ -12,6 +12,7 @@ pub struct Button<Message, B: crate::core::Backend = crate::core::IcedBackend> {
     variant: Variant,
     size: ControlSize,
     width: Length,
+    height: Length,
     is_compact: bool,
     _phantom: std::marker::PhantomData<B>,
 }
@@ -35,6 +36,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
             variant: Variant::Solid,
             size: ControlSize::Medium,
             width: Length::Shrink,
+            height: Length::Shrink,
             is_compact: false,
             _phantom: std::marker::PhantomData,
         }
@@ -74,6 +76,16 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
         self
     }
 
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
     pub fn compact(mut self) -> Self {
         self.is_compact = true;
         self
@@ -99,11 +111,6 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
                 self.variant = Variant::Ghost;
             }
         }
-        self
-    }
-
-    pub fn width(mut self, width: Length) -> Self {
-        self.width = width;
         self
     }
 }
@@ -162,6 +169,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             self.variant,
             self.intent,
             self.width,
+            self.height,
             self.is_compact,
             context,
         )
@@ -395,6 +403,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Variant::Outline,
                     Intent::Neutral,
                     Length::Fixed(20.0),
+                    Length::Fixed(20.0),
                     false,
                     context,
                 ),
@@ -414,6 +423,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
                     Some((self.on_change)(self.value + self.step)),
                     Variant::Outline,
                     Intent::Neutral,
+                    Length::Fixed(20.0),
                     Length::Fixed(20.0),
                     false,
                     context,

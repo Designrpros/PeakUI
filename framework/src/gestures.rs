@@ -74,6 +74,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend, V: View<Message, B>> Vie
             crate::modifiers::Variant::Plain,
             crate::modifiers::Intent::Neutral,
             iced::Length::Shrink,
+            iced::Length::Shrink,
             false,
             context,
         )

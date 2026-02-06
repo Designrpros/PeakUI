@@ -69,7 +69,7 @@ pub mod prelude {
     pub use crate::controls::{Button, ButtonStyle, Slider, Stepper, TextInput, Toggle};
     pub use crate::core::{
         responsive, AIBackend, Backend, ChatCompletionMessage, Context, DeviceType, IcedBackend,
-        ProxyView, SemanticNode, ShellMode, TermBackend, ThemeTokens, View,
+        ProxyView, ScrollDirection, SemanticNode, ShellMode, TermBackend, ThemeTokens, View,
     };
     pub use crate::dsl::*;
     pub use crate::forms::{Form, FormStyle};

@@ -1,287 +1,322 @@
-use crate::reference::app::{LayoutLabState, Message, RenderMode};
+use crate::core::{AIBackend, Backend, IcedBackend, ScrollDirection, SpatialBackend, TermBackend};
 use crate::navigation::PageResult;
-use crate::atoms::Container;
-use crate::core::{Backend, SpatialBackend};
 use crate::prelude::*;
+use crate::reference::app::{LayoutLabState, Message, RenderMode, SizingType};
 
-use crate::reference::views::ComponentDoc;
-use std::sync::Arc;
+pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> PageResult<Message> {
+    let mode = ctx.theme.colors;
+    let is_narrow = ctx.size.width < 1000.0;
 
-pub fn view(
-    base_context: &Context,
-    _is_mobile: bool,
-    lab: &LayoutLabState,
-    render_mode: RenderMode,
-) -> PageResult<Message> {
-    let context = base_context;
+    // --- 1. Hero Section ---
+    let hero = vstack![
+        text("Layout Engine")
+            .size(if is_narrow { 42.0 } else { 56.0 })
+            .bold()
+            .color(mode.text_primary),
+        text("Use VStack, HStack, and ZStack to compose complex, responsive layouts with ease.")
+            .size(18.0)
+            .color(mode.text_secondary),
+    ]
+    .spacing(12.0)
+    .align_x(iced::Alignment::Start)
+    .width(Length::Fill);
 
-    let code_snippet = generate_code(lab);
+    // --- 2. Interactive Lab ---
+    let mode_tabs = hstack![
+        render_mode_tab("Canvas", RenderMode::Canvas, render_mode),
+        render_mode_tab("Terminal", RenderMode::Terminal, render_mode),
+        render_mode_tab("Neural", RenderMode::Neural, render_mode),
+        render_mode_tab("Spatial", RenderMode::Spatial, render_mode),
+    ]
+    .spacing(8.0);
 
-    // 1. Canvas View (Standard GUI)
-    let canvas_preview = create_preview::<IcedBackend>(lab);
+    let child_count_tabs = hstack![
+        render_child_count_tab("1", 1, lab.child_count),
+        render_child_count_tab("3", 3, lab.child_count),
+        render_child_count_tab("5", 5, lab.child_count),
+        render_child_count_tab("8", 8, lab.child_count),
+    ]
+    .spacing(8.0);
 
-    // 2. Terminal View (ANSI Text)
-    let terminal_preview = create_preview::<TermBackend>(lab).view(context);
+    let alignment_tabs = hstack![
+        render_alignment_tab("Start", Alignment::Start, lab.alignment),
+        render_alignment_tab("Center", Alignment::Center, lab.alignment),
+        render_alignment_tab("End", Alignment::End, lab.alignment),
+    ]
+    .spacing(8.0);
 
-    // 3. Neural View (Semantic JSON)
-    let neural_preview = create_preview::<AIBackend>(lab).view(context);
+    let item_sizing_tabs = hstack![
+        render_item_sizing_tab("Fixed", SizingType::Fixed, lab.item_sizing),
+        render_item_sizing_tab("Fill", SizingType::Fill, lab.item_sizing),
+        render_item_sizing_tab("Shrink", SizingType::Shrink, lab.item_sizing),
+    ]
+    .spacing(8.0);
 
-    // 4. Spatial View (3D transforms)
-    let spatial_preview = create_preview::<SpatialBackend>(lab).view(context);
+    let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
+        RenderMode::Canvas => crate::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
+            .padding(32)
+            .width(Length::Fill)
+            .height(Length::Shrink)
+            .into_box(),
+        RenderMode::Terminal => {
+            let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
+            crate::containers::Card::new(CodeBlock::new(ansi).transparent())
+                .background(iced::Color::from_rgb8(30, 30, 30))
+                .padding(0)
+                .width(Length::Fill)
+                .height(Length::Shrink)
+                .into_box()
+        }
+        RenderMode::Neural => {
+            let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
+            let json = serde_json::to_string_pretty(&node).unwrap_or_default();
+            crate::containers::Card::new(CodeBlock::new(json).transparent())
+                .background(iced::Color::from_rgb8(30, 30, 30))
+                .padding(0)
+                .width(Length::Fill)
+                .height(Length::Shrink)
+                .into_box()
+        }
+        RenderMode::Spatial => {
+            let spatial_node = create_preview::<SpatialBackend>(ctx, lab).view(ctx);
+            let empty_node = spatial_node.to_empty();
+            crate::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
+                .background(iced::Color::from_rgb8(30, 30, 30))
+                .padding(0)
+                .width(Length::Fill)
+                .height(Length::Fixed(400.0))
+                .into_box()
+        }
+    };
 
-    let doc = ComponentDoc::new(
-        "Layout Engine",
-        "Use VStack, HStack, and ZStack to compose complex, responsive layouts with ease.",
-        code_snippet,
-        Arc::new(canvas_preview),
-    )
-    .terminal(terminal_preview)
-    .neural(neural_preview)
-    .spatial(spatial_preview)
-    .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
-    .theory(
-        r#"
-### Composition over Layout
-**PeakUI** uses a declarative, flex-inspired layout engine. Instead of absolute positioning, you compose smaller components into larger stacks.
+    let lab_section = vstack![
+        Text::<IcedBackend>::new("The Lab").title2(),
+        vstack![
+            text("Render Mode").caption1().secondary(),
+            ScrollView::new(mode_tabs)
+                .direction(ScrollDirection::Horizontal)
+                .height(Length::Shrink)
+                .hide_indicators(),
+        ]
+        .spacing(8.0),
+        vstack![
+            text("Child Count").caption1().secondary(),
+            ScrollView::new(child_count_tabs)
+                .direction(ScrollDirection::Horizontal)
+                .height(Length::Shrink)
+                .hide_indicators(),
+        ]
+        .spacing(8.0),
+        vstack![
+            text("Alignment (Cross Axis)").caption1().secondary(),
+            ScrollView::new(alignment_tabs)
+                .direction(ScrollDirection::Horizontal)
+                .height(Length::Shrink)
+                .hide_indicators(),
+        ]
+        .spacing(8.0),
+        vstack![
+            text("Item Sizing").caption1().secondary(),
+            ScrollView::new(item_sizing_tabs)
+                .direction(ScrollDirection::Horizontal)
+                .height(Length::Shrink)
+                .hide_indicators(),
+        ]
+        .spacing(8.0),
+        vstack![
+            text(format!("Inner Spacing: {:.0}px", lab.inner_spacing))
+                .caption1()
+                .secondary(),
+            Slider::new(0.0..=64.0, lab.inner_spacing, |v| {
+                Message::UpdateLayoutInnerSpacing(v)
+            })
+            .width(Length::Fill),
+        ]
+        .spacing(8.0),
+        preview_content
+    ]
+    .spacing(32.0)
+    .width(Length::Fill);
 
-- **VStack:** Vertical arrangement of views.
-- **HStack:** Horizontal arrangement of views.
-- **ZStack:** Depth-based stacking (layering).
-- **Alignment:** Control how children are positioned on the cross-axis.
-- **Spacing:** Uniform gaps between children.
-"#,
-    )
-    .props_table(
-        r#"
-| Modifier | Description |
-| :--- | :--- |
-| `.spacing(f32)` | Uniform gap between all immediate children. |
-| `.padding(p)` | Inner margin for the stack. |
-| `.align_x(a)` | Horizontal alignment (for VStack). |
-| `.align_y(a)` | Vertical alignment (for HStack). |
-| `.push(v)` | Adds a child view to the end of the stack. |
-"#,
-    );
+    // --- 3. Usage Section ---
+    let usage = vstack![
+        text("Usage").title2().bold(),
+        text("Layouts are composed using three primary stacks. By nesting these stacks, you can build any interface structure while maintaining clean, declarative code.")
+            .secondary(),
+        CodeBlock::new(generate_code(lab)),
+    ]
+    .spacing(24.0);
 
-    PageResult::new(doc).inspector(LayoutInspector::new(lab))
+    // --- 4. Theory Section ---
+    let theory = vstack![
+        text("Theory").title2().bold(),
+        theory_item::<IcedBackend>(
+            "VStack & HStack",
+            "These stacks arrange children linearly. VStack stacks them vertically (top to bottom), while HStack stacks them horizontally (left to right). Both support spacing, alignment, and recursive nesting."
+        ),
+        theory_item::<IcedBackend>(
+            "ZStack & Depth",
+            "ZStack enables overlaying components on top of each other. This is essential for modals, notifications, floating action buttons, and complex multi-layered UI effects."
+        ),
+        theory_item::<IcedBackend>(
+            "The Flex Mental Model",
+            "PeakUI's layout engine works on a flex-box mental model. Children negotiate their size with the parent stack based on their Length settings (Fixed, Fill, Shrink), ensuring responsiveness across all device types."
+        ),
+    ]
+    .spacing(24.0);
+
+    let content = vstack![hero, lab_section, usage, theory]
+        .spacing(64.0)
+        .padding(Padding::new(48.0))
+        .width(Length::Fill);
+
+    PageResult::new(content)
 }
 
-fn create_preview<B: Backend>(lab: &LayoutLabState) -> VStack<Message, B> {
+fn render_mode_tab(
+    label: &str,
+    mode: RenderMode,
+    current: RenderMode,
+) -> Button<Message, IcedBackend> {
+    let active = mode == current;
+    button_label(label)
+        .variant(if active {
+            Variant::Solid
+        } else {
+            Variant::Ghost
+        })
+        .intent(Intent::Primary)
+        .on_press(Message::SetRenderMode(mode))
+}
+
+fn render_child_count_tab(
+    label: &str,
+    count: usize,
+    current: usize,
+) -> Button<Message, IcedBackend> {
+    let active = count == current;
+    button_label(label)
+        .variant(if active {
+            Variant::Solid
+        } else {
+            Variant::Ghost
+        })
+        .intent(Intent::Primary)
+        .on_press(Message::UpdateLayoutChildCount(count))
+}
+
+fn render_alignment_tab(
+    label: &str,
+    alignment: Alignment,
+    current: Alignment,
+) -> Button<Message, IcedBackend> {
+    let active = alignment == current;
+    button_label(label)
+        .variant(if active {
+            Variant::Solid
+        } else {
+            Variant::Ghost
+        })
+        .intent(Intent::Primary)
+        .on_press(Message::UpdateLayoutAlignment(alignment))
+}
+
+fn render_item_sizing_tab(
+    label: &str,
+    sizing: SizingType,
+    current: SizingType,
+) -> Button<Message, IcedBackend> {
+    let active = sizing == current;
+    button_label(label)
+        .variant(if active {
+            Variant::Solid
+        } else {
+            Variant::Ghost
+        })
+        .intent(Intent::Primary)
+        .on_press(Message::UpdateLayoutItemSizing(sizing))
+}
+
+fn create_preview<B: Backend>(ctx: &Context, lab: &LayoutLabState) -> VStack<Message, B> {
     let mut children = Vec::new();
 
     for i in 0..lab.child_count {
         let color = match i % 3 {
-            0 => Color::from_rgb(0.2, 0.6, 1.0), // Blue
-            1 => Color::from_rgb(0.2, 0.8, 0.4), // Green
-            _ => Color::from_rgb(1.0, 0.4, 0.4), // Red
+            0 => ctx.theme.colors.primary,
+            1 => ctx.theme.colors.success,
+            _ => ctx.theme.colors.warning,
         };
 
         children.push(
-            Container::<Message, B>::new(Text::<B>::new(format!("{}", i + 1)).title3().bold())
-                .padding(20)
-                .width(match lab.item_sizing {
-                    crate::reference::app::SizingType::Fixed => Length::Fixed(60.0),
-                    crate::reference::app::SizingType::Fill => Length::Fill,
-                    crate::reference::app::SizingType::Shrink => Length::Shrink,
-                })
-                .height(Length::Fixed(60.0))
-                .background(color)
-                .radius(12.0),
+            crate::atoms::Container::<Message, B>::new(
+                text(format!("{}", i + 1)).bold().color(Color::WHITE),
+            )
+            .padding(12)
+            .width(match lab.item_sizing {
+                SizingType::Fixed => Length::Fixed(40.0),
+                SizingType::Fill => Length::Fixed(80.0), // Give it a base width in preview so it doesn't collapse
+                SizingType::Shrink => Length::Shrink,
+            })
+            .height(Length::Fixed(40.0))
+            .background(color)
+            .radius(8.0)
+            .align_x(iced::Alignment::Center)
+            .align_y(iced::Alignment::Center),
         );
     }
 
-    VStack::new_generic()
-        .spacing(lab.outer_spacing)
+    vstack![
+        text("Layout Composition").secondary().caption2(),
+        crate::atoms::Container::<Message, B>::new(
+            vstack![
+                text("HStack Example").caption2().secondary(),
+                ScrollView::new_generic(
+                    hstack()
+                        .extend(children.clone())
+                        .spacing(lab.inner_spacing)
+                        .align_y(lab.alignment)
+                        .width(Length::Shrink) // MUST be Shrink to overflow and scroll
+                )
+                .direction(ScrollDirection::Horizontal)
+                .height(Length::Shrink)
+                .hide_indicators(),
+                Divider::<B>::new(),
+                text("VStack Example").caption2().secondary(),
+                vstack()
+                    .extend(children)
+                    .spacing(lab.inner_spacing)
+                    .align_x(lab.alignment)
+                    .width(Length::Fill),
+            ]
+            .spacing(32.0)
+            .padding(12)
+            .width(Length::Fill)
+        )
+        .height(Length::Shrink)
         .width(Length::Fill)
-        .push(
-            VStack::new_generic()
-                .spacing(12.0)
-                .width(Length::Fill)
-                .push(Text::<B>::new("HStack (Horizontal)").caption2().secondary())
-                .push(
-                    HStack::new_generic()
-                        .spacing(lab.inner_spacing)
-                        .align_x(lab.alignment)
-                        .extend(children.clone()),
-                ),
-        )
-        .push(Divider::new())
-        .push(
-            VStack::new_generic()
-                .spacing(12.0)
-                .width(Length::Fill)
-                .push(Text::<B>::new("VStack (Vertical)").caption2().secondary())
-                .push(
-                    VStack::new_generic()
-                        .spacing(lab.inner_spacing)
-                        .align_x(lab.alignment)
-                        .extend(children),
-                ),
-        )
+        .background(ctx.theme.colors.surface_variant.scale_alpha(0.2))
+        .radius(12.0)
+    ]
+    .spacing(12.0)
+    .width(Length::Fill)
+    .align_x(iced::Alignment::Center)
+}
+
+fn theory_item<B: Backend>(title: &str, description: &str) -> VStack<Message, B> {
+    vstack![text(title).bold(), text(description).secondary(),].spacing(8.0)
 }
 
 fn generate_code(lab: &LayoutLabState) -> String {
     format!(
-        "HStack::new()\n    .spacing({:.1})\n    .align_x(Alignment::{:?})\n    .push(...) // x{}",
-        lab.inner_spacing, lab.alignment, lab.child_count
+        "// Composition Example
+VStack::new()
+    .spacing({:.1})
+    .align_x(Alignment::{:?})
+    .push(HStack::new()
+        .spacing({:.1})
+        .push(child_1)
+        .push(child_2)
+    )",
+        lab.inner_spacing, lab.alignment, lab.inner_spacing
     )
-}
-
-struct LayoutInspector {
-    lab: LayoutLabState,
-}
-
-impl LayoutInspector {
-    fn new(lab: &LayoutLabState) -> Self {
-        Self { lab: lab.clone() }
-    }
-}
-
-impl View<Message, IcedBackend> for LayoutInspector {
-    fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
-        ScrollView::new(
-            VStack::new_generic()
-                .spacing(24.0)
-                .padding(Padding {
-                    top: context.safe_area.top,
-                    right: 20.0,
-                    bottom: context.safe_area.bottom,
-                    left: 20.0,
-                })
-                .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Spacing")
-                                .caption2()
-                                .bold()
-                                .secondary(),
-                        )
-                        .push(
-                            HStack::new_generic()
-                                .spacing(12.0)
-                                .push(
-                                    Slider::<Message, IcedBackend>::new(
-                                        0.0..=64.0,
-                                        self.lab.inner_spacing,
-                                        |v| Message::UpdateLayoutInnerSpacing(v),
-                                    )
-                                    .width(Length::Fill),
-                                )
-                                .push(
-                                    Text::<IcedBackend>::new(format!(
-                                        "{:.0}",
-                                        self.lab.inner_spacing
-                                    ))
-                                    .caption2()
-                                    .secondary(),
-                                ),
-                        ),
-                )
-                .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Child Count")
-                                .caption2()
-                                .bold()
-                                .secondary(),
-                        )
-                        .push(
-                            SegmentedPicker::<Message, Theme>::new(
-                                vec![
-                                    ("1".to_string(), Message::UpdateLayoutChildCount(1)),
-                                    ("3".to_string(), Message::UpdateLayoutChildCount(3)),
-                                    ("5".to_string(), Message::UpdateLayoutChildCount(5)),
-                                    ("8".to_string(), Message::UpdateLayoutChildCount(8)),
-                                ],
-                                match self.lab.child_count {
-                                    1 => 0,
-                                    3 => 1,
-                                    5 => 2,
-                                    8 => 3,
-                                    _ => 1,
-                                },
-                            )
-                            .background_color(
-                                context.theme.colors.surface_variant.scale_alpha(0.5),
-                            ),
-                        ),
-                )
-                .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Alignment")
-                                .caption2()
-                                .bold()
-                                .secondary(),
-                        )
-                        .push(
-                            SegmentedPicker::<Message, Theme>::new(
-                                vec![
-                                    (
-                                        "Start".to_string(),
-                                        Message::UpdateLayoutAlignment(Alignment::Start),
-                                    ),
-                                    (
-                                        "Center".to_string(),
-                                        Message::UpdateLayoutAlignment(Alignment::Center),
-                                    ),
-                                    (
-                                        "End".to_string(),
-                                        Message::UpdateLayoutAlignment(Alignment::End),
-                                    ),
-                                ],
-                                match self.lab.alignment {
-                                    Alignment::Start => 0,
-                                    Alignment::Center => 1,
-                                    Alignment::End => 2,
-                                },
-                            )
-                            .background_color(
-                                context.theme.colors.surface_variant.scale_alpha(0.5),
-                            ),
-                        ),
-                )
-                .push(
-                    VStack::new_generic()
-                        .spacing(12.0)
-                        .push(
-                            Text::<IcedBackend>::new("Item Sizing")
-                                .caption2()
-                                .bold()
-                                .secondary(),
-                        )
-                        .push(
-                            SegmentedPicker::<Message, Theme>::new(
-                                vec![
-                                    (
-                                        "Fixed".to_string(),
-                                        Message::UpdateLayoutItemSizing(
-                                            crate::reference::app::SizingType::Fixed,
-                                        ),
-                                    ),
-                                    (
-                                        "Fill".to_string(),
-                                        Message::UpdateLayoutItemSizing(
-                                            crate::reference::app::SizingType::Fill,
-                                        ),
-                                    ),
-                                ],
-                                match self.lab.item_sizing {
-                                    crate::reference::app::SizingType::Fixed => 0,
-                                    crate::reference::app::SizingType::Fill => 1,
-                                    _ => 0,
-                                },
-                            )
-                            .background_color(
-                                context.theme.colors.surface_variant.scale_alpha(0.5),
-                            ),
-                        ),
-                ),
-        )
-        .view(context)
-    }
 }

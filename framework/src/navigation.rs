@@ -234,6 +234,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
             Variant::Ghost,
             Intent::Neutral,
             Length::Fill,
+            Length::Shrink,
             false,
             context,
         )

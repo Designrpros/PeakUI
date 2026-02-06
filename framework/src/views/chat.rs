@@ -134,6 +134,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
                     Variant::Compact,
                     Intent::Neutral,
                     Length::Shrink,
+                    Length::Shrink,
                     false, // is_compact
                     context,
                 ), // Wait, original code was:
@@ -157,6 +158,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
             Some((on_action)(ChatViewMessage::SendPressed)),
             Variant::Compact,
             Intent::Neutral,
+            Length::Shrink,
             Length::Shrink,
             true, // is_compact = true
             context,
