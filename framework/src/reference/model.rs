@@ -60,6 +60,9 @@ pub enum Page {
     NavigationSplit,
     Section,
     DataTable,
+    BarChart,
+    LineChart,
+    PieChart,
 
     // API Schema
     ApiSchema,
@@ -146,6 +149,9 @@ impl ToString for Page {
             Page::NavigationSplit => "NavigationSplit".to_string(),
             Page::Section => "Section".to_string(),
             Page::DataTable => "Data Table".to_string(),
+            Page::BarChart => "Bar Chart".to_string(),
+            Page::LineChart => "Line Chart".to_string(),
+            Page::PieChart => "Pie Chart".to_string(),
 
             Page::ApiSchema => "API Schema".to_string(),
 
@@ -227,6 +233,8 @@ impl From<String> for Page {
             "navigationsplit" | "navigation-split" | "navigation_split" => Page::NavigationSplit,
             "section" => Page::Section,
             "datatable" | "table" | "data-table" => Page::DataTable,
+            "linechart" | "line-chart" => Page::LineChart,
+            "piechart" | "pie-chart" => Page::PieChart,
 
             "api schema" | "apischema" | "api-schema" => Page::ApiSchema,
 
@@ -321,6 +329,9 @@ impl Page {
             Page::NavigationSplit => "/components/navigation-split".to_string(),
             Page::Section => "/components/section".to_string(),
             Page::DataTable => "/components/data-table".to_string(),
+            Page::BarChart => "/components/bar-chart".to_string(),
+            Page::LineChart => "/components/line-chart".to_string(),
+            Page::PieChart => "/components/pie-chart".to_string(),
 
             Page::ApiSchema => "/api-schema".to_string(),
 
@@ -420,6 +431,8 @@ impl Page {
             "/components/navigation-split" => Page::NavigationSplit,
             "/components/section" => Page::Section,
             "/components/data-table" => Page::DataTable,
+            "/components/line-chart" => Page::LineChart,
+            "/components/pie-chart" => Page::PieChart,
 
             "/api-schema" => Page::ApiSchema,
 
@@ -508,6 +521,9 @@ impl Page {
             | Page::NavigationSplit
             | Page::Section
             | Page::DataTable
+            | Page::BarChart
+            | Page::LineChart
+            | Page::PieChart
             | Page::ShowcaseButtons
             | Page::ShowcaseInputs
             | Page::ShowcaseToggles
@@ -568,6 +584,9 @@ impl Page {
             Page::NavigationSplit,
             Page::Section,
             Page::DataTable,
+            Page::BarChart,
+            Page::LineChart,
+            Page::PieChart,
             Page::PeakDB,
             Page::PeakCloud,
             Page::PeakHub,

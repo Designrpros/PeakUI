@@ -151,6 +151,15 @@ impl CanvasView {
             ReferencePage::DataTable => {
                 pages::components::data_table::view(context, self.render_mode)
             }
+            ReferencePage::BarChart => {
+                pages::components::bar_chart::view(context, self.render_mode)
+            }
+            ReferencePage::LineChart => {
+                pages::components::line_chart::view(context, self.render_mode)
+            }
+            ReferencePage::PieChart => {
+                pages::components::pie_chart::view(context, self.render_mode)
+            }
 
             // Showcase Gallery (Deprecated / Redirects)
             ReferencePage::ShowcaseButtons => {

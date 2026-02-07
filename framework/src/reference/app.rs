@@ -165,6 +165,7 @@ pub struct App {
     pub typewriter_phrase_index: usize,
     pub is_deleting: bool,
     pub a11y: crate::accessibility::AccessibilityBridge,
+    pub tick: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -374,6 +375,7 @@ pub enum Message {
     ExecuteShell(String), // New: Shell execution message
     ApplyNativeVibrancy,
     TypewriterTick(std::time::Instant),
+    Unknown(String),
     None,
 }
 
@@ -592,6 +594,7 @@ impl Default for App {
             typewriter_phrase_index: 0,
             is_deleting: false,
             a11y: crate::accessibility::AccessibilityBridge::new(),
+            tick: 0,
         }
     }
 }
@@ -602,6 +605,8 @@ impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::TypewriterTick(_) => {
+                self.tick = self.tick.wrapping_add(1);
+
                 if !self.show_landing {
                     return Task::none();
                 }
@@ -1164,6 +1169,10 @@ impl App {
                 Task::none()
             }
             Message::None => Task::none(),
+            Message::Unknown(s) => {
+                log::info!("Message::Unknown: {}", s);
+                Task::none()
+            }
 
             Message::Chat(msg) => match msg {
                 ChatViewMessage::InputChanged(val) => {
@@ -1438,12 +1447,13 @@ impl App {
 
     fn get_system_prompt(&self) -> String {
         // ... (existing prompt generation)
-        let ctx = Context::new(
+        let mut ctx = Context::new(
             crate::core::ShellMode::Desktop,
             ThemeTokens::new(PeakTheme::Peak, ThemeTone::Light),
             iced::Size::new(1280.0, 800.0),
             self.localization.clone(),
         );
+        ctx.tick = self.tick;
         let view = crate::reference::views::ContentView::new(self);
         let tree = view.describe(&ctx);
         // Call the accessibility bridge to update platform/log data
@@ -1481,7 +1491,8 @@ impl App {
         if self.show_landing {
             // Create context directly without responsive wrapper for performance
             let size = iced::Size::new(self.window_width, 800.0); // Height doesn't matter for landing
-            let context = Context::new(mode, tokens, size, self.localization.clone());
+            let mut context = Context::new(mode, tokens, size, self.localization.clone());
+            context.tick = self.tick;
 
             // Capture the search query state
             let query = self.search_query.clone();
@@ -1542,11 +1553,13 @@ impl App {
         // Neural Export (Exported in update for performance)
 
         let peak_id = self.peak_id.clone();
+        let tick = self.tick;
         crate::core::responsive(
             mode,
             tokens.clone(),
             self.localization.clone(),
             move |mut context| {
+                context.tick = tick;
                 context.peak_id = peak_id.clone().into();
                 // Main App Content
                 let base_content = iced::widget::container(content.view(&context))
@@ -1765,6 +1778,8 @@ impl App {
                 window_events,
                 iced::time::every(std::time::Duration::from_millis(100))
                     .map(|_| Message::Heartbeat),
+                iced::time::every(std::time::Duration::from_millis(100))
+                    .map(Message::TypewriterTick),
             ])
         }
         #[cfg(not(target_arch = "wasm32"))]

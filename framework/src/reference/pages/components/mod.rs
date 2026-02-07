@@ -1,3 +1,4 @@
+pub mod bar_chart;
 pub mod button;
 pub mod card;
 pub mod data_table;
@@ -7,9 +8,11 @@ pub mod docks;
 pub mod hstack;
 pub mod icon;
 pub mod image;
+pub mod line_chart;
 pub mod modal_doc;
 pub mod navigation_split;
 pub mod overlay;
+pub mod pie_chart;
 pub mod scroll_view;
 pub mod section;
 pub mod shapes;

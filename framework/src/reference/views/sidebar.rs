@@ -251,6 +251,24 @@ impl SidebarView {
                 Page::DataTable,
                 *active_tab == Page::DataTable,
             ))
+            .push(sidebar_item(
+                "Bar Chart",
+                "chart-bar",
+                Page::BarChart,
+                *active_tab == Page::BarChart,
+            ))
+            .push(sidebar_item(
+                "Line Chart",
+                "chart-line",
+                Page::LineChart,
+                *active_tab == Page::LineChart,
+            ))
+            .push(sidebar_item(
+                "Pie Chart",
+                "chart-pie",
+                Page::PieChart,
+                *active_tab == Page::PieChart,
+            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("FEEDBACK"))
             .push(sidebar_item(

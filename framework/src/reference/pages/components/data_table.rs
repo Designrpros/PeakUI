@@ -46,7 +46,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
        "### High-Density Data\nData tables in PeakUI are more than just grids. They are semantic structures that handle complex layout logic across different display kernels.\n\n- **Kernel Agnostic**: The same `data_table!` DSL manifests as a rich interactive grid on Canvas, a character-based table in Terminal, and a structured array in Neural mode.\n- **Performance**: Built with virtualization in mind (planned) to handle thousands of rows without dropping frames."
     )
     .props_table(
-        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `show_grid(b)` | `bool` | Toggles internal grid lines. |"
+        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `sortable_column(n, w, f)` | `&str, Length, Fn` | Defines a sortable column with a callback. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `row_with_action(cells, m)` | `Vec<...>, Msg` | Adds an interactive row. |\n| `show_grid(b)` | `bool` | Toggles internal grid lines. |"
     );
 
     PageResult::new(doc)
@@ -70,17 +70,22 @@ fn create_canvas_preview(_ctx: &Context) -> VStack<Message, IcedBackend> {
                     preset(DataTablePreset::Professional),
                     min_width(400.0),
                     column("ID", Length::Fixed(60.0)),
-                    column("Name", Length::Fill),
-                    column("Status", Length::Fixed(100.0)),
-                ];
+                ]
+                .sortable_column("Name", Length::Fill, |asc| {
+                    Message::Unknown(format!("Sort Name {}", if asc { "Asc" } else { "Desc" }))
+                })
+                .column("Status", Length::Fixed(100.0));
 
                 for (id, name, status, _, intent) in sample_rows() {
-                    table = table.row(vec![
-                        Box::new(text::<IcedBackend>(id).secondary())
-                            as Box<dyn View<Message, IcedBackend>>,
-                        Box::new(text::<IcedBackend>(name).bold()),
-                        Box::new(Badge::new(status).intent(intent)),
-                    ]);
+                    table = table.row_with_action(
+                        vec![
+                            Box::new(text::<IcedBackend>(id).secondary())
+                                as Box<dyn View<Message, IcedBackend>>,
+                            Box::new(text::<IcedBackend>(name).bold()),
+                            Box::new(Badge::new(status).intent(intent)),
+                        ],
+                        Message::Unknown(format!("Selected {}", name)),
+                    );
                 }
                 table
             }),

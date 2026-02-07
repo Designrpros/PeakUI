@@ -86,6 +86,7 @@ pub mod prelude {
     pub use crate::scroll_view::ScrollView;
     pub use crate::segmented_picker::SegmentedPicker;
     pub use crate::toolbar::{ToolbarGroup, ToolbarItem};
+    pub use crate::views::chart::{Chart, ChartDataPoint, ChartType};
     pub use crate::views::code_block::CodeBlock;
     pub use crate::views::data_table::{DataTable, DataTablePreset};
     pub use crate::views::markdown::MarkdownView;

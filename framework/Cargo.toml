@@ -71,3 +71,4 @@ native = [
 tokio = ["iced/tokio"]
 wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]
 webview = ["wry"]
+tui = [] # Gated TUI backend

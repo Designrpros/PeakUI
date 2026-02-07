@@ -247,6 +247,8 @@ pub struct Context {
     pub billboarding: bool,
     /// Whether we are currently inside a ScrollView (to prevent unlimited height paradox).
     pub is_inside_scrollable: bool,
+    /// A monotonically increasing tick count for animations and dynamic state.
+    pub tick: u64,
 }
 
 impl Default for Context {
@@ -263,6 +265,7 @@ impl Default for Context {
             foreground: None,
             billboarding: false,
             is_inside_scrollable: false,
+            tick: 0,
         }
     }
 }
@@ -311,6 +314,7 @@ impl Context {
             foreground: None,
             billboarding: false,
             is_inside_scrollable: false,
+            tick: 0,
         }
     }
 
@@ -679,6 +683,21 @@ pub trait Backend: Sized + Clone + 'static {
     fn circle<Message: 'static>(
         radius: f32,
         color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn arc<Message: 'static>(
+        radius: f32,
+        start_angle: f32,
+        end_angle: f32,
+        color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn path<Message: 'static>(
+        points: Vec<iced::Point>,
+        color: Option<Color>,
+        width: f32,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
@@ -1079,6 +1098,65 @@ impl Backend for SpatialBackend {
             depth: 0.1,
             transform: Transform3D::default(),
             bounds: BoundingBox3D::from_size(size, size, 0.1),
+            layout: Layout::Vertical,
+            is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
+            children: vec![],
+        }
+    }
+
+    fn arc<Message: 'static>(
+        radius: f32,
+        _start_angle: f32,
+        _end_angle: f32,
+        _color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        let size = radius * 2.0;
+        SpatialNode {
+            role: "arc".into(),
+            width: size,
+            height: size,
+            depth: 0.1,
+            transform: Transform3D::default(),
+            bounds: BoundingBox3D::from_size(size, size, 0.1),
+            layout: Layout::Vertical,
+            is_focused: false,
+            billboarding: context.billboarding,
+            on_press: None,
+            children: vec![],
+        }
+    }
+
+    fn path<Message: 'static>(
+        points: Vec<iced::Point>,
+        _color: Option<Color>,
+        _width: f32,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        let mut min_x = f32::MAX;
+        let mut max_x = f32::MIN;
+        let mut min_y = f32::MAX;
+        let mut max_y = f32::MIN;
+
+        for p in &points {
+            min_x = min_x.min(p.x);
+            max_x = max_x.max(p.x);
+            min_y = min_y.min(p.y);
+            max_y = max_y.max(p.y);
+        }
+
+        let w = (max_x - min_x).max(1.0);
+        let h = (max_y - min_y).max(1.0);
+
+        SpatialNode {
+            role: "path".into(),
+            width: w,
+            height: h,
+            depth: 0.1,
+            transform: Transform3D::default(),
+            bounds: BoundingBox3D::from_size(w, h, 0.1),
             layout: Layout::Vertical,
             is_focused: false,
             billboarding: context.billboarding,
@@ -1847,6 +1925,126 @@ impl Backend for IcedBackend {
         .into()
     }
 
+    fn arc<Message: 'static>(
+        radius: f32,
+        start_angle: f32,
+        end_angle: f32,
+        color: Option<Color>,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::canvas::{Canvas, Frame, Geometry, Path, Program};
+
+        struct ArcProgram {
+            radius: f32,
+            start_angle: f32,
+            end_angle: f32,
+            color: Color,
+        }
+
+        impl<Message> Program<Message, Theme, Renderer> for ArcProgram {
+            type State = ();
+
+            fn draw(
+                &self,
+                _state: &Self::State,
+                renderer: &Renderer,
+                _theme: &Theme,
+                bounds: iced::Rectangle,
+                _cursor: iced::mouse::Cursor,
+            ) -> Vec<Geometry> {
+                let mut frame = Frame::new(renderer, bounds.size());
+                let center = iced::Point::new(bounds.width / 2.0, bounds.height / 2.0);
+                let path = Path::new(|p| {
+                    p.move_to(center);
+                    p.arc(iced::widget::canvas::path::Arc {
+                        center,
+                        radius: self.radius,
+                        start_angle: iced::Radians(self.start_angle),
+                        end_angle: iced::Radians(self.end_angle),
+                    });
+                    p.line_to(center);
+                    p.close();
+                });
+
+                frame.fill(&path, self.color);
+                vec![frame.into_geometry()]
+            }
+        }
+
+        let scale = context.theme.scaling;
+        Canvas::new(ArcProgram {
+            radius: radius * scale,
+            start_angle,
+            end_angle,
+            color: color.unwrap_or(Color::BLACK),
+        })
+        .width(Length::Fixed(radius * 2.0 * scale))
+        .height(Length::Fixed(radius * 2.0 * scale))
+        .into()
+    }
+
+    fn path<Message: 'static>(
+        points: Vec<iced::Point>,
+        color: Option<Color>,
+        width: f32,
+        context: &Context,
+    ) -> Self::AnyView<Message> {
+        use iced::widget::canvas::{Canvas, Frame, Geometry, Path, Program, Stroke};
+
+        struct PathProgram {
+            points: Vec<iced::Point>,
+            color: Color,
+            width: f32,
+        }
+
+        impl<Message> Program<Message, Theme, Renderer> for PathProgram {
+            type State = ();
+
+            fn draw(
+                &self,
+                _state: &Self::State,
+                renderer: &Renderer,
+                _theme: &Theme,
+                bounds: iced::Rectangle,
+                _cursor: iced::mouse::Cursor,
+            ) -> Vec<Geometry> {
+                let mut frame = Frame::new(renderer, bounds.size());
+                if self.points.len() < 2 {
+                    return vec![];
+                }
+
+                let path = Path::new(|p| {
+                    p.move_to(self.points[0]);
+                    for i in 1..self.points.len() {
+                        p.line_to(self.points[i]);
+                    }
+                });
+
+                frame.stroke(
+                    &path,
+                    Stroke {
+                        style: iced::widget::canvas::Style::Solid(self.color),
+                        width: self.width,
+                        line_cap: iced::widget::canvas::LineCap::Round,
+                        line_join: iced::widget::canvas::LineJoin::Round,
+                        ..Default::default()
+                    },
+                );
+                vec![frame.into_geometry()]
+            }
+        }
+
+        let scale = context.theme.scaling;
+        Canvas::new(PathProgram {
+            points,
+            color: color.unwrap_or(Color::BLACK),
+            width: width * scale,
+        })
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .into()
+    }
+
     fn capsule<Message: 'static>(
         width: Length,
         height: Length,
@@ -2235,11 +2433,33 @@ impl Backend for IcedBackend {
         children: Vec<Self::AnyView<Message>>,
         width: Length,
         height: Length,
-        _alignment: Alignment,
+        alignment: Alignment,
         _context: &Context,
     ) -> Self::AnyView<Message> {
-        let s = iced::widget::stack(children).width(width).height(height);
-        s.into()
+        use iced::widget::container;
+
+        let iced_alignment = match alignment {
+            Alignment::Center => iced::Alignment::Center,
+            Alignment::Start => iced::Alignment::Start,
+            Alignment::End => iced::Alignment::End,
+        };
+
+        let aligned_children: Vec<Self::AnyView<Message>> = children
+            .into_iter()
+            .map(|child| {
+                container(child)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .align_x(iced_alignment)
+                    .align_y(iced_alignment)
+                    .into()
+            })
+            .collect();
+
+        iced::widget::stack(aligned_children)
+            .width(width)
+            .height(height)
+            .into()
     }
 
     fn grid<Message: 'static>(
@@ -2914,6 +3134,25 @@ impl Backend for TermBackend {
         "O".to_string()
     }
 
+    fn arc<Message: 'static>(
+        _radius: f32,
+        _start_angle: f32,
+        _end_angle: f32,
+        _color: Option<Color>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        "C".to_string()
+    }
+
+    fn path<Message: 'static>(
+        points: Vec<iced::Point>,
+        _color: Option<Color>,
+        _width: f32,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("~ ({} pts)", points.len())
+    }
+
     fn capsule<Message: 'static>(
         _width: Length,
         _height: Length,
@@ -3581,11 +3820,36 @@ impl Backend for AIBackend {
     }
 
     fn circle<Message: 'static>(
-        _radius: f32,
-        _color: Option<Color>,
+        radius: f32,
+        color: Option<Color>,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode::new("circle")
+            .with_label(format!("r={}", radius))
+            .with_content(format!("{:?}", color))
+    }
+
+    fn arc<Message: 'static>(
+        radius: f32,
+        start_angle: f32,
+        end_angle: f32,
+        color: Option<Color>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SemanticNode::new("arc")
+            .with_label(format!("r={}, {}->{}", radius, start_angle, end_angle))
+            .with_content(format!("{:?}", color))
+    }
+
+    fn path<Message: 'static>(
+        points: Vec<iced::Point>,
+        color: Option<Color>,
+        width: f32,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SemanticNode::new("path")
+            .with_label(format!("{} pts, w={}", points.len(), width))
+            .with_content(format!("{:?}", color))
     }
 
     fn capsule<Message: 'static>(

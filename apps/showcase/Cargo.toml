@@ -46,3 +46,6 @@ wasm = [
     "iced/canvas",
     "iced/wgpu",
 ]
+tui = [
+    "peak-ui/tui",
+]

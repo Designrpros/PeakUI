@@ -1,5 +1,6 @@
-use crate::core::{ScrollDirection, View};
 use crate::prelude::*;
+use iced::widget::container;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DataTablePreset {
@@ -9,23 +10,28 @@ pub enum DataTablePreset {
     Glass,
 }
 
-pub struct DataTableColumn {
+pub struct DataTableColumn<M> {
     pub label: String,
     pub width: Length,
+    pub is_sortable: bool,
+    pub on_sort: Option<Arc<dyn Fn(bool) -> M + Send + Sync>>,
 }
 
 pub struct DataTableRow<M> {
     pub cells: Vec<Box<dyn View<M, IcedBackend>>>,
+    pub on_press: Option<M>,
 }
 
 pub struct DataTable<M> {
-    pub columns: Vec<DataTableColumn>,
+    pub columns: Vec<DataTableColumn<M>>,
     pub rows: Vec<DataTableRow<M>>,
     pub min_width: Option<f32>,
     pub preset: DataTablePreset,
     pub show_grid: bool,
     pub emphasize_first_column: bool,
     pub alternate_rows: bool,
+    pub sort_column: Option<usize>,
+    pub sort_ascending: bool,
 }
 
 impl<M: 'static + Clone> DataTable<M> {
@@ -38,6 +44,8 @@ impl<M: 'static + Clone> DataTable<M> {
             show_grid: false,
             emphasize_first_column: false,
             alternate_rows: true,
+            sort_column: None,
+            sort_ascending: true,
         }
     }
 
@@ -70,31 +78,102 @@ impl<M: 'static + Clone> DataTable<M> {
         self.columns.push(DataTableColumn {
             label: label.into(),
             width,
+            is_sortable: false,
+            on_sort: None,
+        });
+        self
+    }
+
+    pub fn sortable_column(
+        mut self,
+        label: impl Into<String>,
+        width: Length,
+        on_sort: impl Fn(bool) -> M + Send + Sync + 'static,
+    ) -> Self {
+        self.columns.push(DataTableColumn {
+            label: label.into(),
+            width,
+            is_sortable: true,
+            on_sort: Some(Arc::new(on_sort)),
         });
         self
     }
 
     pub fn row(mut self, cells: Vec<Box<dyn View<M, IcedBackend>>>) -> Self {
-        self.rows.push(DataTableRow { cells });
+        self.rows.push(DataTableRow {
+            cells,
+            on_press: None,
+        });
+        self
+    }
+
+    pub fn row_with_action(
+        mut self,
+        cells: Vec<Box<dyn View<M, IcedBackend>>>,
+        on_press: M,
+    ) -> Self {
+        self.rows.push(DataTableRow {
+            cells,
+            on_press: Some(on_press),
+        });
+        self
+    }
+
+    pub fn sort(mut self, column_index: usize, ascending: bool) -> Self {
+        self.sort_column = Some(column_index);
+        self.sort_ascending = ascending;
         self
     }
 
     fn header_cell(
         &self,
         context: &Context,
-        label: &str,
-        width: Length,
+        col_index: usize,
+        col: &DataTableColumn<M>,
     ) -> Element<'static, M, Theme, Renderer> {
-        container(
-            Text::<IcedBackend>::new(label)
-                .caption1()
-                .bold()
-                .secondary()
-                .view(context),
-        )
-        .width(width)
-        .padding([12, 12])
-        .into()
+        let is_sorted = self.sort_column == Some(col_index);
+
+        let mut content = HStack::new()
+            .spacing(8.0)
+            .align_y(iced::Alignment::Center)
+            .push(
+                Text::<IcedBackend>::new(&col.label)
+                    .caption1()
+                    .bold()
+                    .secondary(),
+            );
+
+        if is_sorted {
+            content = content.push(
+                Icon::<IcedBackend>::new(if self.sort_ascending {
+                    "chevron-up"
+                } else {
+                    "chevron-down"
+                })
+                .size(12.0)
+                .color(context.theme.colors.primary),
+            );
+        }
+
+        let cell = container(content.view(context))
+            .width(col.width)
+            .padding([12, 12]);
+
+        if let Some(on_sort) = &col.on_sort {
+            let msg = on_sort(is_sorted && !self.sort_ascending);
+            IcedBackend::button(
+                cell.into(),
+                Some(msg),
+                Variant::Ghost,
+                Intent::Secondary,
+                Length::Shrink,
+                Length::Shrink,
+                true,
+                context,
+            )
+        } else {
+            cell.into()
+        }
     }
 
     fn row_cell(
@@ -152,7 +231,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
             .align_y(iced::Alignment::Center);
         let col_count = self.columns.len();
         for (i, col) in self.columns.iter().enumerate() {
-            header_row = header_row.push(self.header_cell(context, &col.label, col.width));
+            header_row = header_row.push(self.header_cell(context, i, col));
 
             if self.show_grid && i < col_count - 1 {
                 header_row = header_row.push(
@@ -215,7 +294,7 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
                 }
             }
 
-            let row_container =
+            let mut row_container =
                 container(row_ui)
                     .width(Length::Fill)
                     .style(move |_| container::Style {
@@ -227,7 +306,28 @@ impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
                         ..Default::default()
                     });
 
-            rows_column = rows_column.push(row_container);
+            if let Some(on_press) = &row_data.on_press {
+                row_container = row_container.style(move |_t| {
+                    let mut s = container::Style::default();
+                    if alternate_rows && i % 2 != 0 {
+                        s.background = Some(palette.surface.scale_alpha(0.1).into());
+                    }
+                    s
+                });
+
+                rows_column = rows_column.push(IcedBackend::button(
+                    row_container.into(),
+                    Some(on_press.clone()),
+                    Variant::Plain,
+                    Intent::Primary,
+                    Length::Fill,
+                    Length::Shrink,
+                    true,
+                    context,
+                ));
+            } else {
+                rows_column = rows_column.push(row_container);
+            }
 
             // Add internal horizontal grid lines
             if i < row_count - 1 && self.show_grid {
