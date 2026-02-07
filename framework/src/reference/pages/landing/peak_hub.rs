@@ -80,9 +80,13 @@ fn feature_item(
     Container::new(
         VStack::new()
             .spacing(16.0)
-            .push(Icon::new(icon).size(24.0).color(t.colors.primary))
-            .push(Text::new(title).bold())
-            .push(Text::new(desc).caption1().secondary()),
+            .push(
+                Icon::new(icon.to_string())
+                    .size(24.0)
+                    .color(t.colors.primary),
+            )
+            .push(Text::new(title.to_string()).bold())
+            .push(Text::new(desc.to_string()).caption1().secondary()),
     )
     .padding(20.0)
     .border(1.0, t.colors.border)

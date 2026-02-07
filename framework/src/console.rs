@@ -38,7 +38,7 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for Console<Message, I
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let theme = context.theme;
 
-        let output = Text::<IcedBackend>::new(&self.content)
+        let output = Text::<IcedBackend>::new(self.content.clone())
             .size(12.0)
             .color(theme.colors.text_primary);
 

@@ -179,7 +179,7 @@ fn render_mode_tab(
     current: RenderMode,
 ) -> Button<Message, IcedBackend> {
     let active = mode == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -195,7 +195,7 @@ fn render_child_count_tab(
     current: usize,
 ) -> Button<Message, IcedBackend> {
     let active = count == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -211,7 +211,7 @@ fn render_alignment_tab(
     current: Alignment,
 ) -> Button<Message, IcedBackend> {
     let active = alignment == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -227,7 +227,7 @@ fn render_item_sizing_tab(
     current: SizingType,
 ) -> Button<Message, IcedBackend> {
     let active = sizing == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -303,7 +303,11 @@ fn create_preview<B: Backend>(ctx: &Context, lab: &LayoutLabState) -> VStack<Mes
 }
 
 fn theory_item<B: Backend>(title: &str, description: &str) -> VStack<Message, B> {
-    vstack![text(title).bold(), text(description).secondary(),].spacing(8.0)
+    vstack![
+        text(title.to_string()).bold(),
+        text(description.to_string()).secondary(),
+    ]
+    .spacing(8.0)
 }
 
 fn generate_code(lab: &LayoutLabState) -> String {

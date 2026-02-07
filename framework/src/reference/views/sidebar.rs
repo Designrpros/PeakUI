@@ -1,24 +1,17 @@
 use super::super::app::Message;
 use super::super::model::Page;
 use crate::prelude::*;
-use std::collections::HashSet;
 
 pub struct SidebarView {
     pub active_tab: Page,
     pub navigation_mode: String,
-    pub expanded_sections: HashSet<String>,
 }
 
 impl SidebarView {
-    pub fn new(
-        active_tab: Page,
-        navigation_mode: String,
-        expanded_sections: HashSet<String>,
-    ) -> Self {
+    pub fn new(active_tab: Page, navigation_mode: String) -> Self {
         Self {
             active_tab,
             navigation_mode,
-            expanded_sections,
         }
     }
 }

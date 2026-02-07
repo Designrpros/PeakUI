@@ -1,5 +1,6 @@
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
 use iced::{Length, Padding};
+use std::borrow::Cow;
 
 pub struct Card<Message: 'static, B: Backend = IcedBackend> {
     content: Box<dyn View<Message, B>>,
@@ -103,7 +104,7 @@ pub struct Section<Message: 'static, B: Backend = IcedBackend> {
 
 impl<Message: 'static> Section<Message, IcedBackend> {
     pub fn new(
-        title: impl Into<String>,
+        title: impl Into<Cow<'static, str>>,
         content: impl View<Message, IcedBackend> + 'static,
     ) -> Self {
         Self::new_generic(title, content)
@@ -112,7 +113,7 @@ impl<Message: 'static> Section<Message, IcedBackend> {
 
 impl<Message: 'static> Section<Message, TermBackend> {
     pub fn new_tui(
-        title: impl Into<String>,
+        title: impl Into<Cow<'static, str>>,
         content: impl View<Message, TermBackend> + 'static,
     ) -> Self {
         Self::new_generic(title, content)
@@ -120,9 +121,12 @@ impl<Message: 'static> Section<Message, TermBackend> {
 }
 
 impl<Message: 'static, B: Backend> Section<Message, B> {
-    pub fn new_generic(title: impl Into<String>, content: impl View<Message, B> + 'static) -> Self {
+    pub fn new_generic(
+        title: impl Into<Cow<'static, str>>,
+        content: impl View<Message, B> + 'static,
+    ) -> Self {
         Self {
-            title: title.into(),
+            title: title.into().into_owned(),
             content: Box::new(content),
             width: Length::Fill,
             height: Length::Shrink,

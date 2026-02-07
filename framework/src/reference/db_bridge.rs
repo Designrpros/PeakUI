@@ -4,33 +4,38 @@ use std::sync::{Arc, Mutex};
 
 pub struct PeakDBBridge {
     // For now, using an in-memory storage, but will eventually connect to PeakDB
-    storage: Arc<Mutex<Vec<SemanticRecord>>>,
+    storage: Arc<Mutex<Arc<Vec<SemanticRecord>>>>,
 }
 
 impl PeakDBBridge {
     pub fn new() -> Self {
         Self {
-            storage: Arc::new(Mutex::new(Vec::new())),
+            storage: Arc::new(Mutex::new(Arc::new(Vec::new()))),
         }
     }
 
-    pub fn get_all(&self) -> Vec<SemanticRecord> {
-        self.storage.lock().map(|db| db.clone()).unwrap_or_default()
+    pub fn get_all(&self) -> Arc<Vec<SemanticRecord>> {
+        self.storage
+            .lock()
+            .map(|db| db.clone())
+            .unwrap_or_else(|_| Arc::new(Vec::new()))
     }
 }
 
 impl DataProvider for PeakDBBridge {
     fn save(&self, record: SemanticRecord) -> Task<std::result::Result<(), String>> {
-        let storage = self.storage.clone();
+        let storage_handle = self.storage.clone();
         Task::perform(
             async move {
-                let mut db = storage.lock().map_err(|e| e.to_string())?;
-                // If ID exists, replace; otherwise, push
-                if let Some(pos) = db.iter().position(|r| r.id == record.id) {
-                    db[pos] = record;
+                let mut mutex = storage_handle.lock().map_err(|e| e.to_string())?;
+                let mut new_vec = (**mutex).clone();
+
+                if let Some(pos) = new_vec.iter().position(|r| r.id == record.id) {
+                    new_vec[pos] = record;
                 } else {
-                    db.push(record);
+                    new_vec.push(record);
                 }
+                *mutex = Arc::new(new_vec);
                 Ok(())
             },
             |res| res,
@@ -38,10 +43,10 @@ impl DataProvider for PeakDBBridge {
     }
 
     fn find(&self, query: String) -> Task<std::result::Result<Vec<SemanticRecord>, String>> {
-        let storage = self.storage.clone();
+        let storage_handle = self.storage.clone();
         Task::perform(
             async move {
-                let db = storage.lock().map_err(|e| e.to_string())?;
+                let db = storage_handle.lock().map_err(|e| e.to_string())?;
                 // Simple keyword search in content for now
                 let results = db
                     .iter()
@@ -55,11 +60,13 @@ impl DataProvider for PeakDBBridge {
     }
 
     fn delete(&self, id: String) -> Task<std::result::Result<(), String>> {
-        let storage = self.storage.clone();
+        let storage_handle = self.storage.clone();
         Task::perform(
             async move {
-                let mut db = storage.lock().map_err(|e| e.to_string())?;
-                db.retain(|r| r.id != id);
+                let mut mutex = storage_handle.lock().map_err(|e| e.to_string())?;
+                let mut new_vec = (**mutex).clone();
+                new_vec.retain(|r| r.id != id);
+                *mutex = Arc::new(new_vec);
                 Ok(())
             },
             |res| res,
@@ -71,9 +78,9 @@ impl DataProvider for PeakDBBridge {
         query: String,
     ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>>
     {
-        let storage = self.storage.clone();
+        let storage_handle = self.storage.clone();
         Box::pin(async move {
-            let db = storage.lock().map_err(|e| e.to_string())?;
+            let db = storage_handle.lock().map_err(|e| e.to_string())?;
             let results = db
                 .iter()
                 .filter(|r| {

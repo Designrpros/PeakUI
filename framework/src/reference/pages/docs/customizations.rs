@@ -3,6 +3,7 @@ use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};
 use peak_theme::{PeakTheme, ThemeTone};
+use std::borrow::Cow;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
     let palette = ctx.theme.colors;
@@ -207,7 +208,7 @@ fn view(&self, ctx: &Context) -> Element {
 }
 
 fn render_theme_tab(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
     theme: PeakTheme,
     color: Color,
     ctx: &Context,
@@ -224,7 +225,7 @@ fn render_theme_tab(
 }
 
 fn render_tone_tab(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
     tone: ThemeTone,
     ctx: &Context,
 ) -> impl View<Message, IcedBackend> {
@@ -244,7 +245,7 @@ fn render_tone_tab(
 }
 
 fn render_mode_tab(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
     mode: RenderMode,
     current: RenderMode,
 ) -> impl View<Message, IcedBackend> {
@@ -260,8 +261,8 @@ fn render_mode_tab(
 }
 
 fn theory_item<B: Backend>(
-    title: impl Into<String>,
-    desc: impl Into<String>,
+    title: impl Into<Cow<'static, str>>,
+    desc: impl Into<Cow<'static, str>>,
 ) -> impl View<Message, B> + 'static {
     VStack::<Message, B>::new_generic()
         .spacing(4.0)
@@ -358,8 +359,8 @@ fn create_preview<B: Backend>(ctx: &Context) -> VStack<Message, B> {
 }
 
 fn token_display<B: Backend>(
-    label: impl Into<String>,
-    value: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
+    value: impl Into<Cow<'static, str>>,
 ) -> impl View<Message, B> + 'static {
     HStack::<Message, B>::new_generic()
         .spacing(12.0)

@@ -15,3 +15,4 @@ pub use sidebar::SidebarView;
 pub use simulator::SimulatorView;
 pub use swarm_dashboard::SwarmDashboardView;
 pub use tabbar::TabBarView;
+pub mod state;

@@ -3,6 +3,7 @@ use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};
 use serde_json; // Added missing import
+use std::borrow::Cow;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
     let palette = ctx.theme.colors;
@@ -123,7 +124,7 @@ Rectangle::new(Length::Fixed(100.0), Length::Fixed(100.0))
 }
 
 fn render_mode_tab(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
     mode: RenderMode,
     current: RenderMode,
 ) -> impl View<Message, IcedBackend> {
@@ -138,8 +139,8 @@ fn render_mode_tab(
 }
 
 fn theory_item<B: Backend>(
-    title: impl Into<String>,
-    desc: impl Into<String>,
+    title: impl Into<Cow<'static, str>>,
+    desc: impl Into<Cow<'static, str>>,
 ) -> impl View<Message, B> + 'static {
     VStack::<Message, B>::new_generic()
         .spacing(4.0)
@@ -199,7 +200,7 @@ fn create_preview<B: Backend>(palette: peak_theme::PeakColors) -> VStack<Message
 }
 
 fn color_swatch<B: Backend>(
-    name: impl Into<String>,
+    name: impl Into<Cow<'static, str>>,
     color: Color,
     palette: peak_theme::PeakColors,
 ) -> impl View<Message, B> + 'static {

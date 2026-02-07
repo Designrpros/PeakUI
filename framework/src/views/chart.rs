@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use std::sync::Arc;
+use std::borrow::Cow;
 
 #[derive(Debug, Clone, serde::Serialize, PartialEq)]
 pub enum ChartType {
@@ -116,13 +116,14 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Chart<Message, B
 
     fn describe(&self, _context: &Context) -> SemanticNode {
         let mut node = SemanticNode::new("chart");
-        node.label = self.title.as_ref().map(|t| Arc::from(t.as_str()));
+        node.label = self.title.as_ref().map(|t| Cow::Owned(t.to_string()));
 
         // Export data for AI perception
         let data_json = serde_json::to_string(&self.data).unwrap_or_default();
-        node.content = Some(Arc::from(
-            format!("Type: {:?}, Data: {}", self.chart_type, data_json).as_str(),
-        ));
+        node.content = Some(Cow::Owned(format!(
+            "Type: {:?}, Data: {}",
+            self.chart_type, data_json
+        )));
 
         node
     }

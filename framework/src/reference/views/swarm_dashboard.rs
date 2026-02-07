@@ -41,7 +41,9 @@ impl View<Message, IcedBackend> for SwarmDashboardView {
                                 .push(text("PeakID").caption1().secondary())
                                 .push(
                                     Container::new(
-                                        text(&self.peak_id).font(Font::MONOSPACE).size(14.0),
+                                        text(self.peak_id.to_string())
+                                            .font(Font::MONOSPACE)
+                                            .size(14.0),
                                     )
                                     .padding(12)
                                     .radius(8.0),

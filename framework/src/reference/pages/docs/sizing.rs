@@ -3,7 +3,6 @@ use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode, SizingLabState, SizingType};
 
-
 pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> PageResult<Message> {
     let mode = ctx.theme.colors;
     let is_narrow = ctx.size.width < 1000.0;
@@ -184,7 +183,7 @@ fn render_mode_tab(
     current: RenderMode,
 ) -> Button<Message, IcedBackend> {
     let active = mode == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -201,7 +200,7 @@ fn render_sizing_tab(
     is_width: bool,
 ) -> Button<Message, IcedBackend> {
     let active = sizing == current;
-    button_label(label)
+    button_label(label.to_string())
         .variant(if active {
             Variant::Solid
         } else {
@@ -255,7 +254,11 @@ fn create_preview<B: Backend>(ctx: &Context, lab: &SizingLabState) -> VStack<Mes
 }
 
 fn theory_item<B: Backend>(title: &str, description: &str) -> VStack<Message, B> {
-    vstack![text(title).bold(), text(description).secondary(),].spacing(8.0)
+    vstack![
+        text(title.to_string()).bold(),
+        text(description.to_string()).secondary(),
+    ]
+    .spacing(8.0)
 }
 
 fn generate_code(lab: &SizingLabState) -> String {

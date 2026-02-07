@@ -121,7 +121,7 @@ pub struct App {
     pub show_user_profile: bool,
     pub navigation_mode: String,
     pub search_query: String,
-    pub expanded_sections: Arc<std::collections::HashSet<String>>,
+    pub expanded_sections: std::collections::HashSet<String>,
     pub theme_tone: ThemeTone,
     pub theme: PeakTheme,
 
@@ -145,7 +145,7 @@ pub struct App {
 
     // Chat State
     pub show_chat_overlay: bool,
-    pub chat_messages: Arc<Vec<ChatMessage>>,
+    pub chat_messages: Vec<ChatMessage>,
     pub chat_input: String,
 
     // AI Integration
@@ -548,7 +548,7 @@ impl Default for App {
             show_user_profile: false,
             navigation_mode: "App".to_string(),
             search_query: String::new(),
-            expanded_sections: Arc::new(std::collections::HashSet::new()),
+            expanded_sections: std::collections::HashSet::new(),
             theme_tone: ThemeTone::Light,
             theme: PeakTheme::Mono,
             button_lab: Arc::new(ButtonLabState::default()),
@@ -567,10 +567,10 @@ impl Default for App {
             context_menu_pos: None,
             last_cursor_pos: iced::Point::ORIGIN,
             show_chat_overlay: false,
-            chat_messages: Arc::new(vec![ChatMessage {
+            chat_messages: vec![ChatMessage {
                 role: ChatRole::System,
                 content: "Welcome to PeakUI. I am your autonomous interface agent.".to_string(),
-            }]),
+            }],
             chat_input: String::new(),
             api_key: settings.api_key,
             ai_provider: settings.ai_provider,
@@ -846,9 +846,9 @@ impl App {
             }
             Message::ToggleSection(section) => {
                 if self.expanded_sections.contains(&section) {
-                    Arc::make_mut(&mut self.expanded_sections).remove(&section);
+                    self.expanded_sections.remove(&section);
                 } else {
-                    Arc::make_mut(&mut self.expanded_sections).insert(section);
+                    self.expanded_sections.insert(section);
                 }
                 Task::none()
             }
@@ -1182,7 +1182,7 @@ impl App {
                 log::info!("EXECUTING SHELL COMMAND: {}", cmd);
                 // For safety in this demo, we just log it.
                 // In a real PeakOS context, this would hit the syscall layer.
-                Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+                self.chat_messages.push(ChatMessage {
                     role: ChatRole::System,
                     content: format!("Shell command executed securely: `{}`", cmd),
                 });
@@ -1213,18 +1213,17 @@ impl App {
             },
             Message::ChatStreamUpdate(result) => match result {
                 Ok(text) => {
-                    let messages = Arc::make_mut(&mut self.chat_messages);
-                    if let Some(last) = messages.last_mut() {
+                    if let Some(last) = self.chat_messages.last_mut() {
                         if last.role == ChatRole::Assistant {
                             last.content = text.clone();
                         } else {
-                            messages.push(ChatMessage {
+                            self.chat_messages.push(ChatMessage {
                                 role: ChatRole::Assistant,
                                 content: text.clone(),
                             });
                         }
                     } else {
-                        messages.push(ChatMessage {
+                        self.chat_messages.push(ChatMessage {
                             role: ChatRole::Assistant,
                             content: text.clone(),
                         });
@@ -1237,7 +1236,7 @@ impl App {
                 }
                 Err(e) => {
                     self.is_thinking = false;
-                    Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+                    self.chat_messages.push(ChatMessage {
                         role: ChatRole::System,
                         content: format!("Error: {}", e),
                     });
@@ -1262,18 +1261,17 @@ impl App {
 
                         if !content.is_empty() {
                             // Sync with streaming message or push new
-                            let messages = Arc::make_mut(&mut self.chat_messages);
-                            if let Some(last) = messages.last_mut() {
+                            if let Some(last) = self.chat_messages.last_mut() {
                                 if last.role == ChatRole::Assistant {
                                     last.content = content.clone();
                                 } else {
-                                    messages.push(ChatMessage {
+                                    self.chat_messages.push(ChatMessage {
                                         role: ChatRole::Assistant,
                                         content: content.clone(),
                                     });
                                 }
                             } else {
-                                messages.push(ChatMessage {
+                                self.chat_messages.push(ChatMessage {
                                     role: ChatRole::Assistant,
                                     content: content.clone(),
                                 });
@@ -1282,7 +1280,7 @@ impl App {
                         return task;
                     }
                     Err(err) => {
-                        Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+                        self.chat_messages.push(ChatMessage {
                             role: ChatRole::System,
                             content: format!("Error: {}", err),
                         });
@@ -1301,7 +1299,7 @@ impl App {
     }
 
     pub fn start_ai_chat(&mut self, content: String) -> Task<Message> {
-        Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+        self.chat_messages.push(ChatMessage {
             role: ChatRole::User,
             content: content.clone(),
         });
@@ -1314,7 +1312,7 @@ impl App {
         let system_chars = system_prompt.len();
 
         if system_chars > MAX_CONTEXT_CHARS {
-            Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+            self.chat_messages.push(ChatMessage {
                 role: ChatRole::System,
                 content: format!(
                     "Error: Context is too large ({} chars). Please reduce the complexity of the current view.",
@@ -1645,7 +1643,7 @@ impl App {
                 }
 
                 // Overlay Sudo Prompt
-                if let Some(sudo) = &content.state.pending_sudo_action {
+                if let Some(sudo) = &content.pending_sudo_action {
                     let prompt = iced::widget::container(
                         iced::widget::column![
                             iced::widget::text("Neural Sudo Permission").size(24),

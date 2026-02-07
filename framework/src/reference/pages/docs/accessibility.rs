@@ -206,7 +206,7 @@ fn render_mode_tab(
     current: RenderMode,
 ) -> Button<Message, IcedBackend> {
     let active = mode == current;
-    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label))
+    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
         .variant(if active {
             Variant::Solid
         } else {
@@ -222,7 +222,7 @@ fn render_component_tab(
     current: AccessibilityComponent,
 ) -> Button<Message, IcedBackend> {
     let active = comp == current;
-    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label))
+    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
         .variant(if active {
             Variant::Solid
         } else {
@@ -235,6 +235,6 @@ fn render_component_tab(
 fn theory_item_manual<B: Backend>(title: &str, description: &str) -> VStack<Message, B> {
     VStack::<Message, B>::new_generic()
         .spacing(8.0)
-        .push(text(title).bold())
-        .push(text(description).secondary())
+        .push(text(title.to_string()).bold())
+        .push(text(description.to_string()).secondary())
 }

@@ -26,7 +26,7 @@ pub enum ChatViewMessage {
 }
 
 pub struct AIChatView<Message: Clone + 'static> {
-    messages: Vec<ChatMessage>,
+    messages: Arc<Vec<ChatMessage>>,
     input_value: String,
     is_thinking: bool,
     on_action: Arc<dyn Fn(ChatViewMessage) -> Message + Send + Sync>,
@@ -34,7 +34,7 @@ pub struct AIChatView<Message: Clone + 'static> {
 
 impl<Message: Clone + 'static> AIChatView<Message> {
     pub fn new(
-        messages: Vec<ChatMessage>,
+        messages: Arc<Vec<ChatMessage>>,
         input_value: String,
         is_thinking: bool,
         on_action: impl Fn(ChatViewMessage) -> Message + Send + Sync + 'static,
@@ -56,7 +56,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Messa
         // 1. Create message list
         let mut message_list = Vec::new();
 
-        for msg in &self.messages {
+        for msg in self.messages.iter() {
             message_list.push(View::<Message, B>::view(
                 &ChatBubble::new(msg.clone(), self.on_action.clone()),
                 context,

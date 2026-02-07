@@ -4,7 +4,7 @@ use iced::futures::channel::mpsc::Sender;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
-pub async fn run_server(mut sender: Sender<Message>) {
+pub async fn run_server(sender: Sender<Message>) {
     let listener = match TcpListener::bind("127.0.0.1:8081").await {
         Ok(l) => l,
         Err(e) => {

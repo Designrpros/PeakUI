@@ -8,12 +8,13 @@ use crate::core::View;
 use crate::layout::{HStack, ResponsiveGrid, VStack, Wrap, ZStack};
 use crate::scroll_view::ScrollView;
 use iced::Length;
+use std::borrow::Cow;
 
-pub fn text<B: Backend>(content: impl Into<String>) -> Text<B> {
+pub fn text<B: Backend>(content: impl Into<Cow<'static, str>>) -> Text<B> {
     Text::new(content)
 }
 
-pub fn icon<B: Backend>(name: impl Into<String>) -> Icon<B> {
+pub fn icon<B: Backend>(name: impl Into<Cow<'static, str>>) -> Icon<B> {
     Icon::new(name)
 }
 
@@ -21,15 +22,15 @@ pub fn divider<B: Backend>() -> Divider<B> {
     Divider::new()
 }
 
-pub fn image<B: Backend>(name: impl Into<String>) -> Image<B> {
+pub fn image<B: Backend>(name: impl Into<Cow<'static, str>>) -> Image<B> {
     Image::new(name)
 }
 
-pub fn video<B: Backend>(path: impl Into<String>) -> Video<B> {
+pub fn video<B: Backend>(path: impl Into<Cow<'static, str>>) -> Video<B> {
     Video::new(path)
 }
 
-pub fn web_view<B: Backend>(url: impl Into<String>) -> WebView<B> {
+pub fn web_view<B: Backend>(url: impl Into<Cow<'static, str>>) -> WebView<B> {
     WebView::new(url)
 }
 
@@ -82,7 +83,7 @@ pub fn glass_card<Message: 'static, B: Backend>(
 }
 
 pub fn section<Message: 'static, B: Backend>(
-    title: impl Into<String>,
+    title: impl Into<Cow<'static, str>>,
     content: impl View<Message, B> + 'static,
 ) -> Section<Message, B> {
     Section::new_generic(title, content)
@@ -95,21 +96,21 @@ pub fn button<Message: Clone + 'static, B: Backend>(
 }
 
 pub fn button_label<Message: Clone + 'static, B: Backend>(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
 ) -> Button<Message, B> {
     Button::new(Text::new(label))
 }
 
 pub fn text_input<Message: Clone + 'static, B: Backend>(
     value: impl Into<String>,
-    placeholder: impl Into<String>,
+    placeholder: impl Into<Cow<'static, str>>,
     on_change: impl Fn(String) -> Message + Send + Sync + 'static,
 ) -> TextInput<Message, B> {
     TextInput::new(value, placeholder, on_change)
 }
 
 pub fn toggle<Message: Clone + 'static, B: Backend>(
-    label: impl Into<String>,
+    label: impl Into<Cow<'static, str>>,
     is_active: bool,
     on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
 ) -> Toggle<Message, B> {

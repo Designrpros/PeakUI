@@ -71,13 +71,13 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
-        node.neural_tag = Some(self.tag.clone().into());
+        node.neural_tag = Some(self.tag.to_string().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
-        node.neural_tag = Some(self.tag.clone().into());
+        node.neural_tag = Some(self.tag.to_string().into());
         node
     }
 }
@@ -101,13 +101,13 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
 
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
-        node.documentation = Some(self.documentation.clone().into());
+        node.documentation = Some(self.documentation.to_string().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
-        node.documentation = Some(self.documentation.clone().into());
+        node.documentation = Some(self.documentation.to_string().into());
         node
     }
 }
@@ -204,14 +204,14 @@ impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
     fn describe(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe(context);
         node.is_protected = true;
-        node.protection_reason = Some(self.reason.clone().into());
+        node.protection_reason = Some(self.reason.to_string().into());
         node
     }
 
     fn describe_iced(&self, context: &Context) -> SemanticNode {
         let mut node = self.inner.describe_iced(context);
         node.is_protected = true;
-        node.protection_reason = Some(self.reason.clone().into());
+        node.protection_reason = Some(self.reason.to_string().into());
         node
     }
 }
@@ -3447,31 +3447,33 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
 /// A semantic representation of a UI component for AI agents and Accessibility.
 ///
 /// `SemanticNode` is a simplified, structured graph of the UI that AI models can
+use std::borrow::Cow;
+
 /// consume directly. It eliminates the need for expensive computer vision by
 /// exposing roles, labels, and state in a dense JSON format.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
 pub struct SemanticNode {
     /// The role of the component (e.g., "button", "text_field").
     #[serde(rename = "r")]
-    pub role: Arc<str>,
+    pub role: Cow<'static, str>,
     /// An optional stable identifier for the component.
     #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
-    pub id: Option<Arc<str>>,
+    pub id: Option<Cow<'static, str>>,
     /// A human-readable label or name for the component.
     #[serde(rename = "l", skip_serializing_if = "Option::is_none")]
-    pub label: Option<Arc<str>>,
+    pub label: Option<Cow<'static, str>>,
     /// The primary text content or value of the component.
     #[serde(rename = "c", skip_serializing_if = "Option::is_none")]
-    pub content: Option<Arc<str>>,
+    pub content: Option<Cow<'static, str>>,
     /// Hierarchical children of this node.
     #[serde(rename = "ch", skip_serializing_if = "Vec::is_empty")]
     pub children: Vec<SemanticNode>,
     /// A unique tag for AI-triggered actions.
     #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
-    pub neural_tag: Option<Arc<str>>,
+    pub neural_tag: Option<Cow<'static, str>>,
     /// Developer-provided documentation for this component.
     #[serde(rename = "d", skip_serializing_if = "Option::is_none")]
-    pub documentation: Option<Arc<str>>,
+    pub documentation: Option<Cow<'static, str>>,
     /// Metadata specifically for platform accessibility APIs.
     #[serde(rename = "a", skip_serializing_if = "Option::is_none")]
     pub accessibility: Option<AccessibilityNode>,
@@ -3486,7 +3488,7 @@ pub struct SemanticNode {
     pub is_protected: bool,
     /// The reason why this component is protected.
     #[serde(rename = "pr", skip_serializing_if = "Option::is_none")]
-    pub protection_reason: Option<Arc<str>>,
+    pub protection_reason: Option<Cow<'static, str>>,
     /// The Z-depth of the component in spatial/volumetric environments.
     #[serde(rename = "z", skip_serializing_if = "Option::is_none")]
     pub depth: Option<f32>,
@@ -3500,19 +3502,19 @@ fn is_false(b: &bool) -> bool {
 }
 
 impl SemanticNode {
-    pub fn new(role: impl Into<Arc<str>>) -> Self {
+    pub fn new(role: impl Into<Cow<'static, str>>) -> Self {
         Self {
             role: role.into(),
             ..Default::default()
         }
     }
 
-    pub fn with_label(mut self, label: impl Into<Arc<str>>) -> Self {
+    pub fn with_label(mut self, label: impl Into<Cow<'static, str>>) -> Self {
         self.label = Some(label.into());
         self
     }
 
-    pub fn with_content(mut self, content: impl Into<Arc<str>>) -> Self {
+    pub fn with_content(mut self, content: impl Into<Cow<'static, str>>) -> Self {
         self.content = Some(content.into());
         self
     }
@@ -3670,13 +3672,13 @@ pub struct AccessibilityNode {
     #[serde(rename = "r")]
     pub role: AccessibilityRole,
     #[serde(rename = "l")]
-    pub label: Arc<str>,
+    pub label: Cow<'static, str>,
     #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
-    pub hint: Option<Arc<str>>,
+    pub hint: Option<Cow<'static, str>>,
     #[serde(rename = "v", skip_serializing_if = "Option::is_none")]
-    pub value: Option<Arc<str>>,
+    pub value: Option<Cow<'static, str>>,
     #[serde(rename = "s", skip_serializing_if = "Vec::is_empty")]
-    pub states: Vec<Arc<str>>,
+    pub states: Vec<Cow<'static, str>>,
     #[serde(rename = "hd", skip_serializing_if = "is_false")]
     pub is_hidden: bool,
     #[serde(rename = "dis", skip_serializing_if = "is_false")]

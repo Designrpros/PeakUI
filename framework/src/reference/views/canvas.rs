@@ -3,80 +3,38 @@ use super::super::model::Page as ReferencePage;
 use super::super::pages;
 use crate::prelude::*;
 
+use super::state::ViewState;
+
 pub struct CanvasView {
-    pub active_tab: ReferencePage,
-    pub navigation_mode: String,
-    pub button_lab: super::super::app::ButtonLabState,
-    pub typography_lab: super::super::app::TypographyLabState,
-    pub layout_lab: super::super::app::LayoutLabState,
-    pub sizing_lab: super::super::app::SizingLabState,
-    pub accessibility_lab: super::super::app::AccessibilityLabState,
-    pub icon_lab: super::super::app::IconLabState,
-    pub render_mode: super::super::app::RenderMode,
-    pub api_key: String,
-    pub ai_provider: super::super::app::AIProviderChoice,
-    pub search_query: String,
-    pub icon_limit: usize,
-    pub db_records: Vec<crate::core::SemanticRecord>,
-    pub enable_exposure: bool,
+    pub state: ViewState,
 }
 
 use super::super::page::PageResult;
 
 impl CanvasView {
-    pub fn new(
-        active_tab: ReferencePage,
-        navigation_mode: String,
-        button_lab: super::super::app::ButtonLabState,
-        typography_lab: super::super::app::TypographyLabState,
-        layout_lab: super::super::app::LayoutLabState,
-        sizing_lab: super::super::app::SizingLabState,
-        accessibility_lab: super::super::app::AccessibilityLabState,
-        icon_lab: super::super::app::IconLabState,
-        render_mode: super::super::app::RenderMode,
-        api_key: String,
-        ai_provider: super::super::app::AIProviderChoice,
-        search_query: String,
-        icon_limit: usize,
-        db_records: Vec<crate::core::SemanticRecord>,
-        enable_exposure: bool,
-    ) -> Self {
-        Self {
-            active_tab,
-            navigation_mode,
-            button_lab,
-            typography_lab,
-            layout_lab,
-            sizing_lab,
-            accessibility_lab,
-            icon_lab,
-            render_mode,
-            api_key,
-            ai_provider,
-            search_query,
-            icon_limit,
-            db_records,
-            enable_exposure,
-        }
+    pub fn new(state: ViewState) -> Self {
+        Self { state }
     }
 
     pub fn render_page(&self, context: &Context) -> PageResult {
         let is_mobile = context.size.width < 900.0;
 
-        let page = match &self.active_tab {
+        let page = match &self.state.active_tab {
             // Guide
             ReferencePage::Introduction => pages::guide::introduction::view(context, is_mobile),
             ReferencePage::Architecture => pages::docs::architecture::view(context, is_mobile),
             ReferencePage::ProjectStructure => {
                 pages::docs::project_structure::view(context, is_mobile)
             }
-            ReferencePage::Accessibility => {
-                pages::docs::accessibility::view(context, &self.accessibility_lab, self.render_mode)
-            }
+            ReferencePage::Accessibility => pages::docs::accessibility::view(
+                context,
+                &self.state.accessibility_lab,
+                self.state.render_mode,
+            ),
 
             ReferencePage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             ReferencePage::Intelligence => {
-                pages::guide::intelligence::view(context, is_mobile, self.api_key.clone())
+                pages::guide::intelligence::view(context, is_mobile, self.state.api_key.clone())
             }
 
             // Ecosystem
@@ -98,76 +56,104 @@ impl CanvasView {
             // Concepts (Overview is legacy/fallback)
             ReferencePage::Overview => pages::guide::introduction::view(context, is_mobile),
             ReferencePage::Customizations => {
-                pages::docs::customizations::view(context, self.render_mode)
+                pages::docs::customizations::view(context, self.state.render_mode)
             }
             ReferencePage::BasicSizing => {
-                pages::docs::sizing::view(context, &self.sizing_lab, self.render_mode)
+                pages::docs::sizing::view(context, &self.state.sizing_lab, self.state.render_mode)
             }
-            ReferencePage::Colors => pages::docs::colors::view(context, self.render_mode),
-            ReferencePage::Typography => {
-                pages::docs::typography::view(context, &self.typography_lab, self.render_mode)
-            }
+            ReferencePage::Colors => pages::docs::colors::view(context, self.state.render_mode),
+            ReferencePage::Typography => pages::docs::typography::view(
+                context,
+                &self.state.typography_lab,
+                self.state.render_mode,
+            ),
             ReferencePage::Layout => {
-                pages::docs::layout::view(context, &self.layout_lab, self.render_mode)
+                pages::docs::layout::view(context, &self.state.layout_lab, self.state.render_mode)
             }
 
             // Atoms (Phase 3/4)
-            ReferencePage::Text => {
-                pages::components::text::view(context, &self.typography_lab, self.render_mode)
-            }
+            ReferencePage::Text => pages::components::text::view(
+                context,
+                &self.state.typography_lab,
+                self.state.render_mode,
+            ),
             ReferencePage::Icon => pages::components::icon::view(
                 context,
-                &self.icon_lab,
-                self.render_mode,
-                self.search_query.clone(),
-                self.icon_limit,
+                &self.state.icon_lab,
+                self.state.render_mode,
+                self.state.search_query.clone(),
+                self.state.icon_limit,
             ),
-            ReferencePage::Button => {
-                pages::components::button::view(context, &self.button_lab, self.render_mode)
+            ReferencePage::Button => pages::components::button::view(
+                context,
+                &self.state.button_lab,
+                self.state.render_mode,
+            ),
+            ReferencePage::Shapes => {
+                pages::components::shapes::view(context, self.state.render_mode)
             }
-            ReferencePage::Shapes => pages::components::shapes::view(context, self.render_mode),
-            ReferencePage::Image => pages::components::image::view(context, self.render_mode),
-            ReferencePage::Video => pages::components::video::view(context, self.render_mode),
-            ReferencePage::WebView => pages::components::web_view::view(context, self.render_mode),
-            ReferencePage::Divider => pages::components::divider::view(context, self.render_mode),
+            ReferencePage::Image => pages::components::image::view(context, self.state.render_mode),
+            ReferencePage::Video => pages::components::video::view(context, self.state.render_mode),
+            ReferencePage::WebView => {
+                pages::components::web_view::view(context, self.state.render_mode)
+            }
+            ReferencePage::Divider => {
+                pages::components::divider::view(context, self.state.render_mode)
+            }
 
             // Containers (Phase 4)
-            ReferencePage::VStack => pages::components::vstack::view(context, self.render_mode),
-            ReferencePage::HStack => pages::components::hstack::view(context, self.render_mode),
-            ReferencePage::ZStack => pages::components::zstack::view(context, self.render_mode),
-            ReferencePage::Overlay => pages::components::overlay::view(context, self.render_mode),
-            ReferencePage::ScrollView => {
-                pages::components::scroll_view::view(context, self.render_mode)
+            ReferencePage::VStack => {
+                pages::components::vstack::view(context, self.state.render_mode)
             }
-            ReferencePage::Card => pages::components::card::view(context, self.render_mode),
+            ReferencePage::HStack => {
+                pages::components::hstack::view(context, self.state.render_mode)
+            }
+            ReferencePage::ZStack => {
+                pages::components::zstack::view(context, self.state.render_mode)
+            }
+            ReferencePage::Overlay => {
+                pages::components::overlay::view(context, self.state.render_mode)
+            }
+            ReferencePage::ScrollView => {
+                pages::components::scroll_view::view(context, self.state.render_mode)
+            }
+            ReferencePage::Card => pages::components::card::view(context, self.state.render_mode),
 
             // Navigation (Phase 4)
             ReferencePage::Sidebar => {
-                pages::components::sidebar_doc::view(context, self.render_mode)
+                pages::components::sidebar_doc::view(context, self.state.render_mode)
             }
-            ReferencePage::Tabbar => pages::components::tabbar_doc::view(context, self.render_mode),
-            ReferencePage::Modal => pages::components::modal_doc::view(context, self.render_mode),
+            ReferencePage::Tabbar => {
+                pages::components::tabbar_doc::view(context, self.state.render_mode)
+            }
+            ReferencePage::Modal => {
+                pages::components::modal_doc::view(context, self.state.render_mode)
+            }
             ReferencePage::NavigationSplit => {
-                pages::components::navigation_split::view(context, self.render_mode)
+                pages::components::navigation_split::view(context, self.state.render_mode)
             }
-            ReferencePage::Section => pages::components::section::view(context, self.render_mode),
+            ReferencePage::Section => {
+                pages::components::section::view(context, self.state.render_mode)
+            }
             ReferencePage::DataTable => {
-                pages::components::data_table::view(context, self.render_mode)
+                pages::components::data_table::view(context, self.state.render_mode)
             }
             ReferencePage::BarChart => {
-                pages::components::bar_chart::view(context, self.render_mode)
+                pages::components::bar_chart::view(context, self.state.render_mode)
             }
             ReferencePage::LineChart => {
-                pages::components::line_chart::view(context, self.render_mode)
+                pages::components::line_chart::view(context, self.state.render_mode)
             }
             ReferencePage::PieChart => {
-                pages::components::pie_chart::view(context, self.render_mode)
+                pages::components::pie_chart::view(context, self.state.render_mode)
             }
 
             // Showcase Gallery (Deprecated / Redirects)
-            ReferencePage::ShowcaseButtons => {
-                pages::components::button::view(context, &self.button_lab, self.render_mode)
-            }
+            ReferencePage::ShowcaseButtons => pages::components::button::view(
+                context,
+                &self.state.button_lab,
+                self.state.render_mode,
+            ),
             ReferencePage::ShowcaseInputs
             | ReferencePage::ShowcaseToggles
             | ReferencePage::ShowcaseSliders
@@ -192,16 +178,16 @@ impl CanvasView {
             ReferencePage::SettingsAI => pages::settings::ai::view(
                 context,
                 is_mobile,
-                self.api_key.clone(),
-                self.ai_provider,
-                self.enable_exposure,
+                self.state.api_key.clone(),
+                self.state.ai_provider,
+                self.state.enable_exposure,
             ),
 
             // Details (from Landing)
             ReferencePage::PeakOSDetail => pages::landing::peak_os::view(context, is_mobile),
             ReferencePage::PeakUIDetail => pages::landing::peak_ui::view(context, is_mobile),
             ReferencePage::PeakDBDetail => {
-                pages::landing::peak_db::view(context, is_mobile, self.db_records.clone())
+                pages::landing::peak_db::view(context, is_mobile, self.state.db_records.to_vec())
             }
             ReferencePage::PeakRelayDetail => pages::landing::peak_relay::view(context, is_mobile),
             ReferencePage::PeakHubDetail => pages::landing::peak_hub::view(context, is_mobile),

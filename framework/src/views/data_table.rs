@@ -137,7 +137,7 @@ impl<M: 'static + Clone> DataTable<M> {
             .spacing(8.0)
             .align_y(iced::Alignment::Center)
             .push(
-                Text::<IcedBackend>::new(&col.label)
+                Text::<IcedBackend>::new(col.label.clone())
                     .caption1()
                     .bold()
                     .secondary(),

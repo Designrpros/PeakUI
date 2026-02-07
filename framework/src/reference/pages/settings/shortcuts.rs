@@ -1,6 +1,6 @@
+use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -28,7 +28,7 @@ subscription: |state| {
 fn shortcut_row(label: &str, keys: &str) -> impl View<Message, IcedBackend> {
     HStack::new_generic()
         .width(Length::Fill)
-        .push(Text::<IcedBackend>::new(label).body())
+        .push(Text::<IcedBackend>::new(label.to_string()).body())
         .push(Space::new(Length::Fill, Length::Shrink))
         .push({
             let keys = keys.to_string();

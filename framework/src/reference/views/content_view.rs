@@ -1,75 +1,18 @@
 use super::super::app::{App, Message};
-use super::super::model::Page;
 use super::{CanvasView, SidebarView, TabBarView};
 use crate::nav_split_view::NavigationSplitView;
 use crate::prelude::*;
 
-pub struct ContentView {
-    pub active_tab: Page,
-    pub show_search: bool,
-    pub show_inspector: bool,
-    pub show_sidebar: bool,
-    pub show_user_profile: bool,
-    pub navigation_mode: String,
-    pub search_query: String,
-    pub expanded_sections: std::collections::HashSet<String>,
-    pub button_lab: super::super::app::ButtonLabState,
-    pub typography_lab: super::super::app::TypographyLabState,
-    pub layout_lab: super::super::app::LayoutLabState,
-    pub sizing_lab: super::super::app::SizingLabState,
-    pub accessibility_lab: super::super::app::AccessibilityLabState,
-    pub icon_lab: super::super::app::IconLabState,
-    pub render_mode: super::super::app::RenderMode,
-    pub is_thinking: bool,
-    pub chat_messages: Vec<crate::views::chat::ChatMessage>,
-    pub chat_input: String,
-    pub sidebar_width: f32,
-    pub inspector_width: f32,
-    pub is_resizing_sidebar: bool,
-    pub is_resizing_inspector: bool,
-    pub inspector_tab: super::super::app::InspectorTab,
+use super::state::ViewState;
 
-    // Chat State for Global Inspector
-    pub api_key: String,
-    pub ai_provider: super::super::app::AIProviderChoice,
-    pub icon_limit: usize,
-    pub pending_sudo_action: Option<super::super::app::SudoAction>,
-    pub db_records: Vec<crate::core::SemanticRecord>,
-    pub enable_exposure: bool,
+pub struct ContentView {
+    pub state: ViewState,
 }
 
 impl ContentView {
     pub fn new(app: &App) -> Self {
         Self {
-            active_tab: app.active_tab.clone(), // Now it is Page
-            show_search: app.show_search,
-            show_inspector: app.show_inspector,
-            show_sidebar: app.show_sidebar,
-            show_user_profile: app.show_user_profile,
-            navigation_mode: app.navigation_mode.clone(),
-            search_query: app.search_query.clone(),
-            expanded_sections: app.expanded_sections.clone(),
-            button_lab: app.button_lab.clone(),
-            typography_lab: app.typography_lab.clone(),
-            layout_lab: app.layout_lab.clone(),
-            sizing_lab: app.sizing_lab.clone(),
-            accessibility_lab: app.accessibility_lab.clone(),
-            icon_lab: app.icon_lab.clone(),
-            render_mode: app.render_mode,
-            is_thinking: app.is_thinking,
-            chat_messages: app.chat_messages.clone(),
-            chat_input: app.chat_input.clone(),
-            sidebar_width: app.sidebar_width,
-            inspector_width: app.inspector_width,
-            is_resizing_sidebar: app.is_resizing_sidebar,
-            is_resizing_inspector: app.is_resizing_inspector,
-            inspector_tab: app.inspector_tab,
-            api_key: app.api_key.clone(),
-            ai_provider: app.ai_provider,
-            icon_limit: app.icon_limit,
-            pending_sudo_action: app.pending_sudo_action.clone(),
-            db_records: app.db.get_all(),
-            enable_exposure: app.enable_exposure,
+            state: ViewState::new(app),
         }
     }
 
@@ -77,30 +20,13 @@ impl ContentView {
         let is_mobile = context.is_slim();
 
         // --- 1. Sub-Views (Data Collection) ---
-        let canvas_manager = CanvasView::new(
-            self.active_tab.clone(),
-            self.navigation_mode.clone(),
-            self.button_lab.clone(),
-            self.typography_lab.clone(),
-            self.layout_lab.clone(),
-            self.sizing_lab.clone(),
-            self.accessibility_lab.clone(),
-            self.icon_lab.clone(),
-            self.render_mode,
-            self.api_key.clone(),
-            self.ai_provider,
-            self.search_query.clone(),
-            self.icon_limit,
-            self.db_records.clone(),
-            self.enable_exposure,
-        );
+        let canvas_manager = CanvasView::new(self.state.clone());
 
         let sidebar = SidebarView::new(
-            self.active_tab.clone(),
-            self.navigation_mode.clone(),
-            self.expanded_sections.clone(),
+            self.state.active_tab.clone(),
+            self.state.navigation_mode.clone(),
         );
-        let tabbar = TabBarView::new(self.navigation_mode.clone());
+        let tab_bar = TabBarView::new(self.state.navigation_mode.clone());
 
         // --- 2. Main Layout (Three-Column Split) ---
         // Render page base result
@@ -143,8 +69,8 @@ impl ContentView {
         // --- 3. Integrated Header --
         let _ = (); // Discard old notch content logic variable
 
-        let query = self.search_query.clone();
-        let show_inspector = self.show_inspector;
+        let query = self.state.search_query.clone();
+        let show_inspector = self.state.show_inspector;
         let sidebar_toggle = page.sidebar_toggle.take();
         let toolbar_items = std::mem::take(&mut page.toolbar_items);
         let search_config = page.search_config.clone();
@@ -182,7 +108,7 @@ impl ContentView {
             // 2. Search Field (Conditioned on Page)
             if let Some(config) = search_config.clone() {
                 let search_input =
-                    TextInput::<Message>::new(query.clone(), &config.placeholder, |s| {
+                    TextInput::<Message>::new(query.clone(), config.placeholder.clone(), |s| {
                         Message::Search(s)
                     })
                     .variant(Variant::Ghost)
@@ -266,25 +192,25 @@ impl ContentView {
             .push(header_view);
 
         let mut split_view = NavigationSplitView::new(sidebar, content_layout)
-            .force_sidebar_on_slim(self.show_sidebar && is_mobile)
-            .sidebar_width(self.sidebar_width)
-            .inspector_width(self.inspector_width)
+            .force_sidebar_on_slim(self.state.show_sidebar && is_mobile)
+            .sidebar_width(self.state.sidebar_width)
+            .inspector_width(self.state.inspector_width)
             .on_resize_sidebar(|w| Message::ResizeSidebar(w))
             .on_resize_inspector(|w| Message::ResizeInspector(w))
             .on_start_resize_sidebar(Message::StartResizingSidebar)
             .on_stop_resize_sidebar(Message::StopResizingSidebar)
             .on_start_resize_inspector(Message::StartResizingInspector)
             .on_stop_resize_inspector(Message::StopResizingInspector)
-            .is_resizing_sidebar(self.is_resizing_sidebar)
-            .is_resizing_inspector(self.is_resizing_inspector)
+            .is_resizing_sidebar(self.state.is_resizing_sidebar)
+            .is_resizing_inspector(self.state.is_resizing_inspector)
             .on_none(Message::None);
 
-        if self.show_inspector {
+        if self.state.show_inspector {
             // Determine available inspectors
             let ai_inspector = crate::views::chat::AIChatView::new(
-                self.chat_messages.clone(),
-                self.chat_input.clone(),
-                self.is_thinking,
+                self.state.chat_messages.clone(),
+                self.state.chat_input.clone(),
+                self.state.is_thinking,
                 Message::Chat,
             );
 
@@ -305,7 +231,9 @@ impl ContentView {
                     .push(
                         Button::label("Feature")
                             .variant(
-                                if self.inspector_tab == super::super::app::InspectorTab::Feature {
+                                if self.state.inspector_tab
+                                    == super::super::app::InspectorTab::Feature
+                                {
                                     Variant::Soft
                                 } else {
                                     Variant::Ghost
@@ -319,7 +247,8 @@ impl ContentView {
                     .push(
                         Button::label("Assistant")
                             .variant(
-                                if self.inspector_tab == super::super::app::InspectorTab::App {
+                                if self.state.inspector_tab == super::super::app::InspectorTab::App
+                                {
                                     Variant::Soft
                                 } else {
                                     Variant::Ghost
@@ -331,7 +260,7 @@ impl ContentView {
                             )),
                     );
 
-                let content: Box<dyn View<Message, IcedBackend>> = match self.inspector_tab {
+                let content: Box<dyn View<Message, IcedBackend>> = match self.state.inspector_tab {
                     super::super::app::InspectorTab::Feature => Box::new(p_inspector),
                     super::super::app::InspectorTab::App => Box::new(ai_inspector),
                 };
@@ -357,7 +286,7 @@ impl ContentView {
         // Unified Floating Dock: Both mobile and desktop use stack layout for a consistent floating dock experience
         let final_view: Element<'static, Message> = iced::widget::stack![
             split_view.view(context),
-            container(tabbar.view(context))
+            container(tab_bar.view(context))
                 .width(Length::Fill)
                 .height(Length::Fill) // Need full height for align_y to position at bottom
                 .align_x(Alignment::Center)
@@ -377,45 +306,28 @@ impl ContentView {
     pub fn describe(&self, context: &Context) -> crate::core::SemanticNode {
         let is_mobile = context.is_slim();
 
-        let canvas_manager = CanvasView::new(
-            self.active_tab.clone(),
-            self.navigation_mode.clone(),
-            self.button_lab.clone(),
-            self.typography_lab.clone(),
-            self.layout_lab.clone(),
-            self.sizing_lab.clone(),
-            self.accessibility_lab.clone(),
-            self.icon_lab.clone(),
-            self.render_mode,
-            self.api_key.clone(),
-            self.ai_provider,
-            self.search_query.clone(),
-            self.icon_limit,
-            self.db_records.clone(),
-            self.enable_exposure,
-        );
+        let canvas_manager = CanvasView::new(self.state.clone());
 
         let sidebar = SidebarView::new(
-            self.active_tab.clone(),
-            self.navigation_mode.clone(),
-            self.expanded_sections.clone(),
+            self.state.active_tab.clone(),
+            self.state.navigation_mode.clone(),
         );
 
         let page = canvas_manager.render_page(context);
 
         let mut split_view = NavigationSplitView::new(sidebar, ScrollView::from_boxed(page.view))
-            .force_sidebar_on_slim(self.show_sidebar && is_mobile)
-            .sidebar_width(self.sidebar_width)
-            .inspector_width(self.inspector_width);
+            .force_sidebar_on_slim(self.state.show_sidebar && is_mobile)
+            .sidebar_width(self.state.sidebar_width)
+            .inspector_width(self.state.inspector_width);
 
-        if self.show_inspector {
+        if self.state.show_inspector {
             if let Some(inspector) = page.inspector {
                 split_view = split_view.inspector(inspector);
             }
         }
 
         crate::core::SemanticNode::new("content_view")
-            .with_label(format!("Page: {:?}", self.active_tab))
+            .with_label(format!("Page: {:?}", self.state.active_tab))
             .push_child(split_view.describe(context))
     }
 }

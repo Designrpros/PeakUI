@@ -71,28 +71,27 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
             .align_x(iced::Alignment::Start)
             .push(hero)
             .push(sections)
-            .push(Space::<IcedBackend>::new(Length::Fill, Length::Fixed(120.0)))
+            .push(Space::<IcedBackend>::new(
+                Length::Fill,
+                Length::Fixed(120.0),
+            ))
             .view(ctx)
     }))
 }
 
-fn doc_section(
-    title: &str,
-    description: &str,
-    ctx: &Context,
-) -> VStack<Message, IcedBackend> {
+fn doc_section(title: &str, description: &str, ctx: &Context) -> VStack<Message, IcedBackend> {
     let t = ctx.theme;
     VStack::new_generic()
         .width(Length::Fill)
         .spacing(16.0)
         .push(
-            Text::<IcedBackend>::new(title)
+            Text::<IcedBackend>::new(title.to_string())
                 .size(24.0)
                 .bold()
                 .color(t.colors.text_primary),
         )
         .push(
-            Text::<IcedBackend>::new(description)
+            Text::<IcedBackend>::new(description.to_string())
                 .size(16.0)
                 .color(t.colors.text_secondary)
                 .width(Length::Fill),

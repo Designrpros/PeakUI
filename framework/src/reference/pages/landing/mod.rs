@@ -103,7 +103,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
                                     .push(
                                         TextInput::new(
                                             query.to_string(), 
-                                            placeholder, 
+                                            placeholder.to_string(), 
                                             Message::Search
                                         )
                                         .variant(Variant::Ghost)
@@ -222,7 +222,7 @@ fn about_section(context: &Context, is_mobile: bool) -> Container<Message, IcedB
 }
 
 fn platform_badge(label: &str, t: ThemeTokens) -> Container<Message, IcedBackend> {
-    Container::new(Text::new(label).size(12.0).bold().color(t.colors.primary))
+    Container::new(Text::new(label.to_string()).size(12.0).bold().color(t.colors.primary))
         .padding(Padding::from([8, 16]))
         .border(1.0, t.colors.border)
         .radius(100.0)
@@ -308,8 +308,8 @@ fn safety_ledger_section(context: &Context, is_mobile: bool) -> Container<Messag
 
 fn section_header(title: &str, subtitle: &str, is_mobile: bool) -> VStack<Message, IcedBackend> {
     VStack::new().spacing(12.0).width(Length::Fill)
-        .push(Text::new(title).size(if is_mobile { 32.0 } else { 48.0 }).bold())
-        .push(Text::new(subtitle).secondary().size(if is_mobile { 16.0 } else { 20.0 }))
+        .push(Text::new(title.to_string()).size(if is_mobile { 32.0 } else { 48.0 }).bold())
+        .push(Text::new(subtitle.to_string()).secondary().size(if is_mobile { 16.0 } else { 20.0 }))
 }
 
 fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context, page: Page) -> impl View<Message, IcedBackend> + 'static {
@@ -317,7 +317,7 @@ fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context
     let is_beta = title == "PeakOS" || title == "PeakRelay" || title == "PeakDB" || title == "Peak Hub";
 
     let mut header = HStack::new().align_y(Alignment::Center).width(Length::Fill);
-    header = header.push(Icon::new(icon).size(24.0).color(t.colors.primary));
+    header = header.push(Icon::new(icon.to_string()).size(24.0).color(t.colors.primary));
 
     if is_beta {
         header = header.push(Space::new(Length::Fill, Length::Shrink)).push(
@@ -335,10 +335,10 @@ fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context
             VStack::new()
                 .spacing(4.0)
                 .width(Length::Fill)
-                .push(Text::new(title).headline().bold())
-                .push(Text::new(sub).caption1().secondary())
+                .push(Text::new(title.to_string()).headline().bold())
+                .push(Text::new(sub.to_string()).caption1().secondary())
         )
-        .push(Text::new(desc).body().secondary());
+        .push(Text::new(desc.to_string()).body().secondary());
 
     Container::new(card_stack)
         .width(Length::Fill)
@@ -350,9 +350,9 @@ fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context
 fn vertical_card(title: &str, desc: &str, icon: &str, context: &Context) -> Container<Message, IcedBackend> {
     let t = context.theme;
     let card = VStack::new().spacing(16.0).padding(20.0).width(Length::Fill)
-        .push(Icon::new(icon).size(24.0).color(t.colors.primary))
-        .push(Text::new(title).headline().bold())
-        .push(Text::new(desc).body().secondary());
+        .push(Icon::new(icon.to_string()).size(24.0).color(t.colors.primary))
+        .push(Text::new(title.to_string()).headline().bold())
+        .push(Text::new(desc.to_string()).body().secondary());
 
     Container::new(card).width(Length::Fill).border(1.0, t.colors.border)
         .radius(if cfg!(target_arch = "wasm32") { 0.0 } else { 4.0 })
@@ -362,7 +362,7 @@ fn blue_print_item(label: &str, desc: &str, context: &Context) -> HStack<Message
     let t = context.theme;
     HStack::new().spacing(24.0).align_y(Alignment::Center).width(Length::Fill)
         .push(Rectangle::new(Length::Fixed(4.0), Length::Fixed(40.0)).color(t.colors.primary).radius(2.0))
-        .push(VStack::new().push(Text::new(label).caption1().bold().secondary()).push(Text::new(desc).body()))
+        .push(VStack::new().push(Text::new(label.to_string()).caption1().bold().secondary()).push(Text::new(desc.to_string()).body()))
 }
 
 fn footer(_context: &Context, is_mobile: bool) -> Container<Message, IcedBackend> {

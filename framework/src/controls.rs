@@ -1,12 +1,13 @@
 use crate::core::{Backend, Context, View};
 use crate::modifiers::{ControlSize, Intent, Variant};
 use iced::{Alignment, Length, Padding};
+use std::borrow::Cow;
 use std::sync::Arc;
 
 /// A customizable button component that supports labels, icons, and various intents/variants.
 pub struct Button<Message, B: crate::core::Backend = crate::core::IcedBackend> {
     content: Box<dyn View<Message, B>>,
-    icon: Option<String>,
+    icon: Option<Cow<'static, str>>,
     on_press: Option<Message>,
     intent: Intent,
     variant: Variant,
@@ -42,11 +43,11 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
         }
     }
 
-    pub fn label(text: impl Into<String>) -> Self {
+    pub fn label(text: impl Into<Cow<'static, str>>) -> Self {
         Self::new(crate::atoms::Text::<B>::new(text))
     }
 
-    pub fn icon(mut self, name: impl Into<String>) -> Self {
+    pub fn icon(mut self, name: impl Into<Cow<'static, str>>) -> Self {
         self.icon = Some(name.into());
         self
     }
@@ -136,7 +137,12 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
 
         if let Some(icon_name) = &self.icon {
             let icon_color = child_context.foreground;
-            children.push(B::icon(icon_name.clone(), 16.0, icon_color, &child_context));
+            children.push(B::icon(
+                icon_name.to_string(),
+                16.0,
+                icon_color,
+                &child_context,
+            ));
         }
 
         children.push(self.content.view(&child_context));
@@ -190,7 +196,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
 }
 
 pub struct Toggle<Message, B: crate::core::Backend = crate::core::IcedBackend> {
-    label: String,
+    label: Cow<'static, str>,
     is_active: bool,
     on_toggle: Arc<dyn Fn(bool) -> Message + Send + Sync>,
     _phantom: std::marker::PhantomData<B>,
@@ -198,7 +204,7 @@ pub struct Toggle<Message, B: crate::core::Backend = crate::core::IcedBackend> {
 
 impl<Message, B: crate::core::Backend> Toggle<Message, B> {
     pub fn new(
-        label: impl Into<String>,
+        label: impl Into<Cow<'static, str>>,
         is_active: bool,
         f: impl Fn(bool) -> Message + Send + Sync + 'static,
     ) -> Self {
@@ -214,7 +220,7 @@ impl<Message, B: crate::core::Backend> Toggle<Message, B> {
 impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Toggle<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::toggle(
-            self.label.clone(),
+            self.label.as_ref().to_string(),
             self.is_active,
             {
                 let on_toggle = self.on_toggle.clone();
@@ -290,7 +296,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Sli
 }
 
 pub struct Stepper<Message, B: crate::core::Backend = crate::core::IcedBackend> {
-    label: String,
+    label: Cow<'static, str>,
     value: i32,
     range: std::ops::RangeInclusive<i32>,
     step: i32,
@@ -300,7 +306,7 @@ pub struct Stepper<Message, B: crate::core::Backend = crate::core::IcedBackend> 
 
 impl<Message, B: crate::core::Backend> Stepper<Message, B> {
     pub fn new(
-        label: impl Into<String>,
+        label: impl Into<Cow<'static, str>>,
         value: i32,
         on_change: impl Fn(i32) -> Message + Send + Sync + 'static,
     ) -> Self {
@@ -409,7 +415,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
 }
 pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBackend> {
     value: String,
-    placeholder: String,
+    placeholder: Cow<'static, str>,
     on_change: Arc<dyn Fn(String) -> Message + Send + Sync>,
     on_submit: Option<Message>,
     font: Option<iced::Font>,
@@ -423,7 +429,7 @@ pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBac
 impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
     pub fn new(
         value: impl Into<String>,
-        placeholder: impl Into<String>,
+        placeholder: impl Into<Cow<'static, str>>,
         on_change: impl Fn(String) -> Message + Send + Sync + 'static,
     ) -> Self {
         Self {
@@ -476,7 +482,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
         let on_change = self.on_change.clone();
         let input = B::text_input(
             self.value.clone(),
-            self.placeholder.clone(),
+            self.placeholder.as_ref().to_string(),
             move |s| (on_change)(s),
             self.on_submit.clone(),
             self.font.clone(),
@@ -502,10 +508,10 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        let value: Arc<str> = if self.is_secure {
+        let value: Cow<'static, str> = if self.is_secure {
             "********".into()
         } else {
-            self.value.as_str().into()
+            self.value.clone().into()
         };
 
         crate::core::SemanticNode::new("text_input")
@@ -513,7 +519,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Messag
             .with_content(value.clone())
             .with_accessibility(crate::core::AccessibilityNode {
                 role: crate::core::AccessibilityRole::TextField,
-                label: self.placeholder.clone().into(),
+                label: self.placeholder.clone(),
                 value: Some(value),
                 ..Default::default()
             })

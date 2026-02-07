@@ -1,13 +1,14 @@
 use crate::core::{Backend, Context, IcedBackend, ProxyView, View};
 use crate::modifiers::Intent;
 use iced::{Alignment, Color, Length, Padding};
+use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::sync::Arc;
 pub mod badge;
 
 #[derive(Clone)]
 pub struct Text<B: Backend = IcedBackend> {
-    content: String,
+    content: Cow<'static, str>,
     size: f32,
     color: Option<Color>,
     intent: Option<Intent>,
@@ -20,7 +21,7 @@ pub struct Text<B: Backend = IcedBackend> {
 }
 
 impl<B: Backend> Text<B> {
-    pub fn new(content: impl Into<String>) -> Self {
+    pub fn new(content: impl Into<Cow<'static, str>>) -> Self {
         Self {
             content: content.into(),
             size: 14.0,
@@ -183,7 +184,7 @@ impl<B: Backend> Text<B> {
 impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::text(
-            self.content.clone(),
+            self.content.as_ref().to_string(),
             self.size,
             self.color,
             self.is_bold,
@@ -382,14 +383,14 @@ impl<Message: 'static, B: Backend> View<Message, B> for Divider<B> {
 
 #[derive(Clone)]
 pub struct Icon<B: Backend + Clone = IcedBackend> {
-    name: String,
+    name: Cow<'static, str>,
     size: f32,
     color: Option<Color>,
     _phantom: PhantomData<B>,
 }
 
 impl<B: Backend> Icon<B> {
-    pub fn new(name: impl Into<String>) -> Self {
+    pub fn new(name: impl Into<Cow<'static, str>>) -> Self {
         Self {
             name: name.into(),
             size: 24.0,
@@ -444,7 +445,12 @@ impl<B: Backend> Icon<B> {
 
 impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        B::icon(self.name.clone(), self.size, self.color, context)
+        B::icon(
+            self.name.as_ref().to_string(),
+            self.size,
+            self.color,
+            context,
+        )
     }
 
     fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
@@ -453,7 +459,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
 }
 
 pub struct Image<B: Backend = IcedBackend> {
-    path: String,
+    path: Cow<'static, str>,
     width: Length,
     height: Length,
     radius: f32,
@@ -461,7 +467,7 @@ pub struct Image<B: Backend = IcedBackend> {
 }
 
 impl<B: Backend> Image<B> {
-    pub fn new(path: impl Into<String>) -> Self {
+    pub fn new(path: impl Into<Cow<'static, str>>) -> Self {
         Self {
             path: path.into(),
             width: Length::Shrink,
@@ -490,7 +496,7 @@ impl<B: Backend> Image<B> {
 impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::image(
-            self.path.clone(),
+            self.path.as_ref().to_string(),
             self.width,
             self.height,
             self.radius,
@@ -510,7 +516,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
 }
 
 pub struct Video<B: Backend = IcedBackend> {
-    path: String,
+    path: Cow<'static, str>,
     width: Length,
     height: Length,
     radius: f32,
@@ -518,7 +524,7 @@ pub struct Video<B: Backend = IcedBackend> {
 }
 
 impl<B: Backend> Video<B> {
-    pub fn new(path: impl Into<String>) -> Self {
+    pub fn new(path: impl Into<Cow<'static, str>>) -> Self {
         Self {
             path: path.into(),
             width: Length::Shrink,
@@ -547,7 +553,7 @@ impl<B: Backend> Video<B> {
 impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::video(
-            self.path.clone(),
+            self.path.as_ref().to_string(),
             self.width,
             self.height,
             self.radius,
@@ -561,7 +567,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
 }
 
 pub struct WebView<B: Backend = IcedBackend> {
-    url: String,
+    url: Cow<'static, str>,
     width: Length,
     height: Length,
     radius: f32,
@@ -569,7 +575,7 @@ pub struct WebView<B: Backend = IcedBackend> {
 }
 
 impl<B: Backend> WebView<B> {
-    pub fn new(url: impl Into<String>) -> Self {
+    pub fn new(url: impl Into<Cow<'static, str>>) -> Self {
         Self {
             url: url.into(),
             width: Length::Fill,
@@ -598,7 +604,7 @@ impl<B: Backend> WebView<B> {
 impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::web_view(
-            self.url.clone(),
+            self.url.as_ref().to_string(),
             self.width,
             self.height,
             self.radius,
