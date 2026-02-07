@@ -9,115 +9,127 @@ pub fn view(
     ai_provider: AIProviderChoice,
     enable_exposure: bool,
 ) -> PageResult<Message> {
-    let mut provider_selection = HStack::<Message, IcedBackend>::new_generic()
-        .spacing(16.0)
-        .width(Length::Fill);
+    PageResult::new(crate::core::ProxyView::new(move |context| {
+        // Config for providers
+        let providers = [
+            (
+                AIProviderChoice::Ollama, 
+                "Ollama", 
+                "brain", 
+                "Privacy-first local inference using your GPU."
+            ),
+            (
+                AIProviderChoice::LlamaCpp, 
+                "Llama.cpp", 
+                "cpu", 
+                "Lightweight local execution for fast response."
+            ),
+            (
+                AIProviderChoice::OpenRouter, 
+                "OpenRouter", 
+                "cloud", 
+                "Access massive cloud models via API."
+            ),
+        ];
 
-    // Config for providers
-    let providers = [
-        (
-            AIProviderChoice::Ollama, 
-            "Ollama", 
-            "brain", 
-            "Privacy-first local inference using your GPU."
-        ),
-        (
-            AIProviderChoice::LlamaCpp, 
-            "Llama.cpp", 
-            "cpu", 
-            "Lightweight local execution for fast response."
-        ),
-        (
-            AIProviderChoice::OpenRouter, 
-            "OpenRouter", 
-            "cloud", 
-            "Access massive cloud models via API."
-        ),
-    ];
+        // Manual Grid Layout for robustness
+        let mut provider_view = VStack::<Message, IcedBackend>::new_generic()
+            .spacing(16.0)
+            .width(Length::Fill);
 
-    for (choice, name, icon, desc) in providers {
-        let is_selected = choice == ai_provider;
+        let is_wide = context.size.width > 700.0;
+        let columns = if is_wide { 3 } else { 1 };
         
-        // Build the card content
-        let mut card_header = HStack::<Message, IcedBackend>::new_generic()
-            .spacing(12.0)
-            .align_y(Alignment::Center)
-            .push(Icon::<IcedBackend>::new(icon).size(20.0))
-            .push(Text::<IcedBackend>::new(name).title3().bold().width(Length::Fill));
-        
-        if is_selected {
-            card_header = card_header.push(
-                Icon::<IcedBackend>::new("check_circle")
-                    .size(16.0)
-                    .primary()
-            );
+        for chunk in providers.chunks(columns) {
+            let mut row = HStack::<Message, IcedBackend>::new_generic()
+                .spacing(16.0)
+                .width(Length::Fill);
+            
+            for (choice, name, icon, desc) in chunk {
+                let is_selected = *choice == ai_provider;
+                
+                // Build robust card content
+                let content = VStack::<Message, IcedBackend>::new_generic()
+                    .spacing(12.0)
+                    .padding(20.0)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .align_x(Alignment::Center)
+                    .align_y(Alignment::Center)
+                    .push(
+                        HStack::<Message, IcedBackend>::new_generic()
+                            .spacing(12.0)
+                            .align_y(Alignment::Center)
+                            .push(Icon::<IcedBackend>::new(icon.to_string()).size(24.0))
+                            .push(
+                                Text::<IcedBackend>::new(name.to_string())
+                                    .bold()
+                            )
+                    )
+                    .push(
+                        Text::<IcedBackend>::new(desc.to_string())
+                            .caption2()
+                            .secondary()
+                            .width(Length::Fill)
+                            .align_center()
+                    );
+
+                row = row.push(
+                    Button::<Message, IcedBackend>::new(content)
+                        .variant(if is_selected { Variant::Soft } else { Variant::Ghost })
+                        .on_press(Message::SetAIProvider(*choice))
+                        .width(Length::Fill)
+                        .height(Length::Fixed(140.0))
+                );
+            }
+            
+            // Add row to view
+            provider_view = provider_view.push(row);
         }
 
-        let card_content = VStack::<Message, IcedBackend>::new_generic()
-            .spacing(12.0)
-            .padding(16.0)
-            .push(card_header)
-            .push(
-                Text::<IcedBackend>::new(desc)
-                    .caption1()
-                    .secondary()
-                    .width(Length::Fill)
-            );
-
-        // Wrap in a GlassCard for premium look
-        let card = crate::containers::GlassCard::<Message, IcedBackend>::new(card_content);
-
-        // Add to the selection row, wrapped in a button to handle clicks
-        provider_selection = provider_selection.push(
-            Button::<Message, IcedBackend>::new(card)
-                .variant(if is_selected { Variant::Soft } else { Variant::Ghost })
-                .on_press(Message::SetAIProvider(choice))
-                .width(Length::FillPortion(1))
-        );
-    }
-
-    let main_view = VStack::<Message, IcedBackend>::new_generic()
-        .width(Length::Fill)
-        .spacing(32.0)
+        let main_view = VStack::<Message, IcedBackend>::new_generic()
+            .width(Length::Fill)
+            .spacing(32.0)
             .padding(Padding {
-                top: _context.safe_area.top,
+                top: context.safe_area.top,
                 right: 20.0,
-                bottom: _context.safe_area.bottom,
+                bottom: context.safe_area.bottom,
                 left: 20.0,
             })
-        // Header
-        .push(
-            VStack::<Message, IcedBackend>::new_generic()
-                .spacing(8.0)
-                .push(Text::<IcedBackend>::new("Intelligence").large_title().bold())
-                .push(
-                    Text::<IcedBackend>::new("Configure your AI routing, local inference engines, and cloud API keys.")
-                        .title3()
-                        .secondary(),
+            // Hero Header (Standardized with other settings)
+            .push(
+                VStack::<Message, IcedBackend>::new_generic()
+                    .spacing(8.0)
+                    .push(Text::<IcedBackend>::new("Intelligence").large_title().bold())
+                    .push(
+                        Text::<IcedBackend>::new("Configure your AI routing, local inference engines, and cloud API keys.")
+                            .title3()
+                            .secondary(),
+                    )
+            )
+            .push(Divider::<IcedBackend>::new())
+            
+            // Provider Selection Section
+            .push(
+                crate::containers::Section::new(
+                    "Model Provider",
+                    VStack::new_generic()
+                        .spacing(16.0)
+                        .push(
+                            Text::<IcedBackend>::new("Select how you want to run your AI models. Local providers run entirely on your machine, while OpenRouter connects to high-performance cloud fleets.")
+                                .body()
+                                .secondary()
+                        )
+                        .push(provider_view)
                 )
-        )
-        .push(Divider::<IcedBackend>::new())
-        
-        // Provider Selection Section
-        .push(
-            VStack::<Message, IcedBackend>::new_generic()
-                .spacing(20.0)
-                .push(Text::<IcedBackend>::new("Model Provider").title2().bold())
-                .push(
-                    Text::<IcedBackend>::new("Select how you want to run your AI models. Local providers run entirely on your machine, while OpenRouter connects to high-performance cloud fleets.")
-                        .body()
-                        .secondary()
-                )
-                .push(provider_selection)
-        )
-        .push(Divider::<IcedBackend>::new())
+                .width(Length::Fill)
+            )
+            .push(Divider::<IcedBackend>::new())
 
-        // Configuration Section
-        .push(
-            VStack::<Message, IcedBackend>::new_generic()
-                .spacing(20.0)
-                .push(Text::<IcedBackend>::new("Configuration").title2().bold())
-                .push(
+            // Configuration Section
+            .push(
+                crate::containers::Section::new(
+                    "Configuration",
                     VStack::<Message, IcedBackend>::new_generic()
                         .spacing(12.0)
                         .push(
@@ -155,38 +167,62 @@ pub fn view(
                                         )
                                 )
                                 .push(
-                                    Toggle::<Message, IcedBackend>::new(
-                                        "",
-                                        enable_exposure,
-                                        |b| Message::SetExposure(b)
-                                    )
+                                    {
+                                        #[cfg(target_arch = "wasm32")]
+                                        {
+                                            HStack::<Message, IcedBackend>::new_generic()
+                                                .spacing(10.0)
+                                                .align_y(iced::Alignment::Center)
+                                                .push(
+                                                    Toggle::<Message, IcedBackend>::new(
+                                                        "",
+                                                        enable_exposure,
+                                                        |b| Message::SetExposure(b) 
+                                                    )
+                                                )
+                                                .push(
+                                                    Text::<IcedBackend>::new("Not available in Browser").caption2().secondary()
+                                                )
+                                        }
+                                        #[cfg(not(target_arch = "wasm32"))]
+                                        {
+                                            Toggle::<Message, IcedBackend>::new(
+                                                "",
+                                                enable_exposure,
+                                                |b| Message::SetExposure(b)
+                                            )
+                                        }
+                                    }
                                 )
                         )
                 )
-        )
+                .width(Length::Fill)
+            )
 
-        // Implementation Detail
-        .push(Divider::<IcedBackend>::new())
-        .push(
-            VStack::<Message, IcedBackend>::new_generic()
-                .spacing(16.0)
-                .push(Text::<IcedBackend>::new("Agnostic Routing Example").title2().bold())
-                .push(
+            // Implementation Detail
+            .push(Divider::<IcedBackend>::new())
+            .push(
+                crate::containers::Section::new(
+                    "Agnostic Routing Example",
                     crate::views::CodeBlock::rust(
-                        r#"// The application remains agnostic of the underlying provider.
-// Switching providers hot-reloads the Bridge automatically.
+                        r#"
+                            // The application remains agnostic of the underlying provider.
+                            // Switching providers hot-reloads the Bridge automatically.
 
-Message::SetAIProvider(AIProviderChoice::LlamaCpp) => {
-    self.intelligence = Arc::new(PeakIntelligenceBridge::new(
-        ModelProvider::LlamaCpp,
-        "models/llama-3-8b.gguf",
-        None
-    ));
-}"#
+                            Message::SetAIProvider(AIProviderChoice::LlamaCpp) => {
+                                self.intelligence = Arc::new(PeakIntelligenceBridge::new(
+                                    ModelProvider::LlamaCpp,
+                                    "models/llama-3-8b.gguf",
+                                    None
+                                ));
+                            }
+                        "#
                     )
                     .on_copy(Message::CopyCode)
                 )
-        );
+                .width(Length::Fill)
+            );
 
-    PageResult::new(crate::scroll_view::ScrollView::new(main_view))
+        main_view.view(context)
+    }))
 }

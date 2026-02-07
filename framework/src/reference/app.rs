@@ -170,6 +170,7 @@ pub struct App {
     pub a11y: crate::accessibility::AccessibilityBridge,
     pub tick: u64,
     pub enable_exposure: bool,
+    pub scaling: f32,
 }
 
 #[derive(Debug, Clone)]
@@ -307,6 +308,7 @@ pub enum Message {
     Search(String),
     SetTheme(ThemeTone),
     SetThemeKind(PeakTheme),
+    SetScaling(f32),
     CopyCode(String),
     SetRenderMode(RenderMode),
     OpenContextMenu(iced::Point),
@@ -379,6 +381,9 @@ pub enum Message {
     SudoDeny,
     ExecuteShell(String), // New: Shell execution message
     ApplyNativeVibrancy,
+    #[cfg(target_arch = "wasm32")]
+    TypewriterTick(wasmtimer::std::Instant),
+    #[cfg(not(target_arch = "wasm32"))]
     TypewriterTick(std::time::Instant),
     Unknown(String),
     None,
@@ -603,6 +608,7 @@ impl Default for App {
             a11y: crate::accessibility::AccessibilityBridge::new(),
             tick: 0,
             enable_exposure: settings.enable_exposure,
+            scaling: 1.0,
         }
     }
 }
@@ -818,6 +824,10 @@ impl App {
             }
             Message::ToggleUserProfile => {
                 self.show_user_profile = !self.show_user_profile;
+                Task::none()
+            }
+            Message::SetScaling(scaling) => {
+                self.scaling = scaling;
                 Task::none()
             }
             Message::SetNavigationMode(mode) => {
@@ -1108,6 +1118,12 @@ impl App {
                     enable_exposure: self.enable_exposure,
                 };
                 settings.save();
+
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    // Native server logic would go here
+                }
+
                 Task::none()
             }
             Message::OpenContextMenu(pos) => {
@@ -1529,7 +1545,8 @@ impl App {
             ShellMode::Desktop
         };
         let tone = self.theme_tone;
-        let tokens = ThemeTokens::with_theme(self.theme, tone);
+        let mut tokens = ThemeTokens::with_theme(self.theme, tone);
+        tokens.scaling = self.scaling;
 
         if self.show_landing {
             // Create context directly without responsive wrapper for performance
@@ -1821,8 +1838,12 @@ impl App {
                 window_events,
                 iced::time::every(std::time::Duration::from_millis(100))
                     .map(|_| Message::Heartbeat),
-                iced::time::every(std::time::Duration::from_millis(100))
-                    .map(Message::TypewriterTick),
+                iced::time::every(std::time::Duration::from_millis(100)).map(|_t| {
+                    #[cfg(target_arch = "wasm32")]
+                    let t = wasmtimer::std::Instant::now(); // iced::time returns std::time::Instant, but we need wasmtimer's
+
+                    Message::TypewriterTick(t)
+                }),
             ])
         }
         #[cfg(not(target_arch = "wasm32"))]

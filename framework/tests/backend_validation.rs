@@ -10,8 +10,8 @@ fn test_semantic_consistency() {
     // Create a simple UI
     fn create_ui<B: Backend>() -> VStack<(), B> {
         VStack::new()
-            .push(Text::new("Hello World"))
-            .push(Text::new("Subtext"))
+            .push(Text::new(std::borrow::Cow::Borrowed("Hello World")))
+            .push(Text::new(std::borrow::Cow::Borrowed("Subtext")))
     }
 
     let iced_view = create_ui::<IcedBackend>();
@@ -25,23 +25,32 @@ fn test_semantic_consistency() {
     let spatial_desc = spatial_view.describe(&ctx);
 
     // Verify that all backends produce semantically equivalent trees
-    assert_eq!(iced_desc.role, "vstack".into());
+    assert_eq!(iced_desc.role, std::borrow::Cow::Borrowed("vstack"));
     assert_eq!(iced_desc.children.len(), 2);
 
-    assert_eq!(term_desc.role, "vstack".into());
+    assert_eq!(term_desc.role, std::borrow::Cow::Borrowed("vstack"));
     assert_eq!(term_desc.children.len(), 2);
 
-    assert_eq!(ai_desc.role, "vstack".into());
+    assert_eq!(ai_desc.role, std::borrow::Cow::Borrowed("vstack"));
     assert_eq!(ai_desc.children.len(), 2);
 
-    assert_eq!(spatial_desc.role, "vstack".into());
+    assert_eq!(spatial_desc.role, std::borrow::Cow::Borrowed("vstack"));
     assert_eq!(spatial_desc.children.len(), 2);
 
     // Verify leaf node consistency
-    assert_eq!(iced_desc.children[0].role, "text".into());
-    assert_eq!(term_desc.children[0].role, "text".into());
-    assert_eq!(ai_desc.children[0].role, "text".into());
-    assert_eq!(spatial_desc.children[0].role, "text".into());
+    assert_eq!(
+        iced_desc.children[0].role,
+        std::borrow::Cow::Borrowed("text")
+    );
+    assert_eq!(
+        term_desc.children[0].role,
+        std::borrow::Cow::Borrowed("text")
+    );
+    assert_eq!(ai_desc.children[0].role, std::borrow::Cow::Borrowed("text"));
+    assert_eq!(
+        spatial_desc.children[0].role,
+        std::borrow::Cow::Borrowed("text")
+    );
 }
 
 #[test]

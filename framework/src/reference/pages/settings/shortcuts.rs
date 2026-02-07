@@ -1,38 +1,76 @@
 use crate::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
-use crate::reference::views::ComponentDoc;
-use std::sync::Arc;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
-    let preview = VStack::<Message, IcedBackend>::new_generic()
-        .spacing(24.0)
-        .push(Text::<IcedBackend>::new("Key Bindings").title2().bold())
-        .push(shortcut_row("Toggle Sidebar", "⌘ B"))
-        .push(shortcut_row("Toggle Search", "⌘ K"))
-        .push(shortcut_row("Switch Theme", "⌘ T"));
-
-    PageResult::new(ComponentDoc::new(
-        "Keyboard Shortcuts",
-        "Register global keyboard accelerators for power users.",
-        r#"
-// Handling keyboard events
-subscription: |state| {
-    iced::event::listen().map(Message::Event)
-}
-"#,
-        Arc::new(preview),
-    ))
+    PageResult::new(crate::core::ProxyView::new(move |context| {
+        VStack::<Message, IcedBackend>::new_generic()
+            .width(Length::Fill)
+            .spacing(32.0)
+            .padding(Padding {
+                top: context.safe_area.top,
+                right: 20.0,
+                bottom: context.safe_area.bottom,
+                left: 20.0,
+            })
+            // Hero Header
+            .push(
+                VStack::<Message, IcedBackend>::new_generic()
+                    .spacing(8.0)
+                    .push(Text::<IcedBackend>::new("Shortcuts").large_title().bold())
+                    .push(
+                        Text::<IcedBackend>::new(
+                            "Register global keyboard accelerators for power users.",
+                        )
+                        .title3()
+                        .secondary(),
+                    ),
+            )
+            .push(Divider::<IcedBackend>::new())
+            // Key Bindings Section
+            .push(
+                crate::containers::Section::new(
+                    "Key Bindings",
+                    VStack::<Message, IcedBackend>::new_generic()
+                        .spacing(16.0)
+                        .push(shortcut_row("Toggle Sidebar", "Cmd B"))
+                        .push(shortcut_row("Toggle Search", "Cmd K"))
+                        .push(shortcut_row("Switch Theme", "Cmd T")),
+                )
+                .width(Length::Fill),
+            )
+            .push(Divider::<IcedBackend>::new())
+            // Implementation Reference
+            .push(
+                crate::containers::Section::new(
+                    "Implementation",
+                    crate::views::CodeBlock::rust(
+                        r#"
+                            // Handling keyboard events in your subscription
+                            subscription: |state| {
+                                iced::event::listen().map(Message::Event)
+                            }
+                        "#,
+                    )
+                    .on_copy(Message::CopyCode),
+                )
+                .width(Length::Fill),
+            )
+            .view(context)
+    }))
 }
 
 fn shortcut_row(label: &str, keys: &str) -> impl View<Message, IcedBackend> {
     HStack::new_generic()
         .width(Length::Fill)
+        .align_y(Alignment::Center)
         .push(Text::<IcedBackend>::new(label.to_string()).body())
         .push(Space::new(Length::Fill, Length::Shrink))
         .push({
             let keys = keys.to_string();
-            ProxyView::new(move |context| {
+            // Note: This internal ProxyView is fine, it just styles the container.
+            // It receives the context from the parent view.
+            crate::core::ProxyView::new(move |context| {
                 container(
                     Text::<IcedBackend>::new(keys.clone())
                         .caption2()
