@@ -175,13 +175,17 @@ impl CanvasView {
             ReferencePage::About | ReferencePage::Updates => {
                 pages::settings::about::view(context, is_mobile)
             }
-            ReferencePage::SettingsAI => pages::settings::ai::view(
-                context,
-                is_mobile,
-                self.state.api_key.clone(),
-                self.state.ai_provider,
-                self.state.enable_exposure,
-            ),
+            ReferencePage::SettingsAI => {
+                let state_json = serde_json::to_string_pretty(&self.state).ok();
+                pages::settings::ai::view(
+                    context,
+                    is_mobile,
+                    self.state.api_key.clone(),
+                    self.state.ai_provider,
+                    self.state.enable_exposure,
+                    state_json,
+                )
+            }
 
             // Details (from Landing)
             ReferencePage::PeakOSDetail => pages::landing::peak_os::view(context, is_mobile),

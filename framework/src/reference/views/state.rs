@@ -6,7 +6,13 @@ use super::super::model::Page;
 use crate::views::chat::ChatMessage;
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+/// ViewState is the single source of truth for all UI state in the PeakUI reference implementation.
+///
+/// It acts as the "Digital Nervous System" of the application, enabling:
+/// 1. **State Optimization**: All lab and app states are consolidated here.
+/// 2. **Performance**: Large collections (chat messages, DB records) are wrapped in `Arc` for pointer-speed cloning.
+/// 3. **AI Introspection**: By deriving `Serialize`, the entire state can be dumped to JSON for AI agents to understand the app's internal "thought process."
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ViewState {
     pub active_tab: Page,
     pub show_search: bool,

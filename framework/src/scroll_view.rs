@@ -2,7 +2,7 @@ use crate::core::{Backend, Context, IcedBackend, ScrollDirection, TermBackend, V
 use iced::Length;
 
 /// A scrollable container that wraps content and provides styled scrollbars.
-pub struct ScrollView<Message: 'static, B: Backend = IcedBackend> {
+pub struct ScrollView<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     content: Box<dyn View<Message, B>>,
     width: Length,
     height: Length,
@@ -11,7 +11,7 @@ pub struct ScrollView<Message: 'static, B: Backend = IcedBackend> {
     direction: ScrollDirection,
 }
 
-impl<Message: 'static> ScrollView<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> ScrollView<Message, IcedBackend> {
     /// Creates a new `ScrollView` for the Iced backend.
     pub fn new(content: impl View<Message, IcedBackend> + 'static) -> Self {
         Self::new_generic(content)
@@ -30,14 +30,14 @@ impl<Message: 'static> ScrollView<Message, IcedBackend> {
     }
 }
 
-impl<Message: 'static> ScrollView<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> ScrollView<Message, TermBackend> {
     /// Creates a new `ScrollView` for the Term backend (TUI).
     pub fn new_tui(content: impl View<Message, TermBackend> + 'static) -> Self {
         Self::new_generic(content)
     }
 }
 
-impl<Message: 'static, B: Backend> ScrollView<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> ScrollView<Message, B> {
     /// Creates a new generic `ScrollView` with the given content.
     pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
         Self {
@@ -86,7 +86,7 @@ impl<Message: 'static, B: Backend> ScrollView<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for ScrollView<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for ScrollView<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let nested_context = context.clone().with_nested_scroll();
         B::scroll_view(

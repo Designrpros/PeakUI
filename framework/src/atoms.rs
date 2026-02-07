@@ -181,7 +181,7 @@ impl<B: Backend> Text<B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Text<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::text(
             self.content.as_ref().to_string(),
@@ -197,8 +197,19 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Text<B> {
         )
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode::new("text").with_content(self.content.clone())
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let node = crate::core::SemanticNode::new("text").with_content(self.content.clone());
+        let color = self
+            .color
+            .or(context.foreground)
+            .unwrap_or(context.theme.colors.text_primary);
+        node.with_color(format!(
+            "#{:02X}{:02X}{:02X}{:02X}",
+            (color.r * 255.0) as u8,
+            (color.g * 255.0) as u8,
+            (color.b * 255.0) as u8,
+            (color.a * 255.0) as u8
+        ))
     }
 }
 
@@ -247,7 +258,7 @@ impl<B: Backend> Rectangle<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Rectangle<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Rectangle<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::rectangle(
             self.width,
@@ -287,7 +298,7 @@ impl<B: Backend> Circle<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Circle<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Circle<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::circle(self.radius, self.color, context)
     }
@@ -321,7 +332,7 @@ impl<B: Backend> Capsule<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Capsule<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Capsule<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::capsule(self.width, self.height, self.color, context)
     }
@@ -348,7 +359,7 @@ impl<B: Backend> Space<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Space<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Space<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::space(self.width, self.height, context)
     }
@@ -371,7 +382,7 @@ impl<B: Backend> Divider<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Divider<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Divider<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::divider(context)
     }
@@ -411,7 +422,7 @@ impl<B: Backend> Icon<B> {
 
     pub fn primary<M>(self) -> ProxyView<M, B>
     where
-        M: Clone + 'static,
+        M: Clone + Send + Sync + 'static,
     {
         ProxyView::new(move |ctx| {
             let mut icon = self.clone();
@@ -422,7 +433,7 @@ impl<B: Backend> Icon<B> {
 
     pub fn primary_color<M>(self) -> ProxyView<M, B>
     where
-        M: Clone + 'static,
+        M: Clone + Send + Sync + 'static,
     {
         ProxyView::new(move |ctx| {
             let mut icon = self.clone();
@@ -433,7 +444,7 @@ impl<B: Backend> Icon<B> {
 
     pub fn secondary<M>(self) -> ProxyView<M, B>
     where
-        M: Clone + 'static,
+        M: Clone + Send + Sync + 'static,
     {
         ProxyView::new(move |ctx| {
             let mut icon = self.clone();
@@ -443,7 +454,7 @@ impl<B: Backend> Icon<B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Icon<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::icon(
             self.name.as_ref().to_string(),
@@ -453,8 +464,19 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Icon<B> {
         )
     }
 
-    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
-        crate::core::SemanticNode::new("icon").with_label(self.name.clone())
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        let node = crate::core::SemanticNode::new("icon").with_label(self.name.clone());
+        let color = self
+            .color
+            .or(context.foreground)
+            .unwrap_or(context.theme.colors.text_primary);
+        node.with_color(format!(
+            "#{:02X}{:02X}{:02X}{:02X}",
+            (color.r * 255.0) as u8,
+            (color.g * 255.0) as u8,
+            (color.b * 255.0) as u8,
+            (color.a * 255.0) as u8
+        ))
     }
 }
 
@@ -493,7 +515,7 @@ impl<B: Backend> Image<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Image<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Image<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::image(
             self.path.as_ref().to_string(),
@@ -550,7 +572,7 @@ impl<B: Backend> Video<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Video<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Video<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::video(
             self.path.as_ref().to_string(),
@@ -601,7 +623,7 @@ impl<B: Backend> WebView<B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for WebView<B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::web_view(
             self.url.as_ref().to_string(),
@@ -618,7 +640,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for WebView<B> {
 }
 
 #[derive(Clone)]
-pub struct Container<Message: 'static, B: Backend = IcedBackend> {
+pub struct Container<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     content: Arc<dyn View<Message, B>>,
     padding: Padding,
     width: Length,
@@ -633,7 +655,7 @@ pub struct Container<Message: 'static, B: Backend = IcedBackend> {
     _phantom: PhantomData<B>,
 }
 
-impl<Message: 'static, B: Backend> Container<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Container<Message, B> {
     pub fn new(content: impl View<Message, B> + 'static) -> Self {
         Self {
             content: Arc::new(content),
@@ -710,7 +732,7 @@ impl<Message: 'static, B: Backend> Container<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Container<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Container<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::container(
             self.content.view(context),

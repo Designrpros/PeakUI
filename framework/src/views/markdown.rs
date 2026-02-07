@@ -3,14 +3,14 @@ use crate::views::CodeBlock;
 use iced::{font, Length};
 use std::sync::Arc;
 
-pub struct MarkdownView<Message> {
+pub struct MarkdownView<Message: 'static + Send + Sync> {
     content: String,
     size: f32,
     padding: iced::Padding,
     on_copy: Option<Arc<dyn Fn(String) -> Message + Send + Sync>>,
 }
 
-impl<Message> MarkdownView<Message> {
+impl<Message: 'static + Send + Sync> MarkdownView<Message> {
     pub fn new(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
@@ -46,7 +46,7 @@ impl<Message> MarkdownView<Message> {
 
 impl<Message, B: Backend> View<Message, B> for MarkdownView<Message>
 where
-    Message: 'static + Clone,
+    Message: 'static + Clone + Send + Sync,
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let mut children: Vec<B::AnyView<Message>> = Vec::new();
@@ -362,7 +362,7 @@ fn parse_numbered_list(line: &str) -> Option<&str> {
     None
 }
 
-fn render_rich_text<Message: Clone + 'static, B: Backend>(
+fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
     content: &str,
     size: f32,
     context: &Context,
@@ -464,7 +464,7 @@ fn is_separator_line(line: &str) -> bool {
     has_dash
 }
 
-fn render_table<Message: Clone + 'static, B: Backend>(
+fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
     lines: Vec<String>,
     size: f32,
     context: &Context,

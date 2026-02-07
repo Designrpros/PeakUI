@@ -15,7 +15,7 @@ pub struct ChartDataPoint {
     pub value: f32,
 }
 
-pub struct Chart<Message: 'static, B: Backend = IcedBackend> {
+pub struct Chart<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     pub chart_type: ChartType,
     pub data: Vec<ChartDataPoint>,
     pub title: Option<String>,
@@ -26,7 +26,7 @@ pub struct Chart<Message: 'static, B: Backend = IcedBackend> {
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend> Chart<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Chart<Message, B> {
     pub fn new(chart_type: ChartType, data: Vec<ChartDataPoint>) -> Self {
         Self {
             chart_type,
@@ -66,7 +66,7 @@ impl<Message: 'static, B: Backend> Chart<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for Chart<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Chart<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let mut children = Vec::new();
 
@@ -133,7 +133,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Chart<Message, B
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> Chart<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> Chart<Message, B> {
     fn render_bar(&self, context: &Context) -> B::AnyView<Message> {
         let max_value = self
             .data

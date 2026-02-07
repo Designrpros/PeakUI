@@ -93,7 +93,7 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for ComponentDoc<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ComponentDoc<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let theme = context.theme;
 

@@ -27,7 +27,7 @@ pub enum ButtonStyle {
     Ghost,
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> Button<Message, B> {
     pub fn new(content: impl View<Message, B> + 'static) -> Self {
         Self {
             content: Box::new(content),
@@ -116,7 +116,9 @@ impl<Message: Clone + 'static, B: crate::core::Backend> Button<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Button<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> View<Message, B>
+    for Button<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         // ... (existing view implementation)
         let theme = context.theme;
@@ -163,7 +165,7 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for But
             8.0,
             padding,
             self.width,
-            Length::Shrink,
+            self.height,
             Alignment::Center,
             Alignment::Center,
             context,
@@ -217,7 +219,9 @@ impl<Message, B: crate::core::Backend> Toggle<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Toggle<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> View<Message, B>
+    for Toggle<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::toggle(
             self.label.as_ref().to_string(),
@@ -266,7 +270,9 @@ impl<Message, B: crate::core::Backend> Slider<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Slider<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> View<Message, B>
+    for Slider<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::slider(
             self.range.clone(),
@@ -331,7 +337,9 @@ impl<Message, B: crate::core::Backend> Stepper<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Stepper<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> View<Message, B>
+    for Stepper<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::hstack(
             vec![
@@ -413,7 +421,8 @@ impl<Message: Clone + 'static, B: crate::core::Backend> View<Message, B> for Ste
             })
     }
 }
-pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBackend> {
+pub struct TextInput<Message: Clone + Send + Sync + 'static, B: Backend = crate::core::IcedBackend>
+{
     value: String,
     placeholder: Cow<'static, str>,
     on_change: Arc<dyn Fn(String) -> Message + Send + Sync>,
@@ -426,7 +435,7 @@ pub struct TextInput<Message: Clone + 'static, B: Backend = crate::core::IcedBac
     _phantom: std::marker::PhantomData<B>,
 }
 
-impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> TextInput<Message, B> {
     pub fn new(
         value: impl Into<String>,
         placeholder: impl Into<Cow<'static, str>>,
@@ -477,7 +486,9 @@ impl<Message: Clone + 'static, B: Backend> TextInput<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for TextInput<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for TextInput<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let on_change = self.on_change.clone();
         let input = B::text_input(

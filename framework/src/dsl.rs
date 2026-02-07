@@ -50,58 +50,58 @@ pub fn capsule<B: Backend>(width: impl Into<Length>, height: impl Into<Length>) 
     Capsule::new(width.into(), height.into())
 }
 
-pub fn container<Message: 'static, B: Backend>(
+pub fn container<Message: 'static + Send + Sync, B: Backend>(
     content: impl View<Message, B> + 'static,
 ) -> Container<Message, B> {
     Container::new(content)
 }
 
-pub fn vstack<Message: 'static, B: Backend>() -> VStack<Message, B> {
+pub fn vstack<Message: 'static + Send + Sync, B: Backend>() -> VStack<Message, B> {
     VStack::new()
 }
 
-pub fn hstack<Message: 'static, B: Backend>() -> HStack<Message, B> {
+pub fn hstack<Message: 'static + Send + Sync, B: Backend>() -> HStack<Message, B> {
     HStack::new()
 }
 
-pub fn zstack<Message: 'static, B: Backend>() -> ZStack<Message, B> {
+pub fn zstack<Message: 'static + Send + Sync, B: Backend>() -> ZStack<Message, B> {
     ZStack::new()
 }
 
-pub fn grid<Message: 'static, B: Backend>() -> ResponsiveGrid<Message, B> {
+pub fn grid<Message: 'static + Send + Sync, B: Backend>() -> ResponsiveGrid<Message, B> {
     ResponsiveGrid::new()
 }
 
-pub fn wrap<Message: 'static, B: Backend>() -> Wrap<Message, B> {
+pub fn wrap<Message: 'static + Send + Sync, B: Backend>() -> Wrap<Message, B> {
     Wrap::new()
 }
 
-pub fn glass_card<Message: 'static, B: Backend>(
+pub fn glass_card<Message: 'static + Send + Sync, B: Backend>(
     content: impl View<Message, B> + 'static,
 ) -> GlassCard<Message, B> {
     GlassCard::new(content)
 }
 
-pub fn section<Message: 'static, B: Backend>(
+pub fn section<Message: 'static + Send + Sync, B: Backend>(
     title: impl Into<Cow<'static, str>>,
     content: impl View<Message, B> + 'static,
 ) -> Section<Message, B> {
     Section::new_generic(title, content)
 }
 
-pub fn button<Message: Clone + 'static, B: Backend>(
+pub fn button<Message: Clone + Send + Sync + 'static, B: Backend>(
     content: impl View<Message, B> + 'static,
 ) -> Button<Message, B> {
     Button::new(content)
 }
 
-pub fn button_label<Message: Clone + 'static, B: Backend>(
+pub fn button_label<Message: Clone + Send + Sync + 'static, B: Backend>(
     label: impl Into<Cow<'static, str>>,
 ) -> Button<Message, B> {
     Button::new(Text::new(label))
 }
 
-pub fn text_input<Message: Clone + 'static, B: Backend>(
+pub fn text_input<Message: Clone + Send + Sync + 'static, B: Backend>(
     value: impl Into<String>,
     placeholder: impl Into<Cow<'static, str>>,
     on_change: impl Fn(String) -> Message + Send + Sync + 'static,
@@ -109,7 +109,7 @@ pub fn text_input<Message: Clone + 'static, B: Backend>(
     TextInput::new(value, placeholder, on_change)
 }
 
-pub fn toggle<Message: Clone + 'static, B: Backend>(
+pub fn toggle<Message: Clone + Send + Sync + 'static, B: Backend>(
     label: impl Into<Cow<'static, str>>,
     is_active: bool,
     on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
@@ -117,7 +117,7 @@ pub fn toggle<Message: Clone + 'static, B: Backend>(
     Toggle::new(label, is_active, on_toggle)
 }
 
-pub fn slider<Message: Clone + 'static, B: Backend>(
+pub fn slider<Message: Clone + Send + Sync + 'static, B: Backend>(
     range: std::ops::RangeInclusive<f32>,
     value: f32,
     on_change: impl Fn(f32) -> Message + Send + Sync + 'static,
@@ -125,7 +125,7 @@ pub fn slider<Message: Clone + 'static, B: Backend>(
     Slider::new(range, value, on_change)
 }
 
-pub fn scroll_view<Message: 'static, B: Backend>(
+pub fn scroll_view<Message: 'static + Send + Sync, B: Backend>(
     content: impl View<Message, B> + 'static,
 ) -> ScrollView<Message, B> {
     ScrollView::new_generic(content)

@@ -25,7 +25,7 @@ pub struct NavigationSplitView<Message: 'static + Send + Sync, B: Backend = Iced
     on_dismiss_inspector: Option<Message>,
 }
 
-impl<Message: Clone + 'static + Send + Sync> NavigationSplitView<Message, IcedBackend> {
+impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, IcedBackend> {
     pub fn new(
         sidebar: impl View<Message, IcedBackend> + 'static,
         content: impl View<Message, IcedBackend> + 'static,
@@ -34,7 +34,7 @@ impl<Message: Clone + 'static + Send + Sync> NavigationSplitView<Message, IcedBa
     }
 }
 
-impl<Message: Clone + 'static + Send + Sync> NavigationSplitView<Message, TermBackend> {
+impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, TermBackend> {
     pub fn new_tui(
         sidebar: impl View<Message, TermBackend> + 'static,
         content: impl View<Message, TermBackend> + 'static,
@@ -43,7 +43,7 @@ impl<Message: Clone + 'static + Send + Sync> NavigationSplitView<Message, TermBa
     }
 }
 
-impl<Message: Clone + 'static + Send + Sync, B: Backend> NavigationSplitView<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> NavigationSplitView<Message, B> {
     pub fn new_generic(
         sidebar: impl View<Message, B> + 'static,
         content: impl View<Message, B> + 'static,
@@ -163,7 +163,7 @@ impl<Message: Clone + 'static + Send + Sync, B: Backend> NavigationSplitView<Mes
 #[allow(unused_imports)]
 use crate::scroll_view::ScrollView;
 
-impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
+impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
     for NavigationSplitView<Message, IcedBackend>
 {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
@@ -538,7 +538,7 @@ impl<Message: Clone + 'static + Send + Sync> View<Message, IcedBackend>
     }
 }
 
-impl<Message: Clone + 'static + Send + Sync> View<Message, TermBackend>
+impl<Message: Clone + Send + Sync + 'static> View<Message, TermBackend>
     for NavigationSplitView<Message, TermBackend>
 {
     fn view(&self, context: &Context) -> String {

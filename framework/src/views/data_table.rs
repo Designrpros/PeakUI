@@ -10,19 +10,19 @@ pub enum DataTablePreset {
     Glass,
 }
 
-pub struct DataTableColumn<M> {
+pub struct DataTableColumn<M: 'static + Send + Sync> {
     pub label: String,
     pub width: Length,
     pub is_sortable: bool,
     pub on_sort: Option<Arc<dyn Fn(bool) -> M + Send + Sync>>,
 }
 
-pub struct DataTableRow<M> {
+pub struct DataTableRow<M: 'static + Send + Sync> {
     pub cells: Vec<Box<dyn View<M, IcedBackend>>>,
     pub on_press: Option<M>,
 }
 
-pub struct DataTable<M> {
+pub struct DataTable<M: 'static + Send + Sync> {
     pub columns: Vec<DataTableColumn<M>>,
     pub rows: Vec<DataTableRow<M>>,
     pub min_width: Option<f32>,
@@ -34,7 +34,7 @@ pub struct DataTable<M> {
     pub sort_ascending: bool,
 }
 
-impl<M: 'static + Clone> DataTable<M> {
+impl<M: 'static + Clone + Send + Sync> DataTable<M> {
     pub fn new() -> Self {
         Self {
             columns: Vec::new(),
@@ -202,7 +202,7 @@ impl<M: 'static + Clone> DataTable<M> {
     }
 }
 
-impl<M: 'static + Clone> View<M, IcedBackend> for DataTable<M> {
+impl<M: 'static + Clone + Send + Sync> View<M, IcedBackend> for DataTable<M> {
     fn view(&self, context: &Context) -> Element<'static, M, Theme, Renderer> {
         let theme = context.theme;
         let palette = theme.colors;

@@ -3,7 +3,7 @@ use iced::{Element, Length};
 
 /// A segmented picker/control component with pill-style selection
 /// Similar to iOS segmented controls or material tabs
-pub struct SegmentedPicker<Message, Theme = iced::Theme> {
+pub struct SegmentedPicker<Message: Clone + Send + Sync + 'static, Theme = iced::Theme> {
     options: Vec<SegmentOption<Message>>,
     active_index: usize,
     width: Length,
@@ -20,7 +20,7 @@ pub struct SegmentedPicker<Message, Theme = iced::Theme> {
 
 impl<Message, Theme> Clone for SegmentedPicker<Message, Theme>
 where
-    Message: Clone,
+    Message: Clone + Send + Sync + 'static,
     Theme: Clone,
 {
     fn clone(&self) -> Self {
@@ -42,14 +42,14 @@ where
 }
 
 #[derive(Clone)]
-pub struct SegmentOption<Message> {
+pub struct SegmentOption<Message: Clone + Send + Sync + 'static> {
     label: String,
     on_press: Message,
 }
 
 impl<Message, Theme> SegmentedPicker<Message, Theme>
 where
-    Message: Clone + 'static,
+    Message: Clone + Send + Sync + 'static,
 {
     /// Create a new segmented picker with options
     pub fn new(options: Vec<(String, Message)>, active_index: usize) -> Self {
@@ -190,7 +190,7 @@ use iced::Renderer;
 
 impl<Message, Theme> View<Message> for SegmentedPicker<Message, Theme>
 where
-    Message: Clone + 'static,
+    Message: Clone + Send + Sync + 'static,
     Theme: Clone + 'static,
 {
     fn view(&self, _context: &Context) -> Element<'static, Message, iced::Theme, Renderer> {

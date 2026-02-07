@@ -24,7 +24,7 @@ pub struct SearchConfig {
 }
 
 /// The result of a page view, including its view and metadata.
-pub struct PageResult<Message: 'static, B: Backend = IcedBackend> {
+pub struct PageResult<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     pub view: Box<dyn View<Message, B>>,
     pub title: String,
     pub inspector: Option<Box<dyn View<Message, B>>>,
@@ -33,7 +33,7 @@ pub struct PageResult<Message: 'static, B: Backend = IcedBackend> {
     pub sidebar_toggle: Option<Message>,
 }
 
-impl<Message: 'static, B: Backend> PageResult<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> PageResult<Message, B> {
     pub fn new(view: impl View<Message, B> + 'static) -> Self {
         Self {
             view: Box::new(view),
@@ -69,14 +69,16 @@ impl<Message: 'static, B: Backend> PageResult<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> From<VStack<Message, B>> for PageResult<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> From<VStack<Message, B>>
+    for PageResult<Message, B>
+{
     fn from(stack: VStack<Message, B>) -> Self {
         Self::new(stack)
     }
 }
 
 /// Extension trait for adding navigation-specific behavior to views.
-pub trait ViewExt<Message: 'static, B: Backend>: View<Message, B> + Sized {
+pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> + Sized {
     fn searchable(
         self,
         title: &str,
@@ -162,10 +164,13 @@ pub trait ViewExt<Message: 'static, B: Backend>: View<Message, B> + Sized {
     }
 }
 
-impl<V: View<Message, B> + 'static, Message: 'static, B: Backend> ViewExt<Message, B> for V {}
+impl<V: View<Message, B> + 'static, Message: 'static + Send + Sync, B: Backend> ViewExt<Message, B>
+    for V
+{
+}
 
 // Explicitly implement for VStack to resolve ambiguity
-impl<Message: 'static, B: Backend> VStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> VStack<Message, B> {
     pub fn searchable(
         self,
         title: &str,
@@ -181,7 +186,7 @@ impl<Message: 'static, B: Backend> VStack<Message, B> {
 }
 
 /// A component that represents a navigation destination in a sidebar or list.
-pub struct NavigationLink<Message: Clone + 'static, B: Backend = IcedBackend> {
+pub struct NavigationLink<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
     label: String,
     icon: String,
     destination: Message,
@@ -189,7 +194,7 @@ pub struct NavigationLink<Message: Clone + 'static, B: Backend = IcedBackend> {
     _phantom: PhantomData<B>,
 }
 
-impl<Message: Clone + 'static, B: Backend> NavigationLink<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> NavigationLink<Message, B> {
     pub fn new(label: impl Into<String>, icon: impl Into<String>, destination: Message) -> Self {
         Self {
             label: label.into(),
@@ -206,7 +211,9 @@ impl<Message: Clone + 'static, B: Backend> NavigationLink<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for NavigationLink<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let active = self.is_active;
 
@@ -248,14 +255,14 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for NavigationLink<M
 /// A container for detail content in a master-detail split view.
 pub struct DetailView<
     V: View<Message, B> + 'static,
-    Message: Clone + 'static,
+    Message: Clone + Send + Sync + 'static,
     B: Backend = IcedBackend,
 > {
     content: V,
     _phantom: PhantomData<(Message, B)>,
 }
 
-impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend>
+impl<V: View<Message, B> + 'static, Message: Clone + Send + Sync + 'static, B: Backend>
     DetailView<V, Message, B>
 {
     pub fn new(content: V) -> Self {
@@ -266,8 +273,8 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend>
     }
 }
 
-impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<Message, B>
-    for DetailView<V, Message, B>
+impl<V: View<Message, B> + 'static, Message: Clone + Send + Sync + 'static, B: Backend>
+    View<Message, B> for DetailView<V, Message, B>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let inner = self.content.view(context);
@@ -293,13 +300,13 @@ impl<V: View<Message, B> + 'static, Message: Clone + 'static, B: Backend> View<M
 }
 
 /// A structural sidebar component for primary navigation.
-pub struct Sidebar<Message: Clone + 'static, B: Backend = IcedBackend> {
+pub struct Sidebar<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
     title: String,
     items: Vec<Box<dyn View<Message, B>>>,
     search: Option<(String, Arc<dyn Fn(String) -> Message + Send + Sync>)>,
 }
 
-impl<Message: Clone + 'static, B: Backend> Sidebar<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> Sidebar<Message, B> {
     pub fn new(title: impl Into<String>) -> Self {
         Self {
             title: title.into(),
@@ -335,7 +342,7 @@ impl<Message: Clone + 'static, B: Backend> Sidebar<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Sidebar<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let mut views = Vec::new();
 
@@ -399,17 +406,17 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for Sidebar<Message,
     }
 }
 
-pub struct NavigationListView<Message: 'static, B: Backend = IcedBackend> {
+pub struct NavigationListView<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     stack: VStack<Message, B>,
 }
 
-impl<Message: 'static, B: Backend> Default for NavigationListView<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Default for NavigationListView<Message, B> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<Message: 'static, B: Backend> NavigationListView<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> NavigationListView<Message, B> {
     pub fn new() -> Self {
         Self {
             stack: VStack::new_generic().spacing(4.0).width(Length::Fill),
@@ -422,7 +429,9 @@ impl<Message: 'static, B: Backend> NavigationListView<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for NavigationListView<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B>
+    for NavigationListView<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         self.stack.view(context)
     }

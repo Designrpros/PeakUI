@@ -15,7 +15,7 @@ impl<Message> SimulatorView<Message> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for SimulatorView<Message> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for SimulatorView<Message> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let mut elements: Vec<B::AnyView<Message>> = Vec::new();
 
@@ -55,7 +55,7 @@ impl<Message> SimulatorView<Message> {
         elements: &mut Vec<B::AnyView<Message>>,
         context: &Context,
     ) where
-        Message: Clone + 'static,
+        Message: Clone + Send + Sync + 'static,
     {
         let x = parent_x + node.transform.position.x;
         let y = parent_y + node.transform.position.y;

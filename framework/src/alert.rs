@@ -11,7 +11,7 @@ impl SystemAlert {
         is_light: bool,
     ) -> Element<'a, Message>
     where
-        Message: 'a + Clone,
+        Message: 'a + Clone + Send + Sync,
     {
         let (bg_color, text_color, btn_bg, btn_text) = if is_light {
             (

@@ -173,13 +173,27 @@ pub struct App {
     pub scaling: f32,
 }
 
-#[derive(Debug, Clone)]
+/// A protected action that requires user confirmation or "Sudo" elevation.
+///
+/// The `message` is skipped during serialization as it contains a dynamic boxed enum
+/// that cannot be easily serialized across boundaries.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SudoAction {
+    #[serde(skip, default = "dummy_message")]
     pub message: Box<Message>,
     pub reason: String,
 }
 
-#[derive(Debug, Clone)]
+fn dummy_message() -> Box<Message> {
+    Box::new(Message::CloseContextMenu)
+}
+
+fn default_alignment() -> Alignment {
+    Alignment::Start
+}
+
+/// Configuration state for the Button Lab component.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ButtonLabState {
     pub label: String,
     pub icon: Option<String>,
@@ -191,12 +205,14 @@ pub struct ButtonLabState {
     pub is_focused: bool,
 }
 
-#[derive(Debug, Clone)]
+/// Configuration state for the Typography Lab component.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct TypographyLabState {
     pub text: String,
     pub size: f32,
     pub is_bold: bool,
     pub is_italic: bool,
+    #[serde(skip, default)]
     pub color: Option<Color>,
 }
 
@@ -212,16 +228,21 @@ impl Default for TypographyLabState {
     }
 }
 
-#[derive(Debug, Clone)]
+/// Configuration state for the Layout Lab component.
+///
+/// `alignment` is skipped during serialization as it is an external iced type without
+/// built-in serialization support in this framework version.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LayoutLabState {
     pub outer_spacing: f32,
     pub inner_spacing: f32,
     pub child_count: usize,
+    #[serde(skip, default = "default_alignment")]
     pub alignment: Alignment,
     pub item_sizing: SizingType,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SizingLabState {
     pub width_type: SizingType,
     pub height_type: SizingType,
@@ -229,15 +250,16 @@ pub struct SizingLabState {
     pub fixed_height: f32,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct AccessibilityLabState {
     pub selected_component: AccessibilityComponent,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct IconLabState {
     pub selected_icon: String,
     pub size: f32,
+    #[serde(skip, default)]
     pub color: Option<Color>,
 }
 

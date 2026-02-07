@@ -34,7 +34,7 @@ impl<Message: 'static, B: Backend> Console<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, IcedBackend> for Console<Message, IcedBackend> {
+impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Console<Message, IcedBackend> {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let theme = context.theme;
 

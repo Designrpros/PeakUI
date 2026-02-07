@@ -61,8 +61,8 @@ impl<Message: 'static, B: crate::core::Backend, V: View<Message, B>> TapGesture<
     }
 }
 
-impl<Message: Clone + 'static, B: crate::core::Backend, V: View<Message, B>> View<Message, B>
-    for TapGesture<Message, B, V>
+impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend, V: View<Message, B>>
+    View<Message, B> for TapGesture<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::button(

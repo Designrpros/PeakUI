@@ -3,7 +3,7 @@ use crate::core::{Backend, Context, IcedBackend, View};
 use crate::modifiers::Variant;
 use iced::{Alignment, Border, Color, Length, Padding, Shadow, Vector};
 
-pub struct ToolbarItem<Message: 'static> {
+pub struct ToolbarItem<Message: 'static + Send + Sync> {
     label: Option<String>,
     icon: Option<String>,
     on_press: Option<Message>,
@@ -11,7 +11,7 @@ pub struct ToolbarItem<Message: 'static> {
     icon_size: f32,
 }
 
-impl<Message: 'static> ToolbarItem<Message> {
+impl<Message: 'static + Send + Sync> ToolbarItem<Message> {
     pub fn new() -> Self {
         Self {
             label: None,
@@ -48,7 +48,7 @@ impl<Message: 'static> ToolbarItem<Message> {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, IcedBackend> for ToolbarItem<Message> {
+impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for ToolbarItem<Message> {
     fn view(
         &self,
         context: &Context,
@@ -94,13 +94,13 @@ impl<Message: Clone + 'static> View<Message, IcedBackend> for ToolbarItem<Messag
     }
 }
 
-pub struct ToolbarGroup<Message: 'static> {
+pub struct ToolbarGroup<Message: 'static + Send + Sync> {
     items: Vec<Box<dyn View<Message, IcedBackend>>>,
     padding: Padding,
     spacing: f32,
 }
 
-impl<Message: 'static> ToolbarGroup<Message> {
+impl<Message: 'static + Send + Sync> ToolbarGroup<Message> {
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
@@ -130,7 +130,7 @@ impl<Message: 'static> ToolbarGroup<Message> {
     }
 }
 
-impl<Message: 'static> View<Message, IcedBackend> for ToolbarGroup<Message> {
+impl<Message: 'static + Send + Sync> View<Message, IcedBackend> for ToolbarGroup<Message> {
     fn view(
         &self,
         context: &Context,

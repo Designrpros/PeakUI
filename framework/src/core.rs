@@ -13,7 +13,7 @@ use std::sync::Arc;
 /// state updates, and view rendering. It abstractly decouples the application logic
 /// from the underlying rendering backend.
 pub trait App: Sized {
-    type Message: Send + Clone + std::fmt::Debug + 'static;
+    type Message: Send + Sync + Clone + std::fmt::Debug + 'static;
     type Flags: Clone + Send + 'static;
 
     /// Initializes a new instance of the application.
@@ -62,7 +62,7 @@ pub struct NeuralView<Message: 'static, B: Backend, V: View<Message, B>> {
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Message, B>
     for NeuralView<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
@@ -88,7 +88,7 @@ pub struct DocumentedView<Message: 'static, B: Backend, V: View<Message, B>> {
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Message, B>
     for DocumentedView<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
@@ -118,7 +118,7 @@ pub struct SpatialBillboard<Message: 'static, B: Backend, V: View<Message, B>> {
     pub _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Message, B>
     for SpatialBillboard<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
@@ -161,7 +161,7 @@ pub struct PhysicalDepthView<Message: 'static, B: Backend, V: View<Message, B>> 
     pub _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Message, B>
     for PhysicalDepthView<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
@@ -194,7 +194,7 @@ pub struct NeuralSudo<Message: 'static, B: Backend, V: View<Message, B>> {
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: Backend, V: View<Message, B>> View<Message, B>
+impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Message, B>
     for NeuralSudo<Message, B, V>
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
@@ -729,7 +729,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn sidebar_item<Message: Clone + 'static>(
+    fn sidebar_item<Message: Clone + Send + Sync + 'static>(
         title: String,
         icon: String,
         is_selected: bool,
@@ -2265,7 +2265,7 @@ impl Backend for IcedBackend {
         b.into()
     }
 
-    fn sidebar_item<Message: Clone + 'static>(
+    fn sidebar_item<Message: Clone + Send + Sync + 'static>(
         title: String,
         icon: String,
         is_selected: bool,
@@ -3495,6 +3495,9 @@ pub struct SemanticNode {
     /// The 3D scale of the component.
     #[serde(rename = "s", skip_serializing_if = "Option::is_none")]
     pub scale: Option<[f32; 3]>,
+    /// The color of the component in Hex format (e.g., "#FF0000").
+    #[serde(rename = "col", skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
 }
 
 fn is_false(b: &bool) -> bool {
@@ -3531,6 +3534,11 @@ impl SemanticNode {
 
     pub fn with_accessibility(mut self, accessibility: AccessibilityNode) -> Self {
         self.accessibility = Some(accessibility);
+        self
+    }
+
+    pub fn with_color(mut self, color: impl Into<String>) -> Self {
+        self.color = Some(color.into());
         self
     }
 
@@ -3890,7 +3898,7 @@ impl Backend for AIBackend {
             .push_child(content)
     }
 
-    fn sidebar_item<Message: Clone + 'static>(
+    fn sidebar_item<Message: Clone + Send + Sync + 'static>(
         title: String,
         icon: String,
         is_selected: bool,
@@ -4065,6 +4073,7 @@ where
 
 pub struct ProxyView<Message: Clone + 'static, B: Backend = IcedBackend> {
     view_fn: Box<dyn Fn(&Context) -> B::AnyView<Message>>,
+    describe_fn: Option<Box<dyn Fn(&Context) -> SemanticNode>>,
 }
 
 impl<Message: Clone + 'static, B: Backend> ProxyView<Message, B> {
@@ -4074,13 +4083,30 @@ impl<Message: Clone + 'static, B: Backend> ProxyView<Message, B> {
     {
         Self {
             view_fn: Box::new(view_fn),
+            describe_fn: None,
         }
+    }
+
+    pub fn with_describe<D>(mut self, describe_fn: D) -> Self
+    where
+        D: Fn(&Context) -> SemanticNode + 'static,
+    {
+        self.describe_fn = Some(Box::new(describe_fn));
+        self
     }
 }
 
 impl<Message: Clone + 'static, B: Backend> View<Message, B> for ProxyView<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         (self.view_fn)(context)
+    }
+
+    fn describe(&self, context: &Context) -> SemanticNode {
+        if let Some(f) = &self.describe_fn {
+            f(context)
+        } else {
+            SemanticNode::new("proxy_view")
+        }
     }
 }
 

@@ -25,14 +25,14 @@ pub enum ChatViewMessage {
     CopyCode(String),
 }
 
-pub struct AIChatView<Message: Clone + 'static> {
+pub struct AIChatView<Message: Clone + Send + Sync + 'static> {
     messages: Arc<Vec<ChatMessage>>,
     input_value: String,
     is_thinking: bool,
     on_action: Arc<dyn Fn(ChatViewMessage) -> Message + Send + Sync>,
 }
 
-impl<Message: Clone + 'static> AIChatView<Message> {
+impl<Message: Clone + Send + Sync + 'static> AIChatView<Message> {
     pub fn new(
         messages: Arc<Vec<ChatMessage>>,
         input_value: String,
@@ -49,7 +49,7 @@ impl<Message: Clone + 'static> AIChatView<Message> {
 }
 
 // Consolidate backend implementations into one generic implementation
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for AIChatView<Message> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AIChatView<Message> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let on_action = &self.on_action;
 
@@ -233,7 +233,7 @@ impl<Message> ChatBubble<Message> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for ChatBubble<Message> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ChatBubble<Message> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
         let is_user = self.message.role == ChatRole::User;
@@ -348,7 +348,7 @@ impl ToolCard {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ToolCard {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
 
@@ -458,7 +458,7 @@ impl<Message: Clone + 'static, B: Backend> View<Message, B> for ToolCard {
 // ThinkingBubble View
 struct ThinkingBubble {}
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for ThinkingBubble {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ThinkingBubble {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let content = B::hstack(
             vec![

@@ -2,7 +2,7 @@ use crate::core::{Backend, Context, IcedBackend, View};
 use iced::Length;
 
 /// A vertical stack layout that arranges children from top to bottom.
-pub struct VStack<Message: 'static, B: Backend = IcedBackend> {
+pub struct VStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     children: Vec<Box<dyn View<Message, B>>>,
     spacing: f32,
     padding: iced::Padding,
@@ -12,7 +12,7 @@ pub struct VStack<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static, B: Backend> VStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> VStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
@@ -80,7 +80,7 @@ impl<Message: 'static, B: Backend> VStack<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for VStack<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
         B::vstack(
@@ -102,7 +102,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for VStack<Message, B> {
 }
 
 /// A horizontal stack layout that arranges children from left to right.
-pub struct HStack<Message: 'static, B: Backend = IcedBackend> {
+pub struct HStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     children: Vec<Box<dyn View<Message, B>>>,
     spacing: f32,
     padding: iced::Padding,
@@ -112,7 +112,7 @@ pub struct HStack<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static, B: Backend> HStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> HStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
@@ -180,7 +180,7 @@ impl<Message: 'static, B: Backend> HStack<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for HStack<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
         B::hstack(
@@ -202,14 +202,14 @@ impl<Message: 'static, B: Backend> View<Message, B> for HStack<Message, B> {
 }
 
 /// A stack layout that layers children on top of each other (Z-axis).
-pub struct ZStack<Message: 'static, B: Backend = IcedBackend> {
+pub struct ZStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     children: Vec<Box<dyn View<Message, B>>>,
     width: Length,
     height: Length,
     alignment: iced::Alignment,
 }
 
-impl<Message: 'static, B: Backend> ZStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> ZStack<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
@@ -248,7 +248,7 @@ impl<Message: 'static, B: Backend> ZStack<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for ZStack<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
         B::zstack(
@@ -267,7 +267,9 @@ impl<Message: 'static, B: Backend> View<Message, B> for ZStack<Message, B> {
 }
 
 /// Extension trait for layout-related modifiers.
-pub trait LayoutExt<Message: Clone + 'static, B: Backend>: View<Message, B> + Sized {
+pub trait LayoutExt<Message: Clone + Send + Sync + 'static, B: Backend>:
+    View<Message, B> + Sized
+{
     /// Layers the given view on top of this view using a ZStack.
     fn overlay<V: View<Message, B> + 'static>(
         self,
@@ -294,7 +296,7 @@ pub trait LayoutExt<Message: Clone + 'static, B: Backend>: View<Message, B> + Si
         Self: Sized + 'static;
 }
 
-impl<V: View<Message, B> + Sized + 'static, Message: Clone + 'static, B: Backend>
+impl<V: View<Message, B> + Sized + 'static, Message: Clone + Send + Sync + 'static, B: Backend>
     LayoutExt<Message, B> for V
 {
     fn ideal_width(self, width: f32) -> crate::core::ProxyView<Message, B>
@@ -329,14 +331,14 @@ impl<V: View<Message, B> + Sized + 'static, Message: Clone + 'static, B: Backend
     }
 }
 
-pub struct ResponsiveGrid<Message: 'static, B: Backend = IcedBackend> {
+pub struct ResponsiveGrid<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     pub children: Vec<Box<dyn View<Message, B>>>,
     pub spacing: f32,
     pub items_per_row: usize,
     pub mobile_items_per_row: usize,
 }
 
-impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> ResponsiveGrid<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
@@ -375,7 +377,7 @@ impl<Message: 'static, B: Backend> ResponsiveGrid<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for ResponsiveGrid<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let items_per_row = if context.size.width < 600.0 {
             self.mobile_items_per_row
@@ -401,7 +403,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for ResponsiveGrid<Message, 
 }
 
 /// A wrap layout that arranges children horizontally and wraps them to the next line when they run out of space.
-pub struct Wrap<Message: 'static, B: Backend = IcedBackend> {
+pub struct Wrap<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     children: Vec<Box<dyn View<Message, B>>>,
     spacing: f32,
     run_spacing: f32,
@@ -412,7 +414,7 @@ pub struct Wrap<Message: 'static, B: Backend = IcedBackend> {
     align_y: iced::Alignment,
 }
 
-impl<Message: 'static, B: Backend> Wrap<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Wrap<Message, B> {
     pub fn new() -> Self {
         Self::new_generic()
     }
@@ -486,7 +488,7 @@ impl<Message: 'static, B: Backend> Wrap<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Wrap<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Wrap<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let child_views = self.children.iter().map(|c| c.view(context)).collect();
         B::wrap(

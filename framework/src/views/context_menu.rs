@@ -3,19 +3,19 @@ use crate::layout::VStack;
 use crate::prelude::*;
 use iced::{Element, Length, Renderer, Theme};
 
-pub struct ContextMenu<Message: Clone + 'static, B: Backend = IcedBackend> {
+pub struct ContextMenu<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
     items: Vec<ContextMenuItem<Message>>,
     _phantom: std::marker::PhantomData<B>,
 }
 
 #[derive(Clone)]
-pub struct ContextMenuItem<Message: Clone + 'static> {
+pub struct ContextMenuItem<Message: Clone + Send + Sync + 'static> {
     pub label: String,
     pub icon: String,
     pub action: Message,
 }
 
-impl<Message: Clone + 'static, B: Backend> ContextMenu<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> ContextMenu<Message, B> {
     pub fn new() -> Self {
         Self {
             items: Vec::new(),
@@ -38,7 +38,7 @@ impl<Message: Clone + 'static, B: Backend> ContextMenu<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static> View<Message, IcedBackend> for ContextMenu<Message, IcedBackend> {
+impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for ContextMenu<Message, IcedBackend> {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let _theme = context.theme;
 

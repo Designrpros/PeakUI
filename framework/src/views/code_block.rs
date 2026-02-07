@@ -1,15 +1,15 @@
 use crate::core::{Backend, Context, TextSpan, View};
 use iced::{Color, Length};
 
-pub struct CodeBlock<Message = ()> {
+pub struct CodeBlock<Message: 'static + Send + Sync = ()> {
     code: String,
     language: String,
     height: Length,
     is_transparent: bool,
-    on_copy: Option<Box<dyn Fn(String) -> Message>>,
+    on_copy: Option<Box<dyn Fn(String) -> Message + Send + Sync>>,
 }
 
-impl<Message> CodeBlock<Message> {
+impl<Message: 'static + Send + Sync> CodeBlock<Message> {
     pub fn new(code: impl Into<String>) -> Self {
         Self {
             code: code.into(),
@@ -32,7 +32,7 @@ impl<Message> CodeBlock<Message> {
 
     pub fn on_copy<F>(mut self, f: F) -> Self
     where
-        F: Fn(String) -> Message + 'static,
+        F: Fn(String) -> Message + Send + Sync + 'static,
     {
         self.on_copy = Some(Box::new(f));
         self
@@ -56,7 +56,7 @@ impl<Message> CodeBlock<Message> {
 
 impl<Message, B: Backend> View<Message, B> for CodeBlock<Message>
 where
-    Message: Clone + 'static,
+    Message: Clone + Send + Sync + 'static,
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let theme_mode = context.theme;
@@ -230,7 +230,7 @@ where
 // Helper: Heuristic Syntax Highlighter
 fn highlight_rust<Message, B: Backend>(content: &str, context: &Context) -> B::AnyView<Message>
 where
-    Message: 'static + Clone,
+    Message: 'static + Clone + Send + Sync,
 {
     let mut spans: Vec<TextSpan> = Vec::new();
 

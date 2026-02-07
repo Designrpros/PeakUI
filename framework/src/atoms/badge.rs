@@ -27,7 +27,7 @@ impl Badge {
 }
 
 // Support for generic messages
-impl<M: 'static + Clone> View<M, IcedBackend> for Badge {
+impl<M: 'static + Clone + Send + Sync> View<M, IcedBackend> for Badge {
     fn view(&self, context: &Context) -> Element<'static, M, Theme, Renderer> {
         let theme = context.theme;
         let palette = theme.colors;

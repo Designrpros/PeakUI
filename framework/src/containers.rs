@@ -2,7 +2,7 @@ use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
 use iced::{Length, Padding};
 use std::borrow::Cow;
 
-pub struct Card<Message: 'static, B: Backend = IcedBackend> {
+pub struct Card<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     content: Box<dyn View<Message, B>>,
     padding: Padding,
     width: Length,
@@ -13,19 +13,19 @@ pub struct Card<Message: 'static, B: Backend = IcedBackend> {
     border_color: Option<iced::Color>,
 }
 
-impl<Message: 'static> Card<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> Card<Message, IcedBackend> {
     pub fn new(content: impl View<Message, IcedBackend> + 'static) -> Self {
         Self::new_generic(content)
     }
 }
 
-impl<Message: 'static> Card<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> Card<Message, TermBackend> {
     pub fn new_tui(content: impl View<Message, TermBackend> + 'static) -> Self {
         Self::new_generic(content)
     }
 }
 
-impl<Message: 'static, B: Backend> Card<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Card<Message, B> {
     pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
         Self {
             content: Box::new(content),
@@ -71,7 +71,7 @@ impl<Message: 'static, B: Backend> Card<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Card<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Card<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let content_view = self.content.view(context);
         B::container(
@@ -95,14 +95,14 @@ impl<Message: 'static, B: Backend> View<Message, B> for Card<Message, B> {
     }
 }
 
-pub struct Section<Message: 'static, B: Backend = IcedBackend> {
+pub struct Section<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     title: String,
     content: Box<dyn View<Message, B>>,
     width: Length,
     height: Length,
 }
 
-impl<Message: 'static> Section<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> Section<Message, IcedBackend> {
     pub fn new(
         title: impl Into<Cow<'static, str>>,
         content: impl View<Message, IcedBackend> + 'static,
@@ -111,7 +111,7 @@ impl<Message: 'static> Section<Message, IcedBackend> {
     }
 }
 
-impl<Message: 'static> Section<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> Section<Message, TermBackend> {
     pub fn new_tui(
         title: impl Into<Cow<'static, str>>,
         content: impl View<Message, TermBackend> + 'static,
@@ -120,7 +120,7 @@ impl<Message: 'static> Section<Message, TermBackend> {
     }
 }
 
-impl<Message: 'static, B: Backend> Section<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Section<Message, B> {
     pub fn new_generic(
         title: impl Into<Cow<'static, str>>,
         content: impl View<Message, B> + 'static,
@@ -144,7 +144,7 @@ impl<Message: 'static, B: Backend> Section<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Section<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Section<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::section(
             self.title.clone(),
@@ -162,14 +162,14 @@ impl<Message: 'static, B: Backend> View<Message, B> for Section<Message, B> {
     }
 }
 
-pub struct GlassCard<Message: 'static, B: Backend = IcedBackend> {
+pub struct GlassCard<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     content: Box<dyn View<Message, B>>,
     padding: Padding,
     width: Length,
     height: Length,
 }
 
-impl<Message: 'static, B: Backend> GlassCard<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> GlassCard<Message, B> {
     pub fn new(content: impl View<Message, B> + 'static) -> Self {
         Self {
             content: Box::new(content),
@@ -195,7 +195,7 @@ impl<Message: 'static, B: Backend> GlassCard<Message, B> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for GlassCard<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for GlassCard<Message, B> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let content_view = self.content.view(context);
         B::glass_card(content_view, self.padding, self.width, self.height, context)

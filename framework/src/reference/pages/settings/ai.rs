@@ -8,6 +8,7 @@ pub fn view(
     api_key: String,
     ai_provider: AIProviderChoice,
     enable_exposure: bool,
+    state_json: Option<String>,
 ) -> PageResult<Message> {
     PageResult::new(crate::core::ProxyView::new(move |context| {
         // Config for providers
@@ -53,7 +54,7 @@ pub fn view(
                     .spacing(12.0)
                     .padding(20.0)
                     .width(Length::Fill)
-                    .height(Length::Fill)
+                    .height(Length::Shrink) // Changed from Length::Fill to Length::Shrink
                     .align_x(Alignment::Center)
                     .align_y(Alignment::Center)
                     .push(
@@ -221,8 +222,70 @@ pub fn view(
                     .on_copy(Message::CopyCode)
                 )
                 .width(Length::Fill)
+            )
+            .push(Divider::<IcedBackend>::new())
+            
+            // Live Introspection Section
+            .push(
+                crate::containers::Section::new(
+                    "Digital Nervous System (Live State)",
+                    VStack::<Message, IcedBackend>::new_generic()
+                        .spacing(12.0)
+                        .push(
+                            Text::<IcedBackend>::new("This is the raw internal state of the framework, exactly as seen by the AI agents. PeakUI leverages 'Serialization Reflection' to provide perfect introspection.")
+                                .body()
+                                .secondary()
+                        )
+                        .push(
+                            if let Some(json) = state_json.clone() {
+                                crate::views::CodeBlock::new(json)
+                                    .language("json")
+                                    .on_copy(Message::CopyCode)
+                            } else {
+                                crate::views::CodeBlock::new("// Serialization not available".to_string())
+                                    .language("json")
+                            }
+                        )
+                )
+                .width(Length::Fill)
             );
-
         main_view.view(context)
-    }))
+    })
+    .with_describe(move |context| {
+        // Re-construct the view logic minimally but correctly for description
+        let providers = [
+            (AIProviderChoice::Ollama, "Ollama", "brain", "Privacy-first local inference using your GPU."),
+            (AIProviderChoice::LlamaCpp, "Llama.cpp", "cpu", "Lightweight local execution for fast response."),
+            (AIProviderChoice::OpenRouter, "OpenRouter", "cloud", "Access massive cloud models via API."),
+        ];
+
+        let mut provider_view = VStack::<Message, IcedBackend>::new_generic().spacing(16.0).width(Length::Fill);
+        
+        for chunk in providers.chunks(3) {
+            let mut row = HStack::<Message, IcedBackend>::new_generic().spacing(16.0).width(Length::Fill);
+            for (_choice, name, icon, desc) in chunk {
+                let content = VStack::<Message, IcedBackend>::new_generic()
+                    .push(Icon::<IcedBackend>::new(icon.to_string()).size(24.0))
+                    .push(Text::<IcedBackend>::new(name.to_string()).bold())
+                    .push(Text::<IcedBackend>::new(desc.to_string()).caption2());
+
+                row = row.push(
+                    Button::<Message, IcedBackend>::new(content)
+                        .variant(Variant::Soft)
+                        .width(Length::Fill)
+                        .height(Length::Fixed(140.0))
+                );
+            }
+            provider_view = provider_view.push(row);
+        }
+
+        let main_view = VStack::<Message, IcedBackend>::new_generic()
+            .width(Length::Fill)
+            .spacing(32.0)
+            .push(Text::<IcedBackend>::new("Intelligence").large_title().bold())
+            .push(provider_view);
+            
+        main_view.describe(context)
+    })
+)
 }
