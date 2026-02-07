@@ -31,6 +31,31 @@ PeakUI is the first framework designed for the Agentic Era.
 - **Semantic Contract**: The UI tree is automatically exposed as structured data (Semantic Nodes) for AI agents to perceive with zero-latency.
 - **Spatial Engine**: A full 3D coordinate system with hierarchical depth, enabling agents to navigate interfaces via volumetric raycasting.
 - **Sovereign Interface**: Move beyond accessibility hacks; the UI communicates its exact "Intent" through a deterministic semantic protocol.
+- **Neural Exposure API**: An optional TCP-based API server (Port 8081) that allows external AI agents to "remote control" the application, retrieve UI schemas, and execute commands via raw network sockets.
+
+---
+
+## Neural Exposure (AI Remote Control)
+
+PeakUI allows you to expose the entire application interface to external intelligence via the **Neural Exposure API**.
+
+### Enabling Exposure
+1. Launch the **Showcase App**.
+2. Navigate to **Settings -> AI**.
+3. Toggle **Neural Exposure** to **ON**.
+
+### API Endpoints (Localhost:8081)
+- `GET /schema`: Retrieves the full framework component schema (MCP Protocol).
+- `GET /instructions`: Retrieves the "Neural Protocol" manual for AI interaction.
+- `GET /view`: Retrieves the **live, dynamic UI structure** (JSON) of the running application.
+- `POST /command`: Executes an application command (e.g., `{"SetTab": "Colors"}`).
+
+```bash
+# Example: Navigate the app to the Colors page via terminal
+curl -X POST http://127.0.0.1:8081/command -d '{"SetTab": "Colors"}'
+```
+
+For advanced testing, use the included `verify_exposure.py` script to validate schema retrieval and instruction delivery.
 
 ### 3. Motion & Spatial Design
 - **Physics-Driven**: Spring physics engine for fluid and interruptible motion.

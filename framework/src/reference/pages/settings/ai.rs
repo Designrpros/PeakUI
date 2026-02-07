@@ -7,6 +7,7 @@ pub fn view(
     _is_mobile: bool,
     api_key: String,
     ai_provider: AIProviderChoice,
+    enable_exposure: bool,
 ) -> PageResult<Message> {
     let mut provider_selection = HStack::<Message, IcedBackend>::new_generic()
         .spacing(16.0)
@@ -135,6 +136,30 @@ pub fn view(
                                     Text::<IcedBackend>::new("Only required if OpenRouter is selected as the provider.")
                                         .caption2()
                                         .secondary()
+                                )
+                        )
+                        .push(Divider::<IcedBackend>::new().padding(8.0))
+                        .push(
+                            HStack::<Message, IcedBackend>::new_generic()
+                                .spacing(12.0)
+                                .align_y(Alignment::Center)
+                                .push(
+                                    VStack::<Message, IcedBackend>::new_generic()
+                                        .spacing(4.0)
+                                        .width(Length::Fill)
+                                        .push(Text::<IcedBackend>::new("Neural Exposure").body().bold())
+                                        .push(
+                                            Text::<IcedBackend>::new("Expose a local network API (Port 8081) for external AI control.")
+                                                .caption2()
+                                                .secondary()
+                                        )
+                                )
+                                .push(
+                                    Toggle::<Message, IcedBackend>::new(
+                                        "",
+                                        enable_exposure,
+                                        |b| Message::SetExposure(b)
+                                    )
                                 )
                         )
                 )

@@ -18,6 +18,7 @@ pub struct CanvasView {
     pub search_query: String,
     pub icon_limit: usize,
     pub db_records: Vec<crate::core::SemanticRecord>,
+    pub enable_exposure: bool,
 }
 
 use super::super::page::PageResult;
@@ -38,6 +39,7 @@ impl CanvasView {
         search_query: String,
         icon_limit: usize,
         db_records: Vec<crate::core::SemanticRecord>,
+        enable_exposure: bool,
     ) -> Self {
         Self {
             active_tab,
@@ -54,6 +56,7 @@ impl CanvasView {
             search_query,
             icon_limit,
             db_records,
+            enable_exposure,
         }
     }
 
@@ -191,6 +194,7 @@ impl CanvasView {
                 is_mobile,
                 self.api_key.clone(),
                 self.ai_provider,
+                self.enable_exposure,
             ),
 
             // Details (from Landing)

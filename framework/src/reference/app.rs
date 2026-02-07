@@ -54,6 +54,7 @@ pub enum AIProviderChoice {
 pub struct Settings {
     pub api_key: String,
     pub ai_provider: AIProviderChoice,
+    pub enable_exposure: bool,
 }
 
 impl Default for Settings {
@@ -61,6 +62,7 @@ impl Default for Settings {
         Self {
             api_key: String::new(),
             ai_provider: AIProviderChoice::Ollama,
+            enable_exposure: false,
         }
     }
 }
@@ -96,6 +98,7 @@ impl Settings {
         Self {
             api_key,
             ai_provider,
+            enable_exposure: false,
         }
     }
 
@@ -166,6 +169,7 @@ pub struct App {
     pub is_deleting: bool,
     pub a11y: crate::accessibility::AccessibilityBridge,
     pub tick: u64,
+    pub enable_exposure: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -325,6 +329,7 @@ pub enum Message {
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
     SetAIProvider(AIProviderChoice),
+    SetExposure(bool),
 
     // Button Lab Messages
     UpdateButtonLabel(String),
@@ -396,6 +401,7 @@ pub enum Command {
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
     SetAIProvider(AIProviderChoice),
+    SetExposure(bool),
 
     // Button Lab
     UpdateButtonLabel(String),
@@ -482,6 +488,7 @@ impl Command {
             Command::SetInspectorTab(tab) => Message::SetInspectorTab(tab),
             Command::SetApiKey(key) => Message::SetApiKey(key),
             Command::SetAIProvider(provider) => Message::SetAIProvider(provider),
+            Command::SetExposure(enable) => Message::SetExposure(enable),
 
             Command::ApplyNativeVibrancy => Message::ApplyNativeVibrancy,
             Command::None => Message::None,
@@ -595,6 +602,7 @@ impl Default for App {
             is_deleting: false,
             a11y: crate::accessibility::AccessibilityBridge::new(),
             tick: 0,
+            enable_exposure: settings.enable_exposure,
         }
     }
 }
@@ -603,7 +611,7 @@ pub use crate::core::{Context, DeviceType};
 
 impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
-        match message {
+        let task = match message {
             Message::TypewriterTick(_) => {
                 self.tick = self.tick.wrapping_add(1);
 
@@ -1029,6 +1037,7 @@ impl App {
                 let settings = Settings {
                     api_key: self.api_key.clone(),
                     ai_provider: self.ai_provider,
+                    enable_exposure: self.enable_exposure,
                 };
                 settings.save();
 
@@ -1060,6 +1069,7 @@ impl App {
                 let settings = Settings {
                     api_key: self.api_key.clone(),
                     ai_provider: self.ai_provider,
+                    enable_exposure: self.enable_exposure,
                 };
                 settings.save();
 
@@ -1088,6 +1098,16 @@ impl App {
                     self.db.clone(),
                 ));
 
+                Task::none()
+            }
+            Message::SetExposure(enable) => {
+                self.enable_exposure = enable;
+                let settings = Settings {
+                    api_key: self.api_key.clone(),
+                    ai_provider: self.ai_provider,
+                    enable_exposure: self.enable_exposure,
+                };
+                settings.save();
                 Task::none()
             }
             Message::OpenContextMenu(pos) => {
@@ -1272,7 +1292,10 @@ impl App {
                 self.icon_limit += 100;
                 Task::none()
             }
-        }
+        };
+
+        self.export_neural_view();
+        task
     }
 
     pub fn start_ai_chat(&mut self, content: String) -> Task<Message> {
@@ -1470,6 +1493,24 @@ impl App {
              GOAL: Help the user explore the PeakUI framework. Respond conversationally and use actions when needed.",
             self.peak_id, ui_json
         )
+    }
+
+    pub fn export_neural_view(&self) {
+        if !self.enable_exposure {
+            return;
+        }
+
+        let mut ctx = Context::new(
+            crate::core::ShellMode::Desktop,
+            ThemeTokens::new(PeakTheme::Peak, ThemeTone::Light),
+            iced::Size::new(1280.0, 800.0),
+            self.localization.clone(),
+        );
+        ctx.tick = self.tick;
+        let view = crate::reference::views::ContentView::new(self);
+        let tree = view.describe(&ctx);
+        let ui_json = serde_json::to_string(&tree).unwrap_or_default();
+        let _ = std::fs::write(".peak/current_view.json", ui_json);
     }
 
     pub fn view(&self) -> Element<'_, Message> {
@@ -1802,9 +1843,20 @@ impl App {
                 receiver
             });
 
+            let exposure_sub = if self.enable_exposure {
+                iced::Subscription::run(|| {
+                    let (sender, receiver) = iced::futures::channel::mpsc::channel(100);
+                    tokio::spawn(crate::reference::intelligence::exposure::run_server(sender));
+                    receiver
+                })
+            } else {
+                iced::Subscription::none()
+            };
+
             iced::Subscription::batch(vec![
                 events,
                 command_sub,
+                exposure_sub,
                 hotkeys,
                 window_events,
                 iced::time::every(std::time::Duration::from_millis(100))
