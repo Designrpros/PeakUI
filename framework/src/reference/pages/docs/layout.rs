@@ -1,9 +1,10 @@
 use crate::core::{AIBackend, Backend, IcedBackend, ScrollDirection, SpatialBackend, TermBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{LayoutLabState, Message, RenderMode, SizingType};
 
-pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> AppPageResult {
     let mode = ctx.theme.colors;
     let is_narrow = ctx.size.width < 1000.0;
 
@@ -170,7 +171,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> Pag
         .padding(Padding::new(48.0))
         .width(Length::Fill);
 
-    PageResult::new(content)
+    AppPageResult::new(content)
 }
 
 fn render_mode_tab(

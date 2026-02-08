@@ -1,11 +1,12 @@
 use crate::reference::app::Message;
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     let preview = VStack::<Message, IcedBackend>::new_generic()
         .spacing(24.0)
         .push(Text::<IcedBackend>::new("Async Actions & Commands").title2().bold())
@@ -16,7 +17,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .secondary(),
         );
 
-    PageResult::new(ComponentDoc::new(
+    AppPageResult::new(ComponentDoc::new(
         "Side Effects",
         "Perform asynchronous operations safely using the Command pattern.",
         r#"

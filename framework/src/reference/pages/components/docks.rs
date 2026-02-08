@@ -1,8 +1,9 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     vstack::<Message, IcedBackend>()
         .spacing(24.0)
         .padding(Padding {

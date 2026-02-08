@@ -1,10 +1,11 @@
-use crate::reference::mcp;
-use crate::engine::navigation::PageResult;
+use crate::reference::intelligence::mcp;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
-    PageResult::new(
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
+    AppPageResult::new(
         VStack::new_generic()
             .spacing(24.0)
             .padding(Padding {

@@ -1,10 +1,11 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(name: &str, context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(name: &str, context: &Context, _is_mobile: bool) -> AppPageResult {
     let name = name.to_string();
-    PageResult::new(
+    AppPageResult::new(
         vstack::<Message, IcedBackend>()
             .width(Length::Fill)
             .spacing(24.0)

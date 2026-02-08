@@ -1,11 +1,12 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     let preview_view = create_preview::<IcedBackend>();
     let terminal_preview = create_preview::<TermBackend>().view(ctx);
     let neural_preview = create_preview::<AIBackend>().view(ctx);
@@ -31,7 +32,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `.title(str)` | `String` | Optional header title for the chart. |\n| `.color(color)` | `Color` | Main accent color for data series. |\n| `.height(len)` | `Length` | Fixed or relative height of the chart area. |"
     );
 
-    PageResult::new(doc)
+    AppPageResult::new(doc)
 }
 
 fn create_preview<B: Backend>() -> Chart<Message, B> {

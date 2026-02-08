@@ -1,12 +1,12 @@
 use crate::prelude::*;
 use crate::reference::app::RenderMode;
-use crate::reference::model::Page;
+use crate::reference::AppPage;
 pub use peak_theme::{PeakTheme, ThemeTone};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
 pub enum Action {
     #[serde(alias = "navigate", alias = "Navigate")]
-    Navigate(Page),
+    Navigate(AppPage),
     #[serde(alias = "setbuttonvariant", alias = "SetButtonVariant")]
     SetButtonVariant(Variant),
     #[serde(alias = "setbuttonintent", alias = "SetButtonIntent")]
@@ -45,7 +45,7 @@ impl Action {
     pub fn is_protected(&self) -> bool {
         match self {
             Action::Shell(_) => true,
-            Action::Navigate(Page::Roadmap) | Action::Navigate(Page::SettingsAI) => true,
+            Action::Navigate(AppPage::Roadmap) | Action::Navigate(AppPage::SettingsAI) => true,
             _ => false,
         }
     }
@@ -53,10 +53,10 @@ impl Action {
     pub fn protection_reason(&self) -> Option<String> {
         match self {
             Action::Shell(cmd) => Some(format!("Execute shell command: `{}`", cmd)),
-            Action::Navigate(Page::Roadmap) => {
+            Action::Navigate(AppPage::Roadmap) => {
                 Some("Accessing vision-critical roadmap data".to_string())
             }
-            Action::Navigate(Page::SettingsAI) => {
+            Action::Navigate(AppPage::SettingsAI) => {
                 Some("Accessing AI configuration and API keys".to_string())
             }
             _ => None,
@@ -200,7 +200,7 @@ mod tests {
         let actions = ActionParser::parse_text(text);
         assert_eq!(actions.len(), 2);
         match &actions[0] {
-            Action::Navigate(Page::Introduction) => (),
+            Action::Navigate(AppPage::Introduction) => (),
             _ => panic!("Expected Navigate(Introduction), got {:?}", actions[0]),
         }
         match &actions[1] {
@@ -211,11 +211,11 @@ mod tests {
 
     #[test]
     fn test_parse_malformed_json() {
-        let text = "Malformed: [action: {\"Navigate\": \"InvalidPage\"})]";
+        let text = "Malformed: [action: {\"Navigate\": \"InvalidAppPage\"})]";
         let actions = ActionParser::parse_text(text);
         assert_eq!(actions.len(), 1);
         match &actions[0] {
-            Action::Unknown(s) => assert!(s.contains("InvalidPage")),
+            Action::Unknown(s) => assert!(s.contains("InvalidAppPage")),
             _ => panic!("Expected Unknown, got {:?}", actions[0]),
         }
     }

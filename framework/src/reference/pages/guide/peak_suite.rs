@@ -1,9 +1,10 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
         let is_narrow = is_mobile || ctx.size.width < 1000.0;
 

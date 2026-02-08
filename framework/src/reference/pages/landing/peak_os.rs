@@ -1,10 +1,11 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
+pub fn view(context: &Context, is_mobile: bool) -> AppPageResult {
     let _ = context;
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
         let mut root = VStack::new().width(Length::Fill).spacing(0.0);
 
@@ -23,7 +24,7 @@ pub fn view(context: &Context, is_mobile: bool) -> PageResult<Message> {
                                 .push(Text::new("Back to Landing").caption1().bold()),
                         )
                         .variant(Variant::Ghost)
-                        .on_press(Message::SetTab(crate::reference::model::Page::Landing)),
+                        .on_press(Message::SetTab(crate::reference::AppPage::Landing)),
                     )
                     .push(
                         HStack::new()

@@ -1,6 +1,7 @@
-use crate::reference::model::Page;
+use crate::reference::AppPage;
 use super::super::app::Message;
 use crate::prelude::*;
+
 use crate::layout::Wrap;
 use crate::elements::controls::TextInput;
 
@@ -236,11 +237,11 @@ fn pillars_section(context: &Context, is_mobile: bool) -> Container<Message, Ice
         .push(
             ResponsiveGrid::new()
                 .spacing(32.0)
-                .push(pillar_card("PeakOS", "Real-Time Orchestration", "Deterministic kernel for hardware coordination.", "cpu", context, Page::PeakOSDetail))
-                .push(pillar_card("PeakUI", "Semantic Vision", "The world's first AI-native semantic interface.", "eye", context, Page::PeakUIDetail))
-                .push(pillar_card("PeakDB", "Neural Memory", "Local-first vector storage for encrypted on-device RAG.", "database", context, Page::PeakDBDetail))
-                .push(pillar_card("PeakRelay", "Distributed Spirit", "Peer-to-peer intelligence mesh for universal swarms.", "share-2", context, Page::PeakRelayDetail))
-                .push(pillar_card("Peak Hub", "Swarm Command", "The dedicated dashboard for controlling the entire stack.", "activity", context, Page::PeakHubDetail)),
+                .push(pillar_card("PeakOS", "Real-Time Orchestration", "Deterministic kernel for hardware coordination.", "cpu", context, AppPage::PeakOSDetail))
+                .push(pillar_card("PeakUI", "Semantic Vision", "The world's first AI-native semantic interface.", "eye", context, AppPage::PeakUIDetail))
+                .push(pillar_card("PeakDB", "Neural Memory", "Local-first vector storage for encrypted on-device RAG.", "database", context, AppPage::PeakDBDetail))
+                .push(pillar_card("PeakRelay", "Distributed Spirit", "Peer-to-peer intelligence mesh for universal swarms.", "share-2", context, AppPage::PeakRelayDetail))
+                .push(pillar_card("Peak Hub", "Swarm Command", "The dedicated dashboard for controlling the entire stack.", "activity", context, AppPage::PeakHubDetail)),
         );
 
     Container::new(content).padding(if is_mobile { 24.0 } else { 80.0 }).width(Length::Fill)
@@ -312,7 +313,7 @@ fn section_header(title: &str, subtitle: &str, is_mobile: bool) -> VStack<Messag
         .push(Text::new(subtitle.to_string()).secondary().size(if is_mobile { 16.0 } else { 20.0 }))
 }
 
-fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context, page: Page) -> impl View<Message, IcedBackend> + 'static {
+fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context, page: AppPage) -> impl View<Message, IcedBackend> + 'static {
     let t = context.theme;
     let is_beta = title == "PeakOS" || title == "PeakRelay" || title == "PeakDB" || title == "Peak Hub";
 

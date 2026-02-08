@@ -1,5 +1,6 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode, TypographyLabState};
 use crate::reference::views::SimulatorView;
 use crate::views::CodeBlock;
@@ -8,9 +9,9 @@ pub fn view(
     _base_context: &Context,
     lab: &TypographyLabState,
     render_mode: RenderMode,
-) -> PageResult<Message> {
+) -> AppPageResult {
     let lab_state = lab.clone();
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let lab = &lab_state;
         let t = ctx.theme;
         let is_narrow = ctx.size.width < 1000.0;

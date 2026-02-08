@@ -2,7 +2,7 @@ use super::super::app::{
     AIProviderChoice, AccessibilityLabState, App, ButtonLabState, IconLabState, InspectorTab,
     LayoutLabState, RenderMode, SizingLabState, SudoAction, TypographyLabState,
 };
-use super::super::model::Page;
+use crate::reference::AppPage;
 use crate::views::chat::ChatMessage;
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ use std::sync::Arc;
 /// 3. **AI Introspection**: By deriving `Serialize`, the entire state can be dumped to JSON for AI agents to understand the app's internal "thought process."
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ViewState {
-    pub active_tab: Page,
+    pub active_tab: AppPage,
     pub show_search: bool,
     pub show_inspector: bool,
     pub show_sidebar: bool,

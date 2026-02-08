@@ -1,5 +1,5 @@
 use crate::reference::app::{Command, Message};
-use crate::reference::mcp;
+use crate::reference::intelligence::mcp;
 use iced::futures::channel::mpsc::Sender;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;

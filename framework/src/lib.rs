@@ -86,8 +86,9 @@ pub mod prelude {
     // Re-export core UI types so showcase doesn't need direct iced imports
     pub use iced::widget::{column, container, row, scrollable, stack, Id};
     pub use iced::{
-        application, run, window, Alignment, Background, Border, Color, Element, Font, Length,
-        Padding, Renderer, Result, Shadow, Size, Task, Theme, Vector,
+        application, clipboard, event, futures, keyboard, mouse, run, window, Alignment,
+        Background, Border, Color, Element, Event, Font, Length, Padding, Point, Renderer, Result,
+        Shadow, Size, Subscription, Task, Theme, Vector,
     };
     pub mod font {
         pub use iced::font::*;

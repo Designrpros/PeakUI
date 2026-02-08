@@ -257,6 +257,3 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         format!("PeakOS {}. Model: {}", provider_name, self.client.model())
     }
 }
-
-// Add Clone to LlmClient if it doesn't have it, or wrap in Arc
-// Looking at llm.rs, LlmClient doesn't have Clone. Let's fix that or wrap it.

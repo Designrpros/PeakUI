@@ -1,9 +1,10 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
-    PageResult::new(crate::core::ProxyView::new(move |context| {
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
+    AppPageResult::new(crate::core::ProxyView::new(move |context| {
         VStack::<Message, IcedBackend>::new_generic()
             .width(Length::Fill)
             .spacing(32.0)

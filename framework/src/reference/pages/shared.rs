@@ -1,11 +1,11 @@
-use crate::core::IcedBackend;
 use crate::prelude::*;
+
 use crate::reference::app::Message;
 
-pub fn heading<S: Into<String>>(
+pub fn heading<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, IcedBackend>> {
+) -> Box<dyn View<Message, B>> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -17,10 +17,10 @@ pub fn heading<S: Into<String>>(
     )
 }
 
-pub fn sub_heading<S: Into<String>>(
+pub fn sub_heading<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, IcedBackend>> {
+) -> Box<dyn View<Message, B>> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -32,10 +32,10 @@ pub fn sub_heading<S: Into<String>>(
     )
 }
 
-pub fn paragraph<S: Into<String>>(
+pub fn paragraph<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, IcedBackend>> {
+) -> Box<dyn View<Message, B>> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -46,7 +46,7 @@ pub fn paragraph<S: Into<String>>(
     )
 }
 
-pub fn bullet_list(items: Vec<&str>, context: &Context) -> Box<dyn View<Message, IcedBackend>> {
+pub fn bullet_list<B: Backend>(items: Vec<&str>, context: &Context) -> Box<dyn View<Message, B>> {
     let mut list = VStack::new_generic().spacing(16.0).width(Length::Fill);
     let theme = context.theme;
     let is_slim = context.device == DeviceType::Mobile || context.size.width < 500.0;
@@ -86,11 +86,11 @@ pub fn bullet_list(items: Vec<&str>, context: &Context) -> Box<dyn View<Message,
     Box::new(list)
 }
 
-pub fn architecture_item(
+pub fn architecture_item<B: Backend>(
     name: &str,
     desc: &str,
     context: &Context,
-) -> Box<dyn View<Message, IcedBackend>> {
+) -> Box<dyn View<Message, B>> {
     let theme = context.theme;
     let is_slim = context.device == DeviceType::Mobile || context.size.width < 500.0;
 
@@ -131,42 +131,44 @@ pub fn architecture_item(
     }
 }
 
-pub fn native_divider() -> Box<dyn View<Message, IcedBackend>> {
-    Box::new(Divider::<IcedBackend>::new())
+pub fn native_divider<B: Backend>() -> Box<dyn View<Message, B>> {
+    Box::new(Divider::<B>::new())
 }
 
-pub fn verdict_badge(score: &str, context: &Context) -> Box<dyn View<Message, IcedBackend>> {
+pub fn verdict_badge<B: Backend>(score: &str, context: &Context) -> Box<dyn View<Message, B>> {
     let score = score.to_string();
     let theme = context.theme;
 
     Box::new(ProxyView::new(move |ctx| {
-        let content: Element<'static, Message> = HStack::new_generic()
+        let content: B::AnyView<Message> = HStack::new_generic()
             .spacing(8.0)
             .align_y(Alignment::Center)
             .push(
-                Icon::<IcedBackend>::new("star")
+                Icon::<B>::new("star")
                     .color(theme.colors.success)
                     .size(16.0),
             )
             .push(
-                Text::<IcedBackend>::new(format!("Verdict: {}", score))
+                Text::<B>::new(format!("Verdict: {}", score))
                     .title3()
                     .bold()
                     .color(theme.colors.success),
             )
             .view(ctx);
 
-        container(content)
-            .padding(Padding::from([12, 24]))
-            .style(move |_| iced::widget::container::Style {
-                background: Some(theme.colors.success.scale_alpha(0.12).into()),
-                border: iced::Border {
-                    radius: 12.0.into(),
-                    color: theme.colors.success.scale_alpha(0.3),
-                    width: 1.0,
-                },
-                ..Default::default()
-            })
-            .into()
+        B::container(
+            content,
+            Padding::from([12, 24]),
+            Length::Shrink,
+            Length::Shrink,
+            Some(theme.colors.success.scale_alpha(0.12)),
+            12.0,
+            1.0,
+            Some(theme.colors.success.scale_alpha(0.3)),
+            None,
+            Alignment::Start,
+            Alignment::Start,
+            ctx,
+        )
     }))
 }

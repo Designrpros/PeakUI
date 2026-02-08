@@ -1,8 +1,9 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
     let items = vec![
         TimelineItem::new(
             "Phase 1: Foundation & Primaries",
@@ -58,7 +59,7 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
         ),
     ];
 
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
         let is_narrow = is_mobile || ctx.size.width < 1000.0;
 

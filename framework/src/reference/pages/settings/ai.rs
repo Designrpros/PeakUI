@@ -1,4 +1,3 @@
-use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{AIProviderChoice, Message};
 
@@ -11,6 +10,11 @@ pub fn view<B: Backend>(
     state_json: Option<String>,
 ) -> PageResult<Message, B> {
     PageResult::new(crate::core::ProxyView::new(move |context| {
+        // Safe Area Adaptation
+        let safe = context.safe_area;
+        let p_top = safe.top;
+        let p_bottom = safe.bottom;
+
         // Config for providers
         let providers = [
             (
@@ -49,10 +53,20 @@ pub fn view<B: Backend>(
             for (choice, name, icon, desc) in chunk {
                 let is_selected = *choice == ai_provider;
 
+                let mut name_text = Text::<B>::new(name.to_string()).bold().title3();
+                let mut desc_text = Text::<B>::new(desc.to_string()).caption2();
+                let mut icon_view = Icon::<B>::new(icon.to_string()).size(32.0);
+
+                if is_selected {
+                    name_text = name_text.color(iced::Color::WHITE);
+                    desc_text = desc_text.color(iced::Color::WHITE);
+                    icon_view = icon_view.color(iced::Color::WHITE);
+                }
+
                 let card_content = VStack::<Message, B>::new_generic()
-                    .push(Icon::<B>::new(icon.to_string()).size(32.0))
-                    .push(Text::<B>::new(name.to_string()).bold().title3())
-                    .push(Text::<B>::new(desc.to_string()).caption2())
+                    .push(icon_view)
+                    .push(name_text)
+                    .push(desc_text)
                     .spacing(8.0);
 
                 row = row.push(
@@ -73,6 +87,12 @@ pub fn view<B: Backend>(
         let main_view = VStack::<Message, B>::new_generic()
             .width(Length::Fill)
             .spacing(32.0)
+            .padding(iced::Padding {
+                top: p_top + 40.0,
+                bottom: p_bottom + 40.0,
+                left: 40.0,
+                right: 40.0,
+            })
             .push(Text::<B>::new("Intelligence").large_title().bold())
             .push(provider_view)
             .push(
@@ -85,6 +105,7 @@ pub fn view<B: Backend>(
                             "Enter API Key...",
                             Message::SetApiKey,
                         )
+                        .password()
                         .on_submit(Message::None),
                     ),
             )
@@ -111,6 +132,7 @@ pub fn view<B: Backend>(
                     } else {
                         crate::views::CodeBlock::new("// Serialization not available".to_string())
                             .language("json")
+                            .on_copy(Message::CopyCode)
                     }),
             );
 

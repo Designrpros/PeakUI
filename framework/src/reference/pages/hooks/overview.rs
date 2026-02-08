@@ -1,11 +1,12 @@
 use crate::reference::app::Message;
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     let preview = VStack::<Message, IcedBackend>::new_generic()
         .spacing(32.0)
         .push(
@@ -27,7 +28,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
                 ),
         );
 
-    PageResult::new(ComponentDoc::new(
+    AppPageResult::new(ComponentDoc::new(
         "Hooks & State",
         "Functional components and state management patterns using the built-in update cycle.",
         r#"

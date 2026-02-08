@@ -1,8 +1,8 @@
 use crate::core::{Backend, SpatialBackend};
-use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{ButtonLabState, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
@@ -28,7 +28,7 @@ pub fn view(
     base_context: &Context,
     lab: &ButtonLabState,
     render_mode: RenderMode,
-) -> PageResult<Message> {
+) -> AppPageResult {
     let context = if lab.is_focused {
         base_context.clone().with_focus("button")
     } else {
@@ -93,7 +93,7 @@ Buttons are the primary vehicle for user intent. In **PeakUI**, buttons follow a
 "#,
     );
 
-    PageResult::new(doc).inspector(ButtonInspector::new(lab))
+    AppPageResult::new(doc).inspector(ButtonInspector::new(lab))
 }
 
 fn generate_code(lab: &ButtonLabState) -> String {

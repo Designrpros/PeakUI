@@ -17,6 +17,7 @@ fn main() {
 
     // PageResult contains a boxed View. We call describe() on it.
     let desc = page_result.view.describe(&ctx);
+    println!("{}", serde_json::to_string_pretty(&desc).unwrap());
 
     // Verify icon loading
     println!("=== ICON LOADING CHECK ===");

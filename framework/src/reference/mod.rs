@@ -1,12 +1,15 @@
-pub mod ai;
 pub mod app;
-pub mod db_bridge;
+pub use app::message::Message;
+pub use app::state::App;
+pub mod data;
 pub mod intelligence;
-pub mod intelligence_bridge;
-pub mod mcp;
-pub mod model;
-pub mod page;
+pub mod models;
 pub mod pages;
 pub mod views;
 
-pub use app::{App, Message};
+// Unique aliases for the reference app to avoid name collisions with framework prelude
+pub use models::result::PageResult as AppPageResult;
+pub use models::Page as AppPage;
+
+// Backward compatibility (deprecated, use AppPage/AppPageResult)
+pub use models as model;

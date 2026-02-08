@@ -1,11 +1,12 @@
 use crate::core::{AIBackend, Backend, ScrollDirection};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use peak_theme::{PeakTheme, ThemeTone};
 use std::borrow::Cow;
 
-pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     let palette = ctx.theme.colors;
     let is_narrow = ctx.size.width < 1000.0;
 
@@ -198,7 +199,7 @@ fn view(&self, ctx: &Context) -> Element {
     .spacing(24.0)
     .width(Length::Fill);
 
-    PageResult::new(
+    AppPageResult::new(
         vstack![hero, lab_section, usage, theory]
             .spacing(64.0)
             .padding(if is_narrow { 24 } else { 48 })

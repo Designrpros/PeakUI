@@ -1,6 +1,7 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{IconLabState, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
@@ -11,7 +12,7 @@ pub fn view(
     render_mode: RenderMode,
     search_query: String,
     icon_limit: usize,
-) -> PageResult<Message> {
+) -> AppPageResult {
     // --- 1. Library Filter ---
     let icons = peak_icons::available_icons();
     let query = search_query.to_lowercase();
@@ -141,7 +142,7 @@ pub fn view(
     )
     .extra_content(library_section);
 
-    PageResult::new(doc)
+    AppPageResult::new(doc)
         .searchable("Icons", "Find icon...", |s| Message::Search(s))
         .inspector(IconInspector::new(lab))
 }

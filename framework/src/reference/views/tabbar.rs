@@ -56,6 +56,11 @@ impl View<Message, IcedBackend> for TabBarView {
                     .active(nav_mode == "Settings")
                     .on_press(Message::SetNavigationMode("Settings".into())),
             )
+            .shadow(iced::Shadow {
+                color: iced::Color::from_rgba8(0, 0, 0, 0.1),
+                offset: iced::Vector::new(0.0, 10.0),
+                blur_radius: 40.0,
+            })
             .view(context)
     }
 }

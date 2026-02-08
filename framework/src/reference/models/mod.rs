@@ -1,5 +1,7 @@
 use percent_encoding;
 
+pub mod result;
+
 #[derive(
     Debug,
     Clone,

@@ -1,14 +1,14 @@
 use super::super::app::Message;
-use super::super::model::Page;
+use crate::reference::AppPage;
 use crate::prelude::*;
 
 pub struct SidebarView {
-    pub active_tab: Page,
+    pub active_tab: AppPage,
     pub navigation_mode: String,
 }
 
 impl SidebarView {
-    pub fn new(active_tab: Page, navigation_mode: String) -> Self {
+    pub fn new(active_tab: AppPage, navigation_mode: String) -> Self {
         Self {
             active_tab,
             navigation_mode,
@@ -62,26 +62,26 @@ impl SidebarView {
             .push(sidebar_item(
                 "Introduction",
                 "map",
-                Page::Introduction,
-                *active_tab == Page::Introduction,
+                AppPage::Introduction,
+                *active_tab == AppPage::Introduction,
             ))
             .push(sidebar_item(
                 "Architecture",
                 "boxes",
-                Page::Architecture,
-                *active_tab == Page::Architecture,
+                AppPage::Architecture,
+                *active_tab == AppPage::Architecture,
             ))
             .push(sidebar_item(
                 "Project Structure",
                 "folder-tree",
-                Page::ProjectStructure,
-                *active_tab == Page::ProjectStructure,
+                AppPage::ProjectStructure,
+                *active_tab == AppPage::ProjectStructure,
             ))
             .push(sidebar_item(
                 "Intelligence",
                 "brain-circuit",
-                Page::Intelligence,
-                *active_tab == Page::Intelligence,
+                AppPage::Intelligence,
+                *active_tab == AppPage::Intelligence,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("RESOURCES"))
@@ -89,54 +89,54 @@ impl SidebarView {
                 sidebar_item(
                     "Roadmap",
                     "milestone",
-                    Page::Roadmap,
-                    *active_tab == Page::Roadmap,
+                    AppPage::Roadmap,
+                    *active_tab == AppPage::Roadmap,
                 )
                 .sudo("Accessing vision-critical roadmap data"),
             )
             .push(sidebar_item(
                 "PeakSuite",
                 "layout-grid",
-                Page::PeakSuite,
-                *active_tab == Page::PeakSuite,
+                AppPage::PeakSuite,
+                *active_tab == AppPage::PeakSuite,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("FOUNDATIONS"))
             .push(sidebar_item(
                 "Typography",
                 "type",
-                Page::Typography,
-                *active_tab == Page::Typography,
+                AppPage::Typography,
+                *active_tab == AppPage::Typography,
             ))
             .push(sidebar_item(
                 "Colors",
                 "palette",
-                Page::Colors,
-                *active_tab == Page::Colors,
+                AppPage::Colors,
+                *active_tab == AppPage::Colors,
             ))
             .push(sidebar_item(
                 "Theming",
                 "palette",
-                Page::Customizations,
-                *active_tab == Page::Customizations,
+                AppPage::Customizations,
+                *active_tab == AppPage::Customizations,
             ))
             .push(sidebar_item(
                 "Sizing",
                 "maximize-2",
-                Page::BasicSizing,
-                *active_tab == Page::BasicSizing,
+                AppPage::BasicSizing,
+                *active_tab == AppPage::BasicSizing,
             ))
             .push(sidebar_item(
                 "Layout",
                 "layout-grid",
-                Page::Layout,
-                *active_tab == Page::Layout,
+                AppPage::Layout,
+                *active_tab == AppPage::Layout,
             ))
             .push(sidebar_item(
                 "Accessibility",
                 "accessibility",
-                Page::Accessibility,
-                *active_tab == Page::Accessibility,
+                AppPage::Accessibility,
+                *active_tab == AppPage::Accessibility,
             ))
     }
 
@@ -149,158 +149,158 @@ impl SidebarView {
             .push(sidebar_item(
                 "Text",
                 "type",
-                Page::Text,
-                *active_tab == Page::Text,
+                AppPage::Text,
+                *active_tab == AppPage::Text,
             ))
             .push(sidebar_item(
                 "Icon",
                 "sparkles",
-                Page::Icon,
-                *active_tab == Page::Icon,
+                AppPage::Icon,
+                *active_tab == AppPage::Icon,
             ))
             .push(sidebar_item(
                 "Divider",
                 "minus",
-                Page::Divider,
-                *active_tab == Page::Divider,
+                AppPage::Divider,
+                *active_tab == AppPage::Divider,
             ))
             .push(sidebar_item(
                 "Button",
                 "square",
-                Page::Button,
-                *active_tab == Page::Button,
+                AppPage::Button,
+                *active_tab == AppPage::Button,
             ))
             .push(sidebar_item(
                 "Shapes",
                 "shapes",
-                Page::Shapes,
-                *active_tab == Page::Shapes,
+                AppPage::Shapes,
+                *active_tab == AppPage::Shapes,
             ))
             .push(sidebar_item(
                 "Image",
                 "image",
-                Page::Image,
-                *active_tab == Page::Image,
+                AppPage::Image,
+                *active_tab == AppPage::Image,
             ))
             .push(sidebar_item(
                 "Video",
                 "video",
-                Page::Video,
-                *active_tab == Page::Video,
+                AppPage::Video,
+                *active_tab == AppPage::Video,
             ))
             .push(sidebar_item(
                 "WebView",
                 "globe",
-                Page::WebView,
-                *active_tab == Page::WebView,
+                AppPage::WebView,
+                *active_tab == AppPage::WebView,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("CONTAINERS"))
             .push(sidebar_item(
                 "VStack",
                 "rows-3",
-                Page::VStack,
-                *active_tab == Page::VStack,
+                AppPage::VStack,
+                *active_tab == AppPage::VStack,
             ))
             .push(sidebar_item(
                 "HStack",
                 "columns-2",
-                Page::HStack,
-                *active_tab == Page::HStack,
+                AppPage::HStack,
+                *active_tab == AppPage::HStack,
             ))
             .push(sidebar_item(
                 "ZStack",
                 "layers",
-                Page::ZStack,
-                *active_tab == Page::ZStack,
+                AppPage::ZStack,
+                *active_tab == AppPage::ZStack,
             ))
             .push(sidebar_item(
                 "Overlay",
                 "copy",
-                Page::Overlay,
-                *active_tab == Page::Overlay,
+                AppPage::Overlay,
+                *active_tab == AppPage::Overlay,
             ))
             .push(sidebar_item(
                 "ScrollView",
                 "move-3d",
-                Page::ScrollView,
-                *active_tab == Page::ScrollView,
+                AppPage::ScrollView,
+                *active_tab == AppPage::ScrollView,
             ))
             .push(sidebar_item(
                 "Card",
                 "credit-card",
-                Page::Card,
-                *active_tab == Page::Card,
+                AppPage::Card,
+                *active_tab == AppPage::Card,
             ))
             .push(sidebar_item(
                 "Section",
                 "package",
-                Page::Section,
-                *active_tab == Page::Section,
+                AppPage::Section,
+                *active_tab == AppPage::Section,
             ))
             .push(sidebar_item(
                 "Data Table",
                 "table",
-                Page::DataTable,
-                *active_tab == Page::DataTable,
+                AppPage::DataTable,
+                *active_tab == AppPage::DataTable,
             ))
             .push(sidebar_item(
                 "Bar Chart",
                 "chart-bar",
-                Page::BarChart,
-                *active_tab == Page::BarChart,
+                AppPage::BarChart,
+                *active_tab == AppPage::BarChart,
             ))
             .push(sidebar_item(
                 "Line Chart",
                 "chart-line",
-                Page::LineChart,
-                *active_tab == Page::LineChart,
+                AppPage::LineChart,
+                *active_tab == AppPage::LineChart,
             ))
             .push(sidebar_item(
                 "Pie Chart",
                 "chart-pie",
-                Page::PieChart,
-                *active_tab == Page::PieChart,
+                AppPage::PieChart,
+                *active_tab == AppPage::PieChart,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("FEEDBACK"))
             .push(sidebar_item(
                 "Sidebar",
                 "panel-left",
-                Page::Sidebar,
-                *active_tab == Page::Sidebar,
+                AppPage::Sidebar,
+                *active_tab == AppPage::Sidebar,
             ))
             .push(sidebar_item(
                 "Tabbar",
                 "layout-panel-top",
-                Page::Tabbar,
-                *active_tab == Page::Tabbar,
+                AppPage::Tabbar,
+                *active_tab == AppPage::Tabbar,
             ))
             .push(sidebar_item(
                 "Nav Split",
                 "columns-3",
-                Page::NavigationSplit,
-                *active_tab == Page::NavigationSplit,
+                AppPage::NavigationSplit,
+                *active_tab == AppPage::NavigationSplit,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("STATE MANAGEMENT"))
             .push(sidebar_item(
                 "State",
                 "zap",
-                Page::UseState,
-                *active_tab == Page::UseState,
+                AppPage::UseState,
+                *active_tab == AppPage::UseState,
             ))
             .push(sidebar_item(
                 "Effects",
                 "activity",
-                Page::UseEffect,
-                *active_tab == Page::UseEffect,
+                AppPage::UseEffect,
+                *active_tab == AppPage::UseEffect,
             ))
             .push(sidebar_item(
                 "Memo",
                 "zap",
-                Page::UseMemo,
-                *active_tab == Page::UseMemo,
+                AppPage::UseMemo,
+                *active_tab == AppPage::UseMemo,
             ))
     }
 
@@ -313,36 +313,36 @@ impl SidebarView {
             .push(sidebar_item(
                 "PeakDB",
                 "database-backup",
-                Page::PeakDB,
-                *active_tab == Page::PeakDB,
+                AppPage::PeakDB,
+                *active_tab == AppPage::PeakDB,
             ))
             .push(sidebar_item(
                 "Swarm Dashboard",
                 "layout-dashboard",
-                Page::SwarmDashboard,
-                *active_tab == Page::SwarmDashboard,
+                AppPage::SwarmDashboard,
+                *active_tab == AppPage::SwarmDashboard,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAKCLOUD"))
             .push(sidebar_item(
                 "PeakCloud",
                 "cloud-cog",
-                Page::PeakCloud,
-                *active_tab == Page::PeakCloud,
+                AppPage::PeakCloud,
+                *active_tab == AppPage::PeakCloud,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAK HUB"))
             .push(sidebar_item(
                 "PeakOS Core",
                 "cpu",
-                Page::PeakOSCore,
-                *active_tab == Page::PeakOSCore,
+                AppPage::PeakOSCore,
+                *active_tab == AppPage::PeakOSCore,
             ))
             .push(sidebar_item(
                 "Peak Hub",
                 "activity",
-                Page::PeakHub,
-                *active_tab == Page::PeakHub,
+                AppPage::PeakHub,
+                *active_tab == AppPage::PeakHub,
             ))
     }
 
@@ -355,34 +355,34 @@ impl SidebarView {
             .push(sidebar_item(
                 "Appearance",
                 "sun-medium",
-                Page::Appearance,
-                *active_tab == Page::Appearance,
+                AppPage::Appearance,
+                *active_tab == AppPage::Appearance,
             ))
             .push(sidebar_item(
                 "Scaling",
                 "maximize-2",
-                Page::Scaling,
-                *active_tab == Page::Scaling,
+                AppPage::Scaling,
+                *active_tab == AppPage::Scaling,
             ))
             .push(sidebar_item(
                 "Shortcuts",
                 "command",
-                Page::Shortcuts,
-                *active_tab == Page::Shortcuts,
+                AppPage::Shortcuts,
+                *active_tab == AppPage::Shortcuts,
             ))
             .push(sidebar_item(
                 "AI Assistant",
                 "brain-circuit",
-                Page::SettingsAI,
-                *active_tab == Page::SettingsAI,
+                AppPage::SettingsAI,
+                *active_tab == AppPage::SettingsAI,
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("SYSTEM"))
             .push(sidebar_item(
                 "About",
                 "info",
-                Page::About,
-                *active_tab == Page::About,
+                AppPage::About,
+                *active_tab == AppPage::About,
             ))
     }
 }
@@ -460,7 +460,7 @@ fn sidebar_section_header(label: &str) -> impl View<Message, IcedBackend> {
 fn sidebar_item(
     label: impl Into<String>,
     icon: impl Into<String>,
-    page: Page,
+    page: AppPage,
     active: bool,
 ) -> impl View<Message, IcedBackend> {
     SidebarItem::new(label, icon, page, active)
@@ -469,12 +469,12 @@ fn sidebar_item(
 struct SidebarItem {
     label: String,
     icon: String,
-    page: Page,
+    page: AppPage,
     active: bool,
 }
 
 impl SidebarItem {
-    fn new(label: impl Into<String>, icon: impl Into<String>, page: Page, active: bool) -> Self {
+    fn new(label: impl Into<String>, icon: impl Into<String>, page: AppPage, active: bool) -> Self {
         Self {
             label: label.into(),
             icon: icon.into(),

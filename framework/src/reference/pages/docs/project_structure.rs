@@ -1,9 +1,10 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
         let is_narrow = is_mobile || ctx.size.width < 1000.0;
 
@@ -39,14 +40,14 @@ pub fn view(_context: &Context, is_mobile: bool) -> PageResult<Message> {
                     .push(
                         Button::label("Open GitHub")
                             .variant(Variant::Outline)
-                            .on_press(Message::SetTab(crate::reference::model::Page::Introduction)) // Placeholder
+                            .on_press(Message::SetTab(crate::reference::AppPage::Introduction)) // Placeholder
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     )
                     .push(
                         Button::label("Architecture Guide")
                             .variant(Variant::Soft)
-                            .on_press(Message::SetTab(crate::reference::model::Page::Architecture))
+                            .on_press(Message::SetTab(crate::reference::AppPage::Architecture))
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     ),

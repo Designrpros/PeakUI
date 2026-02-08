@@ -1,11 +1,12 @@
 use crate::core::{AIBackend, Context, IcedBackend, SpatialBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     // --- 1. Preview Construction ---
     let preview_view = create_canvas_preview(ctx);
     let terminal_preview = "DataTable[Rows: 3, Columns: 3]".to_string();
@@ -49,7 +50,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `sortable_column(n, w, f)` | `&str, Length, Fn` | Defines a sortable column with a callback. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `row_with_action(cells, m)` | `Vec<...>, Msg` | Adds an interactive row. |\n| `show_grid(b)` | `bool` | Toggles internal grid lines. |"
     );
 
-    PageResult::new(doc)
+    AppPageResult::new(doc)
 }
 
 fn create_canvas_preview(_ctx: &Context) -> VStack<Message, IcedBackend> {

@@ -116,7 +116,7 @@ impl ContentView {
                 }
             }
 
-            // 2. Search Field (Conditioned on Page)
+            // 2. Search Field (Conditioned on AppPage)
             if let Some(config) = search_config.clone() {
                 let search_input =
                     TextInput::<Message>::new(query.clone(), config.placeholder.clone(), |s| {
@@ -167,7 +167,7 @@ impl ContentView {
             // 3. Spacer (Push everything else right)
             header_row = header_row.push(iced::widget::Space::new().width(Length::Fill));
 
-            // 4. Page Toolbar Items
+            // 4. AppPage Toolbar Items
             for item in toolbar_items.iter() {
                 header_row = header_row.push(item.view(context));
             }
@@ -338,7 +338,7 @@ impl ContentView {
         }
 
         crate::core::SemanticNode::new("content_view")
-            .with_label(format!("Page: {:?}", self.state.active_tab))
+            .with_label(format!("AppPage: {:?}", self.state.active_tab))
             .push_child(split_view.describe(context))
     }
 }

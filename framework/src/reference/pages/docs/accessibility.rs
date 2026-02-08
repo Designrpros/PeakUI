@@ -1,10 +1,11 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{AccessibilityComponent, AccessibilityLabState, Message, RenderMode};
 use crate::reference::pages::shared::*;
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
-pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode) -> AppPageResult {
     let mode = ctx.theme.colors;
     let is_narrow = ctx.size.width < 1000.0;
 
@@ -151,7 +152,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         .padding(Padding::new(48.0))
         .width(Length::Fill);
 
-    PageResult::new(content)
+    AppPageResult::new(content)
 }
 
 fn create_preview<B: Backend>(

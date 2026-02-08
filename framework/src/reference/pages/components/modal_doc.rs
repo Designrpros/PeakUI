@@ -1,11 +1,12 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     // --- 1. Preview Construction ---
     let preview_view = create_preview::<IcedBackend>();
     let terminal_preview = "Modal: [ Confirm Action ]".to_string();
@@ -38,7 +39,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `.new(content)` | `View` | Creates the modal with inner content. |\n| `.on_close(m)` | `Message` | Triggered when the user clicks the backdrop. |\n| `.width(len)` | `Length` | Sets the maximum width of the dialog. |"
     );
 
-    PageResult::new(doc)
+    AppPageResult::new(doc)
 }
 
 fn create_preview<B: Backend>() -> VStack<Message, B> {

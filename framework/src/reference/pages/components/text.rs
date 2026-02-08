@@ -1,6 +1,7 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode, TypographyLabState};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
@@ -9,7 +10,7 @@ pub fn view(
     ctx: &Context,
     lab: &TypographyLabState,
     render_mode: RenderMode,
-) -> PageResult<Message> {
+) -> AppPageResult {
     // --- 1. Preview Construction ---
     // We create a preview that can be rendered by any backend
     let preview_view = create_preview::<IcedBackend>(lab);
@@ -58,7 +59,7 @@ In **PeakUI**, typography is semantic. Instead of choosing raw font sizes for ev
 "#,
     );
 
-    PageResult::new(doc).inspector(TypographyInspector::new(lab))
+    AppPageResult::new(doc).inspector(TypographyInspector::new(lab))
 }
 
 fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {

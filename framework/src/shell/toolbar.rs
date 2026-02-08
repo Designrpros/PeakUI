@@ -1,5 +1,5 @@
-use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, View};
+use crate::elements::atoms::{Icon, Text};
 use crate::style::Variant;
 use iced::{Alignment, Border, Color, Length, Padding, Shadow, Vector};
 
@@ -98,6 +98,7 @@ pub struct ToolbarGroup<Message: 'static + Send + Sync> {
     items: Vec<Box<dyn View<Message, IcedBackend>>>,
     padding: Padding,
     spacing: f32,
+    shadow: Option<Shadow>,
 }
 
 impl<Message: 'static + Send + Sync> ToolbarGroup<Message> {
@@ -111,6 +112,7 @@ impl<Message: 'static + Send + Sync> ToolbarGroup<Message> {
                 left: 16.0,
             },
             spacing: 8.0,
+            shadow: None,
         }
     }
 
@@ -126,6 +128,11 @@ impl<Message: 'static + Send + Sync> ToolbarGroup<Message> {
 
     pub fn spacing(mut self, spacing: f32) -> Self {
         self.spacing = spacing;
+        self
+    }
+
+    pub fn shadow(mut self, shadow: Shadow) -> Self {
+        self.shadow = Some(shadow);
         self
     }
 }
@@ -151,25 +158,32 @@ impl<Message: 'static + Send + Sync> View<Message, IcedBackend> for ToolbarGroup
         );
 
         let radius = context.radius(24.0);
+        let custom_shadow = self.shadow;
+
         if is_grouped {
             iced::widget::container(row)
                 .width(Length::Shrink)
-                .style({
+                .style(move |_| {
                     let bg_color = theme.colors.surface;
                     let border_color = theme.colors.border.scale_alpha(0.1);
-                    let shadow = if cfg!(target_arch = "wasm32") {
-                        Shadow::default()
-                    } else {
-                        Shadow {
-                            color: Color {
-                                a: 0.1,
-                                ..Color::BLACK
-                            },
-                            offset: Vector::new(0.0, 4.0),
-                            blur_radius: 12.0,
+
+                    // Use custom shadow if provided (ignoring WASM check), otherwise use default logic
+                    let shadow = custom_shadow.unwrap_or_else(|| {
+                        if cfg!(target_arch = "wasm32") {
+                            Shadow::default()
+                        } else {
+                            Shadow {
+                                color: Color {
+                                    a: 0.1,
+                                    ..Color::BLACK
+                                },
+                                offset: Vector::new(0.0, 4.0),
+                                blur_radius: 12.0,
+                            }
                         }
-                    };
-                    move |_| iced::widget::container::Style {
+                    });
+
+                    iced::widget::container::Style {
                         background: Some(bg_color.into()),
                         border: Border {
                             radius,

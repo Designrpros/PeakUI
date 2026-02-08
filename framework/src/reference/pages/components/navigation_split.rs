@@ -1,11 +1,12 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
+pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     // --- 1. Preview Construction ---
     let preview_view = create_preview::<IcedBackend>();
     let terminal_preview = create_preview::<TermBackend>().view(ctx);
@@ -35,7 +36,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `.new(side, main)` | `View, View` | Creates a split container. |\n| `.sidebar_width(w)` | `f32` | Sets the preferred sidebar width. |"
     );
 
-    PageResult::new(doc)
+    AppPageResult::new(doc)
 }
 
 fn create_preview<B: Backend>() -> VStack<Message, B> {

@@ -1,9 +1,10 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> PageResult<Message> {
-    PageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
+pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageResult {
+    AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
         let t = ctx.theme;
         let is_narrow = is_mobile || ctx.size.width < 1000.0;
 
@@ -39,14 +40,14 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> PageResult
                     .push(
                         Button::label("View Protocol")
                             .variant(Variant::Outline)
-                            .on_press(Message::SetTab(crate::reference::model::Page::Introduction)) // Placeholder
+                            .on_press(Message::SetTab(crate::reference::AppPage::Introduction)) // Placeholder
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     )
                     .push(
                         Button::label("Architecture")
                             .variant(Variant::Soft)
-                            .on_press(Message::SetTab(crate::reference::model::Page::Architecture))
+                            .on_press(Message::SetTab(crate::reference::AppPage::Architecture))
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     ),
@@ -118,7 +119,7 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> PageResult
                 Box::new(Text::new("PeakUI uses a high-precision Action Protocol. The AI emits structured tags in its natural language responses, which the framework translates into internal messages.")),
                 Box::new(Text::new("• Deterministic Interaction: No more unstable 'click at pixel X,Y'.")),
                 Box::new(Text::new("• Human-in-the-Loop: Critical actions can be wrapped in `NeuralSudo` to require explicit human confirmation.")),
-                Box::new(code_block("// The AI emits a protocol tag:\n// \"I will now help you [Action: Navigate(Settings)]\"\n// Framework executes: Message::SetTab(Page::Settings)")),
+                Box::new(code_block("// The AI emits a protocol tag:\n// \"I will now help you [Action: Navigate(Settings)]\"\n// Framework executes: Message::SetTab(AppPage::Settings)")),
             ],
         );
 

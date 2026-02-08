@@ -1,8 +1,9 @@
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 use crate::reference::app::Message;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     let items = vec![
         TimelineItem::new(
             "Phase 1: Local Discovery",
@@ -54,7 +55,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
         ),
     ];
 
-    PageResult::new(RoadmapPage { items })
+    AppPageResult::new(RoadmapAppPage { items })
 }
 
 #[derive(Clone)]
@@ -78,11 +79,11 @@ impl TimelineItem {
     }
 }
 
-struct RoadmapPage {
+struct RoadmapAppPage {
     items: Vec<TimelineItem>,
 }
 
-impl View<Message, IcedBackend> for RoadmapPage {
+impl View<Message, IcedBackend> for RoadmapAppPage {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let is_mobile = context.is_slim();
 

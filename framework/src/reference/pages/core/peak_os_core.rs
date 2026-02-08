@@ -1,12 +1,13 @@
 use crate::reference::app::Message;
-use crate::engine::navigation::PageResult;
+
 use crate::prelude::*;
+use crate::reference::AppPageResult;
 
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
-    let mcp_schema = format!("{:#?}", crate::reference::mcp::get_framework_schema());
+pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
+    let mcp_schema = format!("{:#?}", crate::reference::intelligence::mcp::get_framework_schema());
     let preview = VStack::<Message, IcedBackend>::new_generic()
         .spacing(24.0)
         .push(Text::<IcedBackend>::new("The System Kernel").title2().bold())
@@ -45,7 +46,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .into()
         }));
 
-    PageResult::new(ComponentDoc::new(
+    AppPageResult::new(ComponentDoc::new(
         "PeakOS Core",
         "The fundamental runtime providing IO, networking, and hardware access.",
         r#"
