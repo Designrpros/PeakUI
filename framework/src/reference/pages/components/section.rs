@@ -51,8 +51,7 @@ fn create_preview<B: Backend>() -> VStack<Message, B> {
                         .secondary(),
                 )
                 .push(
-                    button_label::<Message, B>("Edit Profile")
-                        .variant(crate::modifiers::Variant::Soft),
+                    button_label::<Message, B>("Edit Profile").variant(crate::style::Variant::Soft),
                 ),
         ))
 }

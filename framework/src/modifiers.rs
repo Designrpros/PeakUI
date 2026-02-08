@@ -32,50 +32,6 @@ impl ControlSize {
     }
 }
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-    schemars::JsonSchema,
-)]
-pub enum Variant {
-    #[default]
-    Solid, // Full background color
-    Soft,    // Light background, dark text
-    Outline, // Border only
-    Ghost,   // No background until hover
-    Compact, // No background, minimal spacing
-    Plain,   // No background, no padding, no styling (click-only)
-}
-
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Default,
-    serde::Serialize,
-    serde::Deserialize,
-    schemars::JsonSchema,
-)]
-pub enum Intent {
-    #[default]
-    Primary,
-    Secondary,
-    Accent,
-    Success,
-    Warning,
-    Danger,
-    Info,
-    Neutral,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct IdealWidth(pub f32);
 

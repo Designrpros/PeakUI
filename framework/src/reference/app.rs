@@ -1636,120 +1636,101 @@ impl App {
 
         let peak_id = self.peak_id.clone();
         let tick = self.tick;
-        crate::core::responsive(
-            mode,
-            tokens.clone(),
-            self.localization.clone(),
-            move |mut context| {
-                context.tick = tick;
-                context.peak_id = peak_id.clone().into();
-                // Main App Content
-                let base_content = iced::widget::container(content.view(&context))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style(move |_| iced::widget::container::Style {
-                        background: Some(tokens.colors.background.into()),
-                        ..Default::default()
-                    });
+        let self_localization = self.localization.clone();
+        let view = crate::core::responsive(move |device_type| {
+            let mut context = Context::new(
+                if device_type == DeviceType::Mobile {
+                    ShellMode::Mobile
+                } else {
+                    ShellMode::Desktop
+                },
+                tokens.clone(),
+                iced::Size::new(1280.0, 800.0), // Responsive viewport
+                self_localization.clone(),
+            );
+            context.tick = tick;
+            context.peak_id = peak_id.clone().into();
 
-                let mut stack = iced::widget::stack![base_content]
-                    .width(Length::Fill)
-                    .height(Length::Fill);
+            // Main App Content
+            let base_content = content.clone().into_box();
 
-                // Overlay Context Menu
-                if let Some(pos) = context_menu_pos {
-                    let menu = crate::views::ContextMenu::new()
-                        .item(
-                            "Reload",
-                            "rotate-cw",
-                            Message::ContextMenuAction("Reload".to_string()),
-                        )
-                        .item(
-                            "Inspect",
-                            "search-code",
-                            Message::ContextMenuAction("Inspect".to_string()),
-                        )
-                        .item("Close", "circle-x", Message::CloseContextMenu);
+            let mut stack = crate::layout::ZStack::<Message, IcedBackend>::new_generic()
+                .push(base_content)
+                .width(Length::Fill)
+                .height(Length::Fill);
 
-                    stack = stack.push(
-                        iced::widget::container(menu.view(&context))
-                            .width(Length::Fill)
-                            .height(Length::Fill)
-                            .padding(iced::Padding {
-                                top: pos.y,
-                                left: pos.x,
-                                ..Default::default()
-                            }),
-                    );
-                }
-
-                // Overlay Sudo Prompt
-                if let Some(sudo) = &content.state.pending_sudo_action {
-                    let prompt = iced::widget::container(
-                        iced::widget::column![
-                            iced::widget::text("Neural Sudo Permission").size(24),
-                            iced::widget::Space::new().height(10),
-                            iced::widget::text(format!("AI wants to perform an action:")).size(16),
-                            iced::widget::text(format!("{:?}", sudo.message))
-                                .size(14)
-                                .color(tokens.colors.primary),
-                            iced::widget::Space::new().height(5),
-                            iced::widget::text(format!("Reason: {}", sudo.reason))
-                                .size(14)
-                                .size(14),
-                            iced::widget::Space::new().height(20),
-                            iced::widget::row![
-                                iced::widget::button("Deny")
-                                    .padding(10)
-                                    .on_press(Message::SudoDeny),
-                                iced::widget::Space::new().width(10),
-                                iced::widget::button("Approve")
-                                    .padding(10)
-                                    .on_press(Message::SudoApprove),
-                            ]
-                        ]
-                        .align_x(iced::Alignment::Center),
+            // Overlay Context Menu
+            if let Some(pos) = context_menu_pos {
+                let menu = crate::views::ContextMenu::new()
+                    .item(
+                        "Reload",
+                        "rotate-cw",
+                        Message::ContextMenuAction("Reload".to_string()),
                     )
-                    .width(400.0)
-                    .padding(30)
-                    .style(move |_| iced::widget::container::Style {
-                        background: Some(tokens.colors.surface.into()),
-                        border: iced::Border {
-                            radius: 12.0.into(),
-                            width: 1.0,
-                            color: tokens.colors.border,
-                        },
-                        shadow: iced::Shadow {
-                            color: Color::BLACK,
-                            offset: iced::Vector::new(0.0, 10.0),
-                            blur_radius: 30.0,
-                        },
-                        ..Default::default()
-                    });
+                    .item(
+                        "Inspect",
+                        "search-code",
+                        Message::ContextMenuAction("Inspect".to_string()),
+                    )
+                    .item("Close", "circle-x", Message::CloseContextMenu);
 
-                    stack = stack.push(
-                        iced::widget::container(prompt)
-                            .width(Length::Fill)
-                            .height(Length::Fill)
-                            .center_x(Length::Fill)
-                            .center_y(Length::Fill)
-                            .style(move |_| iced::widget::container::Style {
-                                background: Some(Background::Color(Color {
-                                    a: 0.5,
-                                    ..tokens.colors.background
-                                })),
-                                ..Default::default()
-                            }),
-                    );
-                }
+                stack = stack.push(
+                    crate::atoms::Container::<Message, IcedBackend>::new(menu)
+                        .padding(iced::Padding {
+                            top: pos.y,
+                            left: pos.x,
+                            ..Default::default()
+                        })
+                        .into_box(),
+                );
+            }
 
-                // Render Window Chrome ON TOP of everything (or wrapping)
-                // Since we want the notch button to be clickable, and it's in the chrome.
+            // Overlay Sudo Prompt
+            if let Some(sudo) = &content.state.pending_sudo_action {
+                let prompt = crate::atoms::Container::<Message, IcedBackend>::new(
+                    crate::layout::VStack::<Message, IcedBackend>::new_generic()
+                        .push(
+                            crate::atoms::Text::<IcedBackend>::new("Neural Sudo Permission")
+                                .title1(),
+                        )
+                        .push(crate::atoms::Text::<IcedBackend>::new(format!(
+                            "AI wants to perform: {:?}",
+                            sudo.message
+                        )))
+                        .push(
+                            crate::layout::HStack::<Message, IcedBackend>::new_generic()
+                                .push(
+                                    crate::controls::Button::<Message, IcedBackend>::new(
+                                        crate::atoms::Text::<IcedBackend>::new("Deny"),
+                                    )
+                                    .on_press(Message::SudoDeny),
+                                )
+                                .push(
+                                    crate::controls::Button::<Message, IcedBackend>::new(
+                                        crate::atoms::Text::<IcedBackend>::new("Approve"),
+                                    )
+                                    .on_press(Message::SudoApprove),
+                                )
+                                .spacing(10.0),
+                        )
+                        .spacing(20.0),
+                )
+                .padding(30.0);
 
-                let content_view: Element<'_, Message> = stack.into();
-                content_view
-            },
-        )
+                stack = stack.push(prompt.into_box());
+            }
+
+            stack.into_box()
+        });
+
+        // Convert View trait object to Element
+        let dummy_ctx = Context::new(
+            ShellMode::Desktop,
+            tokens,
+            iced::Size::new(1280.0, 800.0),
+            self.localization.clone(),
+        );
+        view.view(&dummy_ctx)
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {

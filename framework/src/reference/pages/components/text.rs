@@ -105,7 +105,7 @@ fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
                                 .push(
                                     text::<B>("Danger")
                                         .body()
-                                        .intent(crate::modifiers::Intent::Danger),
+                                        .intent(crate::style::Intent::Danger),
                                 ),
                         ),
                 ),

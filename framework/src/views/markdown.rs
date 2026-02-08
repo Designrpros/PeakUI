@@ -382,6 +382,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
+                    is_bold: false,
+                    is_dim: false,
                 });
             }
             if let Some(end) = remaining[start + 2..].find("**") {
@@ -394,6 +396,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                         ..Default::default()
                     }),
                     size: None,
+                    is_bold: true,
+                    is_dim: false,
                 });
                 remaining = &remaining[start + 2 + end + 2..];
             } else {
@@ -402,6 +406,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
+                    is_bold: false,
+                    is_dim: false,
                 });
                 break;
             }
@@ -412,6 +418,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
+                    is_bold: false,
+                    is_dim: false,
                 });
             }
             if let Some(end) = remaining[start + 1..].find('`') {
@@ -421,6 +429,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                     color: Some(theme.colors.primary),
                     font: Some(font::Font::MONOSPACE),
                     size: None,
+                    is_bold: false,
+                    is_dim: false,
                 });
                 remaining = &remaining[start + 1 + end + 1..];
             } else {
@@ -429,6 +439,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                     color: Some(theme.colors.text_secondary),
                     font: None,
                     size: None,
+                    is_bold: false,
+                    is_dim: false,
                 });
                 break;
             }
@@ -438,6 +450,8 @@ fn render_rich_text<Message: Clone + Send + Sync + 'static, B: Backend>(
                 color: Some(theme.colors.text_secondary),
                 font: None,
                 size: None,
+                is_bold: false,
+                is_dim: false,
             });
             break;
         }

@@ -6,7 +6,7 @@ fn main() {
     let ctx = Context::default();
 
     // We want to see how the AI settings page describes itself
-    let page_result = ai::view(
+    let page_result = ai::view::<AIBackend>(
         &ctx,
         false, // is_mobile
         "sk-test-key".to_string(),

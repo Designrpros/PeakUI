@@ -1,7 +1,7 @@
 use crate::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, ScrollDirection, SemanticNode, View};
 use crate::layout::{HStack, VStack};
-use crate::modifiers::{Intent, Variant};
+use crate::style::{Intent, Variant};
 use iced::{Alignment, Color, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;

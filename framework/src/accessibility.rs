@@ -1,4 +1,4 @@
-use crate::core::SemanticNode;
+use crate::semantic::SemanticNode;
 
 pub enum AccessibilityEvent {
     NodeCreated(SemanticNode),
@@ -72,4 +72,70 @@ pub trait Accessible {
     // using generic string for now as placeholder
     fn set_accessibility_role(&mut self, role: String);
     fn set_accessibility_label(&mut self, label: String);
+}
+
+/// Standard roles for accessibility nodes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Default)]
+pub enum AccessibilityRole {
+    #[default]
+    Unknown,
+    Button,
+    CheckBox,
+    Header,
+    Link,
+    SearchBox,
+    Slider,
+    SpinButton,
+    Switch,
+    TextField,
+    Label,
+    List,
+    ListItem,
+    Menu,
+    MenuItem,
+    ProgressBar,
+    RadioButton,
+    Tab,
+    TabList,
+    TabPanel,
+    Toolbar,
+    Tooltip,
+    Window,
+    Dialog,
+    Image,
+    Graphic,
+    Video,
+    Status,
+    Icon,
+    Text,
+    WebView,
+    Group,
+}
+
+impl std::fmt::Display for AccessibilityRole {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, Default)]
+pub struct AccessibilityNode {
+    #[serde(rename = "r")]
+    pub role: AccessibilityRole,
+    #[serde(rename = "l")]
+    pub label: std::borrow::Cow<'static, str>,
+    #[serde(rename = "h", skip_serializing_if = "Option::is_none")]
+    pub hint: Option<std::borrow::Cow<'static, str>>,
+    #[serde(rename = "v", skip_serializing_if = "Option::is_none")]
+    pub value: Option<std::borrow::Cow<'static, str>>,
+    #[serde(rename = "s", skip_serializing_if = "Vec::is_empty")]
+    pub states: Vec<std::borrow::Cow<'static, str>>,
+    #[serde(rename = "hd", skip_serializing_if = "is_false")]
+    pub is_hidden: bool,
+    #[serde(rename = "dis", skip_serializing_if = "is_false")]
+    pub is_disabled: bool,
+}
+
+fn is_false(b: &bool) -> bool {
+    !*b
 }

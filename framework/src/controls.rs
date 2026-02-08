@@ -1,5 +1,6 @@
 use crate::core::{Backend, Context, View};
-use crate::modifiers::{ControlSize, Intent, Variant};
+use crate::modifiers::ControlSize;
+use crate::style::{Intent, Variant};
 use iced::{Alignment, Length, Padding};
 use std::borrow::Cow;
 use std::sync::Arc;

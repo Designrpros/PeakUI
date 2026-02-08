@@ -1,5 +1,5 @@
 use crate::core::{Backend, Context, IcedBackend, ProxyView, View};
-use crate::modifiers::Intent;
+use crate::style::Intent;
 use iced::{Alignment, Color, Length, Padding};
 use std::borrow::Cow;
 use std::marker::PhantomData;

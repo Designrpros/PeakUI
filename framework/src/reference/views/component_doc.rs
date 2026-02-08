@@ -2,7 +2,7 @@ use crate::atoms::Text;
 use crate::controls::Button;
 use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::layout::{HStack, VStack};
-use crate::modifiers::Variant;
+use crate::style::Variant;
 use crate::views::{CodeBlock, MarkdownView};
 use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
@@ -93,7 +93,9 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
     }
 }
 
-impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ComponentDoc<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for ComponentDoc<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let theme = context.theme;
 
@@ -141,7 +143,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Co
                                 },
                             )
                             .on_press((on_change)(crate::reference::app::RenderMode::Canvas))
-                            .neural("lab_tab_canvas"),
+                            .neural_tag("lab_tab_canvas"),
                     )
                     .push(
                         Button::<Message, B>::label("Terminal")
@@ -153,7 +155,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Co
                                 },
                             )
                             .on_press((on_change)(crate::reference::app::RenderMode::Terminal))
-                            .neural("lab_tab_terminal"),
+                            .neural_tag("lab_tab_terminal"),
                     )
                     .push(
                         Button::<Message, B>::label("Neural")
@@ -165,7 +167,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Co
                                 },
                             )
                             .on_press((on_change)(crate::reference::app::RenderMode::Neural))
-                            .neural("lab_tab_neural"),
+                            .neural_tag("lab_tab_neural"),
                     )
                     .push(
                         Button::<Message, B>::label("Spatial")
@@ -177,7 +179,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Co
                                 },
                             )
                             .on_press((on_change)(crate::reference::app::RenderMode::Spatial))
-                            .neural("lab_tab_spatial"),
+                            .neural_tag("lab_tab_spatial"),
                     );
             }
 

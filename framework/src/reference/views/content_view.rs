@@ -5,8 +5,19 @@ use crate::prelude::*;
 
 use super::state::ViewState;
 
+#[derive(Clone)]
 pub struct ContentView {
     pub state: ViewState,
+}
+
+impl View<Message, IcedBackend> for ContentView {
+    fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
+        self.view(context)
+    }
+
+    fn describe(&self, context: &Context) -> crate::core::SemanticNode {
+        self.describe(context)
+    }
 }
 
 impl ContentView {
@@ -112,7 +123,7 @@ impl ContentView {
                         Message::Search(s)
                     })
                     .variant(Variant::Ghost)
-                    .neural("header-search")
+                    .neural_tag("header-search")
                     .view(context);
 
                 // Styled "Search Field" Container

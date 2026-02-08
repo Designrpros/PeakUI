@@ -20,8 +20,8 @@ fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
         } else {
             Some(Message::CopyCode("Clicked!".to_string()))
         })
-        .neural("lab-primary-action")
-        .document("Primary action for the lab experiment")
+        .neural_tag("lab-primary-action")
+        .documented("Primary action for the lab experiment")
 }
 
 pub fn view(
@@ -121,7 +121,7 @@ fn generate_code(lab: &ButtonLabState) -> String {
         code.push_str("\n    .on_press(Message::Action)");
     }
 
-    code.push_str("\n    .neural(\"lab-primary-action\")");
+    code.push_str("\n    .neural_tag(\"lab-primary-action\")");
 
     code
 }

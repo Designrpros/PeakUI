@@ -196,7 +196,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                     let back_button =
                         crate::controls::Button::<Message, IcedBackend>::label("Back")
                             .icon("chevron_left")
-                            .variant(crate::modifiers::Variant::Ghost)
+                            .variant(crate::style::Variant::Ghost)
                             .on_press(back_msg)
                             .width(Length::Shrink)
                             .view(context);

@@ -1,6 +1,6 @@
 use crate::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, View};
-use crate::modifiers::Variant;
+use crate::style::Variant;
 use iced::{Alignment, Border, Color, Length, Padding, Shadow, Vector};
 
 pub struct ToolbarItem<Message: 'static + Send + Sync> {

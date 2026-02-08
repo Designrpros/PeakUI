@@ -42,6 +42,7 @@ macro_rules! data_table {
 
 pub mod assets;
 pub mod atoms;
+pub mod backend;
 pub mod benchmark;
 pub mod catalog;
 pub mod console;
@@ -51,11 +52,12 @@ pub mod core;
 pub mod forms;
 pub mod gestures;
 pub mod layout;
-pub mod mobile;
 pub mod modifiers;
 pub mod motion;
 pub mod nav_split_view;
 pub mod scroll_view;
+pub mod semantic;
+pub mod style;
 pub mod views;
 
 pub mod prelude {
@@ -63,20 +65,21 @@ pub mod prelude {
         badge::Badge, Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text,
         Video, WebView,
     };
+    pub use crate::backend::{
+        ai::AIBackend, iced_backend::IcedBackend, spatial::SpatialBackend, term::TermBackend,
+        Backend, TextSpan,
+    };
     pub use crate::catalog::{Catalog, CatalogItem, CatalogMessage};
     pub use crate::console::Console;
     pub use crate::containers::{Card, GlassCard, Section};
     pub use crate::controls::{Button, ButtonStyle, Slider, Stepper, TextInput, Toggle};
-    pub use crate::core::{
-        responsive, AIBackend, Backend, ChatCompletionMessage, Context, DeviceType, IcedBackend,
-        ProxyView, ScrollDirection, SemanticNode, ShellMode, TermBackend, ThemeTokens, View,
-    };
+    pub use crate::core::{responsive, ProxyView, ShellMode, ThemeTokens, View};
     pub use crate::dsl::*;
     pub use crate::forms::{Form, FormStyle};
     pub use crate::gestures::{Gesture, GestureDetector, TapGesture};
     pub use crate::layout::{HStack, LayoutExt, ResponsiveGrid, VStack, ZStack};
     pub use crate::localization::Localization;
-    pub use crate::modifiers::{ControlSize, Intent, Variant};
+    pub use crate::modifiers::ControlSize;
     pub use crate::motion::{AnimationConfig, Interpolatable, MotionState, Spring};
     pub use crate::nav_split_view::NavigationSplitView;
     pub use crate::navigation::{
@@ -85,6 +88,10 @@ pub mod prelude {
     };
     pub use crate::scroll_view::ScrollView;
     pub use crate::segmented_picker::SegmentedPicker;
+    pub use crate::semantic::{
+        ChatCompletionMessage, DataProvider, IntelligenceProvider, SemanticNode, SemanticRecord,
+    };
+    pub use crate::style::{Context, DeviceType, Intent, ScrollDirection, Variant};
     pub use crate::toolbar::{ToolbarGroup, ToolbarItem};
     pub use crate::views::chart::{Chart, ChartDataPoint, ChartType};
     pub use crate::views::code_block::CodeBlock;

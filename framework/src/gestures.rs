@@ -68,8 +68,8 @@ impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend, V: View<Me
         B::button(
             self.content.view(context),
             Some(self.on_tap.clone()),
-            crate::modifiers::Variant::Plain,
-            crate::modifiers::Intent::Neutral,
+            crate::style::Variant::Plain,
+            crate::style::Intent::Neutral,
             iced::Length::Shrink,
             iced::Length::Shrink,
             false,

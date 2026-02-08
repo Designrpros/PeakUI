@@ -1,4 +1,6 @@
+use crate::atoms::Icon;
 use crate::core::{Backend, Context, TextSpan, View};
+use crate::style::{Intent, ScrollDirection, Variant};
 use iced::{Color, Length};
 
 pub struct CodeBlock<Message: 'static + Send + Sync = ()> {
@@ -116,7 +118,7 @@ where
                     btn_content,
                     Some(msg),
                     Variant::Ghost,
-                    crate::modifiers::Intent::Neutral,
+                    Intent::Neutral,
                     Length::Shrink,
                     Length::Shrink,
                     true,
@@ -169,7 +171,6 @@ where
             context,
         );
         // Note: scroll_view usually enables scrolling if
-        use crate::prelude::*;
 
         let code_container = B::container(
             scroll_area,
@@ -276,6 +277,8 @@ where
             color: Some(color),
             font: Some(iced::Font::MONOSPACE),
             size: None, // Default size
+            is_bold: false,
+            is_dim: false,
         });
     }
 

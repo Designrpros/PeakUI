@@ -1,6 +1,6 @@
 use crate::core::{Backend, Context, ScrollDirection, SemanticNode, View};
-use crate::modifiers::{Intent, Variant};
 use crate::reference::intelligence::{Action, ActionParser, ContentPart};
+use crate::style::{Intent, Variant};
 use crate::views::MarkdownView;
 use iced::{Length, Padding};
 use std::sync::Arc;
