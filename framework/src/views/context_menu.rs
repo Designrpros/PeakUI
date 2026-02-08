@@ -52,7 +52,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Cont
             let action = item.action.clone();
 
             list = list.push(
-                crate::controls::Button::<Message, IcedBackend>::label(label)
+                crate::elements::controls::Button::<Message, IcedBackend>::label(label)
                     .icon(icon)
                     .variant(Variant::Ghost)
                     .on_press(action)
@@ -60,7 +60,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Cont
             );
         }
 
-        crate::containers::Card::<Message, IcedBackend>::new_generic(list)
+        crate::layout::containers::Card::<Message, IcedBackend>::new_generic(list)
             .width(Length::Fixed(180.0))
             .view(context)
     }

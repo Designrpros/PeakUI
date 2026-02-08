@@ -1,6 +1,10 @@
 use crate::core::{Backend, Context, IcedBackend, View};
 use iced::Length;
 
+pub mod containers;
+pub mod nav_split_view;
+pub mod scroll_view;
+
 /// A vertical stack layout that arranges children from top to bottom.
 pub struct VStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     children: Vec<Box<dyn View<Message, B>>>,

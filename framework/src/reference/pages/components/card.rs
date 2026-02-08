@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
@@ -43,7 +43,7 @@ fn create_preview<B: Backend>() -> VStack<Message, B> {
             .spacing(8.0)
             .push(text::<B>("Sample Card").caption2().secondary())
             .push(
-                crate::dsl::container::<Message, B>(
+                crate::dev::dsl::container::<Message, B>(
                     vstack::<Message, B>()
                         .spacing(8.0)
                         .push(text::<B>("Title").title3().bold())

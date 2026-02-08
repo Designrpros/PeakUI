@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
@@ -28,7 +28,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
 
             // Interface Density Section
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Interface Density",
                     VStack::<Message, IcedBackend>::new_generic()
                         .spacing(16.0)
@@ -64,7 +64,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
 
             // Implementation Reference
             .push(
-                 crate::containers::Section::new(
+                 crate::layout::containers::Section::new(
                     "Implementation",
                     crate::views::CodeBlock::rust(
                         r#"

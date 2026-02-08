@@ -1,6 +1,6 @@
 use super::super::app::{App, Message};
 use super::{CanvasView, SidebarView, TabBarView};
-use crate::nav_split_view::NavigationSplitView;
+use crate::layout::nav_split_view::NavigationSplitView;
 use crate::prelude::*;
 
 use super::state::ViewState;

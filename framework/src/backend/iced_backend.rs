@@ -291,8 +291,8 @@ impl Backend for IcedBackend {
             .into();
         }
 
-        if let Some(icon) = crate::assets::SystemIcon::from_name(&name) {
-            let path = crate::assets::Asset::Icon(icon).path();
+        if let Some(icon) = crate::engine::assets::SystemIcon::from_name(&name) {
+            let path = crate::engine::assets::Asset::Icon(icon).path();
             return iced::widget::svg(iced::widget::svg::Handle::from_path(path))
                 .width(scaled_size)
                 .height(scaled_size)
@@ -704,7 +704,7 @@ impl Backend for IcedBackend {
         is_selected: bool,
         context: &Context,
     ) -> Self::AnyView<Message> {
-        use crate::atoms::{Icon, Text};
+        use crate::elements::atoms::{Icon, Text};
         use crate::layout::HStack;
         use iced::widget::container;
 

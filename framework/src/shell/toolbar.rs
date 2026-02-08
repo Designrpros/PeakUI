@@ -1,4 +1,4 @@
-use crate::atoms::{Icon, Text};
+use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, View};
 use crate::style::Variant;
 use iced::{Alignment, Border, Color, Length, Padding, Shadow, Vector};
@@ -87,7 +87,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Tool
             );
         }
 
-        crate::controls::Button::new(content)
+        crate::elements::controls::Button::new(content)
             .variant(Variant::Compact)
             .on_press_maybe(self.on_press.clone())
             .view(context)

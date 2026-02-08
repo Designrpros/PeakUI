@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
@@ -303,7 +303,7 @@ fn render_card(item: &TimelineItem, context: &Context) -> impl View<Message, Ice
         );
     }
 
-    crate::containers::Card::new(
+    crate::layout::containers::Card::new(
         VStack::<Message, IcedBackend>::new_generic()
             .width(Length::Fill)
             .spacing(16.0)

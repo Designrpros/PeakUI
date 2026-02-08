@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{AccessibilityComponent, AccessibilityLabState, Message, RenderMode};
 use crate::reference::pages::shared::*;
@@ -40,14 +40,14 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
     .spacing(8.0);
 
     let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
-        RenderMode::Canvas => crate::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
+        RenderMode::Canvas => crate::layout::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
             .padding(32)
             .width(Length::Fill)
             .height(Length::Shrink)
             .into_box(),
         RenderMode::Terminal => {
             let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
-             Box::new(crate::containers::Card::new(CodeBlock::new(ansi).transparent())
+             Box::new(crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -56,7 +56,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-             Box::new(crate::containers::Card::new(CodeBlock::new(json).transparent())
+             Box::new(crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -65,7 +65,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         RenderMode::Spatial => {
             let spatial_node = create_preview::<SpatialBackend>(ctx, lab).view(ctx);
             let empty_node = spatial_node.to_empty();
-             Box::new(crate::containers::Card::new(crate::reference::views::simulator::SimulatorView::new(
+             Box::new(crate::layout::containers::Card::new(crate::reference::views::simulator::SimulatorView::new(
                 empty_node,
             ))
             .background(iced::Color::from_rgb8(30, 30, 30))
@@ -126,7 +126,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         text("PeakUI's accessibility model is based on the Semantic Tree concept.")
             .secondary(),
         
-        crate::atoms::Container::<Message, IcedBackend>::new(
+        crate::elements::atoms::Container::<Message, IcedBackend>::new(
             text("SemanticNode {\n  role: \"button\",\n  label: \"Save\",\n  is_focused: true,\n  ...\n}")
                 .font(iced::Font {
                     family: iced::font::Family::Monospace,
@@ -163,7 +163,7 @@ fn create_preview<B: Backend>(
             VStack::<Message, B>::new_generic()
                 .spacing(12.0)
                 .push(
-                    crate::controls::Button::<Message, B>::new(text::<B>("Standard Button"))
+                    crate::elements::controls::Button::<Message, B>::new(text::<B>("Standard Button"))
                         .intent(Intent::Primary)
                 )
                 .push(text("Role: Button").caption2().secondary())
@@ -172,7 +172,7 @@ fn create_preview<B: Backend>(
         AccessibilityComponent::Slider => {
             VStack::<Message, B>::new_generic()
                 .spacing(12.0)
-                .push(crate::controls::Slider::<Message, B>::new(0.0..=100.0, 50.0, |_| {
+                .push(crate::elements::controls::Slider::<Message, B>::new(0.0..=100.0, 50.0, |_| {
                     Message::None
                 }))
                 .push(text("Role: Slider").caption2().secondary())
@@ -181,7 +181,7 @@ fn create_preview<B: Backend>(
         AccessibilityComponent::Toggle => {
             VStack::<Message, B>::new_generic()
                 .spacing(12.0)
-                .push(crate::controls::Toggle::<Message, B>::new("Example Toggle", true, |_| Message::None))
+                .push(crate::elements::controls::Toggle::<Message, B>::new("Example Toggle", true, |_| Message::None))
                 .push(text("Role: Toggle").caption2().secondary())
                 .push(text("State: Checked").caption2().secondary())
         }
@@ -189,7 +189,7 @@ fn create_preview<B: Backend>(
             VStack::<Message, B>::new_generic()
                 .spacing(12.0)
                 .push(
-                    crate::atoms::Container::<Message, B>::new(text::<B>("Inside Container"))
+                    crate::elements::atoms::Container::<Message, B>::new(text::<B>("Inside Container"))
                         .padding(16)
                         .background(ctx.theme.colors.surface_variant)
                         .radius(8.0),
@@ -206,7 +206,7 @@ fn render_mode_tab(
     current: RenderMode,
 ) -> Button<Message, IcedBackend> {
     let active = mode == current;
-    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
+    crate::elements::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
         .variant(if active {
             Variant::Solid
         } else {
@@ -222,7 +222,7 @@ fn render_component_tab(
     current: AccessibilityComponent,
 ) -> Button<Message, IcedBackend> {
     let active = comp == current;
-    crate::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
+    crate::elements::controls::Button::<Message, IcedBackend>::new(text::<IcedBackend>(label.to_string()))
         .variant(if active {
             Variant::Solid
         } else {

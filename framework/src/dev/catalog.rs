@@ -1,4 +1,4 @@
-use crate::atoms::{Icon, Text};
+use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
 use crate::prelude::*;
 use iced::{Element, Renderer, Task, Theme};

@@ -1,5 +1,5 @@
 use crate::core::{Backend, SpatialBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{ButtonLabState, Message, RenderMode};
 use crate::reference::views::ComponentDoc;

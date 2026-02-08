@@ -1,4 +1,4 @@
-use crate::accessibility::AccessibilityNode;
+use crate::engine::accessibility::AccessibilityNode;
 use iced::Task;
 use std::borrow::Cow;
 

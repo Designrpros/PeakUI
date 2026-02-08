@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
@@ -42,7 +42,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .push(Divider::<IcedBackend>::new())
             // 1. Appearance Section
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Appearance",
                     VStack::<Message, IcedBackend>::new_generic()
                         .width(Length::Fill)
@@ -80,7 +80,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .push(Divider::<IcedBackend>::new())
             // 2. Theme Selection
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Theme",
                     VStack::<Message, IcedBackend>::new_generic()
                         .width(Length::Fill)
@@ -97,7 +97,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             // 3. Developer Reference
             .push(Divider::<IcedBackend>::new())
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Implementation",
                     VStack::new_generic()
                         .spacing(16.0)

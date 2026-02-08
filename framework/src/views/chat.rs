@@ -152,7 +152,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AI
         );
 
         // Fix input_row_2 button content:
-        let send_icon = crate::atoms::Icon::<B>::new("arrow-up").view(context);
+        let send_icon = crate::elements::atoms::Icon::<B>::new("arrow-up").view(context);
         let send_btn = B::button(
             send_icon,
             Some((on_action)(ChatViewMessage::SendPressed)),

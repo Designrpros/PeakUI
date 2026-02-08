@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Context, IcedBackend, SpatialBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;

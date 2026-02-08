@@ -2,7 +2,7 @@ use crate::reference::model::Page;
 use super::super::app::Message;
 use crate::prelude::*;
 use crate::layout::Wrap;
-use crate::controls::TextInput;
+use crate::elements::controls::TextInput;
 
 pub mod peak_os;
 pub mod peak_ui;

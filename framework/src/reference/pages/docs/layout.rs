@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Backend, IcedBackend, ScrollDirection, SpatialBackend, TermBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{LayoutLabState, Message, RenderMode, SizingType};
 
@@ -53,14 +53,14 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> Pag
     .spacing(8.0);
 
     let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
-        RenderMode::Canvas => crate::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
+        RenderMode::Canvas => crate::layout::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
             .padding(32)
             .width(Length::Fill)
             .height(Length::Shrink)
             .into_box(),
         RenderMode::Terminal => {
             let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
-            crate::containers::Card::new(CodeBlock::new(ansi).transparent())
+            crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -70,7 +70,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> Pag
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-            crate::containers::Card::new(CodeBlock::new(json).transparent())
+            crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -80,7 +80,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> Pag
         RenderMode::Spatial => {
             let spatial_node = create_preview::<SpatialBackend>(ctx, lab).view(ctx);
             let empty_node = spatial_node.to_empty();
-            crate::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
+            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -248,7 +248,7 @@ fn create_preview<B: Backend>(ctx: &Context, lab: &LayoutLabState) -> VStack<Mes
         };
 
         children.push(
-            crate::atoms::Container::<Message, B>::new(
+            crate::elements::atoms::Container::<Message, B>::new(
                 text(format!("{}", i + 1)).bold().color(Color::WHITE),
             )
             .padding(12)
@@ -267,7 +267,7 @@ fn create_preview<B: Backend>(ctx: &Context, lab: &LayoutLabState) -> VStack<Mes
 
     vstack![
         text("Layout Composition").secondary().caption2(),
-        crate::atoms::Container::<Message, B>::new(
+        crate::elements::atoms::Container::<Message, B>::new(
             vstack![
                 text("HStack Example").caption2().secondary(),
                 ScrollView::new_generic(

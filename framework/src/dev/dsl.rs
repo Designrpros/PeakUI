@@ -1,12 +1,12 @@
-use crate::atoms::{
+use crate::elements::atoms::{
     Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text, Video, WebView,
 };
-use crate::containers::{GlassCard, Section};
-use crate::controls::{Button, Slider, TextInput, Toggle};
+use crate::layout::containers::{GlassCard, Section};
+use crate::elements::controls::{Button, Slider, TextInput, Toggle};
 use crate::core::Backend;
 use crate::core::View;
 use crate::layout::{HStack, ResponsiveGrid, VStack, Wrap, ZStack};
-use crate::scroll_view::ScrollView;
+use crate::layout::scroll_view::ScrollView;
 use iced::Length;
 use std::borrow::Cow;
 

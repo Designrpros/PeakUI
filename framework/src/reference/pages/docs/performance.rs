@@ -1,5 +1,5 @@
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 
 use crate::reference::views::ComponentDoc;

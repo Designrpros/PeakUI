@@ -1,5 +1,5 @@
 use crate::reference::app::Message;
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
@@ -297,7 +297,7 @@ fn render_card(item: &TimelineItem, context: &Context) -> impl View<Message, Ice
         );
     }
 
-    crate::containers::Card::new(
+    crate::layout::containers::Card::new(
         VStack::<Message, IcedBackend>::new_generic()
             .width(Length::Fill)
             .spacing(16.0)

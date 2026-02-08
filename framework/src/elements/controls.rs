@@ -1,5 +1,5 @@
 use crate::core::{Backend, Context, View};
-use crate::modifiers::ControlSize;
+use crate::engine::modifiers::ControlSize;
 use crate::style::{Intent, Variant};
 use iced::{Alignment, Length, Padding};
 use std::borrow::Cow;
@@ -45,7 +45,7 @@ impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> Button<Mes
     }
 
     pub fn label(text: impl Into<Cow<'static, str>>) -> Self {
-        Self::new(crate::atoms::Text::<B>::new(text))
+        Self::new(crate::elements::atoms::Text::<B>::new(text))
     }
 
     pub fn icon(mut self, name: impl Into<Cow<'static, str>>) -> Self {

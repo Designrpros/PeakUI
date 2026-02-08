@@ -1,5 +1,5 @@
-use crate::atoms::Text;
-use crate::controls::Button;
+use crate::elements::atoms::Text;
+use crate::elements::controls::Button;
 use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::layout::{HStack, VStack};
 use crate::style::Variant;
@@ -197,13 +197,13 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
         let preview_area = match self.render_mode {
             crate::reference::app::RenderMode::Canvas => {
                 let preview = self.preview.clone();
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
                         .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
-                            crate::containers::Card::<Message, B>::new_generic(
+                            crate::layout::containers::Card::<Message, B>::new_generic(
                                 crate::core::ProxyView::new(move |ctx| {
                                     let preview_view = preview.view(ctx);
                                     B::scroll_view(
@@ -227,13 +227,13 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
                     .as_deref()
                     .unwrap_or("No terminal representation available.")
                     .to_string();
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
                         .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
-                            crate::containers::Card::<Message, B>::new_generic(
+                            crate::layout::containers::Card::<Message, B>::new_generic(
                                 VStack::<Message, B>::new_generic()
                                     .padding(24)
                                     .push(CodeBlock::<Message>::new(ansi)),
@@ -249,13 +249,13 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
                 } else {
                     "No neural representation available.".to_string()
                 };
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
                         .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
-                            crate::containers::Card::<Message, B>::new_generic(
+                            crate::layout::containers::Card::<Message, B>::new_generic(
                                 VStack::<Message, B>::new_generic()
                                     .padding(24)
                                     .push(CodeBlock::<Message>::new(json)),
@@ -266,13 +266,13 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
             }
             crate::reference::app::RenderMode::Spatial => {
                 let spatial_node = self.spatial_preview.clone();
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "The Lab",
                     VStack::<Message, B>::new_generic()
                         .spacing(16.0)
                         .push(crate::core::ProxyView::new(scrollable_tabs.clone()))
                         .push(
-                            crate::containers::Card::<Message, B>::new_generic(
+                            crate::layout::containers::Card::<Message, B>::new_generic(
                                 crate::core::ProxyView::new(move |ctx| {
                                     if let Some(node) = &spatial_node {
                                         crate::core::View::<Message, B>::view(
@@ -307,7 +307,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
         // 3. Code Block with Copy (Using the Shared CodeBlock component)
         let code_snippet = self.code_snippet.clone();
 
-        let code_area = crate::containers::Section::<Message, B>::new_generic(
+        let code_area = crate::layout::containers::Section::<Message, B>::new_generic(
             "Usage",
             crate::core::ProxyView::new(move |ctx| {
                 View::<Message, B>::view(&CodeBlock::<Message>::rust(code_snippet.clone()), ctx)
@@ -332,7 +332,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
         // Add Theory section if present
         if let Some(theory) = &self.theory {
             doc_content = doc_content.push(
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "Theory",
                     MarkdownView::new(theory.clone()),
                 )
@@ -343,7 +343,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
         // Add Props Table if present
         if let Some(props) = &self.props_table {
             doc_content = doc_content.push(
-                crate::containers::Section::<Message, B>::new_generic(
+                crate::layout::containers::Section::<Message, B>::new_generic(
                     "Props",
                     MarkdownView::new(props.clone()),
                 )

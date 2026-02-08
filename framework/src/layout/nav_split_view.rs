@@ -161,7 +161,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> NavigationSplitView<Mes
 }
 
 #[allow(unused_imports)]
-use crate::scroll_view::ScrollView;
+use crate::layout::scroll_view::ScrollView;
 
 impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
     for NavigationSplitView<Message, IcedBackend>
@@ -194,7 +194,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
 
                 if let Some(back_msg) = self.on_back.clone() {
                     let back_button =
-                        crate::controls::Button::<Message, IcedBackend>::label("Back")
+                        crate::elements::controls::Button::<Message, IcedBackend>::label("Back")
                             .icon("chevron_left")
                             .variant(crate::style::Variant::Ghost)
                             .on_press(back_msg)

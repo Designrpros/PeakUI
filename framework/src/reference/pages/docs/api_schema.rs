@@ -1,5 +1,5 @@
 use crate::reference::mcp;
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 

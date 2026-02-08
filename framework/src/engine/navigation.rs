@@ -1,4 +1,4 @@
-use crate::atoms::{Icon, Text};
+use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, ScrollDirection, SemanticNode, View};
 use crate::layout::{HStack, VStack};
 use crate::style::{Intent, Variant};
@@ -114,53 +114,53 @@ pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> 
 
     // --- Tailwind-style Utility Modifiers ---
 
-    fn padding(self, padding: impl Into<iced::Padding>) -> crate::atoms::Container<Message, B>
+    fn padding(self, padding: impl Into<iced::Padding>) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).padding(padding)
+        crate::elements::atoms::Container::new(self).padding(padding)
     }
 
-    fn width(self, width: Length) -> crate::atoms::Container<Message, B>
+    fn width(self, width: Length) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).width(width)
+        crate::elements::atoms::Container::new(self).width(width)
     }
 
-    fn height(self, height: Length) -> crate::atoms::Container<Message, B>
+    fn height(self, height: Length) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).height(height)
+        crate::elements::atoms::Container::new(self).height(height)
     }
 
-    fn background(self, color: Color) -> crate::atoms::Container<Message, B>
+    fn background(self, color: Color) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).background(color)
+        crate::elements::atoms::Container::new(self).background(color)
     }
 
-    fn corner_radius(self, radius: f32) -> crate::atoms::Container<Message, B>
+    fn corner_radius(self, radius: f32) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).radius(radius)
+        crate::elements::atoms::Container::new(self).radius(radius)
     }
 
-    fn border(self, width: f32, color: Color) -> crate::atoms::Container<Message, B>
+    fn border(self, width: f32, color: Color) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).border(width, color)
+        crate::elements::atoms::Container::new(self).border(width, color)
     }
 
-    fn shadow(self, shadow: iced::Shadow) -> crate::atoms::Container<Message, B>
+    fn shadow(self, shadow: iced::Shadow) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
-        crate::atoms::Container::new(self).shadow(shadow)
+        crate::elements::atoms::Container::new(self).shadow(shadow)
     }
 }
 

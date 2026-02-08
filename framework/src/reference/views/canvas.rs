@@ -44,7 +44,7 @@ impl CanvasView {
             ReferencePage::SwarmDashboard => {
                 let view =
                     super::swarm_dashboard::SwarmDashboardView::new(context.peak_id.to_string());
-                crate::navigation::PageResult::new(view)
+                crate::engine::navigation::PageResult::new(view)
             }
             ReferencePage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
             ReferencePage::PeakOSCore => pages::core::peak_os_core::view(context, is_mobile),

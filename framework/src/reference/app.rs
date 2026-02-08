@@ -167,7 +167,7 @@ pub struct App {
     pub typewriter_index: usize,
     pub typewriter_phrase_index: usize,
     pub is_deleting: bool,
-    pub a11y: crate::accessibility::AccessibilityBridge,
+    pub a11y: crate::engine::accessibility::AccessibilityBridge,
     pub tick: u64,
     pub enable_exposure: bool,
     pub scaling: f32,
@@ -627,7 +627,7 @@ impl Default for App {
             typewriter_index: 0,
             typewriter_phrase_index: 0,
             is_deleting: false,
-            a11y: crate::accessibility::AccessibilityBridge::new(),
+            a11y: crate::engine::accessibility::AccessibilityBridge::new(),
             tick: 0,
             enable_exposure: settings.enable_exposure,
             scaling: 1.0,
@@ -1675,7 +1675,7 @@ impl App {
                     .item("Close", "circle-x", Message::CloseContextMenu);
 
                 stack = stack.push(
-                    crate::atoms::Container::<Message, IcedBackend>::new(menu)
+                    crate::elements::atoms::Container::<Message, IcedBackend>::new(menu)
                         .padding(iced::Padding {
                             top: pos.y,
                             left: pos.x,
@@ -1687,27 +1687,27 @@ impl App {
 
             // Overlay Sudo Prompt
             if let Some(sudo) = &content.state.pending_sudo_action {
-                let prompt = crate::atoms::Container::<Message, IcedBackend>::new(
+                let prompt = crate::elements::atoms::Container::<Message, IcedBackend>::new(
                     crate::layout::VStack::<Message, IcedBackend>::new_generic()
                         .push(
-                            crate::atoms::Text::<IcedBackend>::new("Neural Sudo Permission")
+                            crate::elements::atoms::Text::<IcedBackend>::new("Neural Sudo Permission")
                                 .title1(),
                         )
-                        .push(crate::atoms::Text::<IcedBackend>::new(format!(
+                        .push(crate::elements::atoms::Text::<IcedBackend>::new(format!(
                             "AI wants to perform: {:?}",
                             sudo.message
                         )))
                         .push(
                             crate::layout::HStack::<Message, IcedBackend>::new_generic()
                                 .push(
-                                    crate::controls::Button::<Message, IcedBackend>::new(
-                                        crate::atoms::Text::<IcedBackend>::new("Deny"),
+                                    crate::elements::controls::Button::<Message, IcedBackend>::new(
+                                        crate::elements::atoms::Text::<IcedBackend>::new("Deny"),
                                     )
                                     .on_press(Message::SudoDeny),
                                 )
                                 .push(
-                                    crate::controls::Button::<Message, IcedBackend>::new(
-                                        crate::atoms::Text::<IcedBackend>::new("Approve"),
+                                    crate::elements::controls::Button::<Message, IcedBackend>::new(
+                                        crate::elements::atoms::Text::<IcedBackend>::new("Approve"),
                                     )
                                     .on_press(Message::SudoApprove),
                                 )

@@ -1,4 +1,4 @@
-use crate::atoms::Icon;
+use crate::elements::atoms::Icon;
 use crate::core::{Backend, Context, TextSpan, View};
 use crate::style::{Intent, ScrollDirection, Variant};
 use iced::{Color, Length};

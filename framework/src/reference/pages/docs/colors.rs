@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Backend, ScrollDirection};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode};
 use serde_json; // Added missing import
@@ -40,14 +40,14 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
     .hide_indicators();
 
     let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
-        RenderMode::Canvas => crate::containers::Card::new(create_preview::<IcedBackend>(palette))
+        RenderMode::Canvas => crate::layout::containers::Card::new(create_preview::<IcedBackend>(palette))
             .padding(24)
             .width(Length::Fill)
             .height(Length::Shrink)
             .into_box(),
         RenderMode::Terminal => {
             let ansi = create_preview::<TermBackend>(palette).view(ctx);
-            crate::containers::Card::new(CodeBlock::new(ansi).transparent())
+            crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -57,7 +57,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(palette).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-            crate::containers::Card::new(CodeBlock::new(json).transparent())
+            crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -67,7 +67,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> PageResult<Message> {
         RenderMode::Spatial => {
             let spatial_node = create_preview::<crate::core::SpatialBackend>(palette).view(ctx);
             let empty_node = spatial_node.to_empty();
-            crate::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
+            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -207,7 +207,7 @@ fn color_swatch<B: Backend>(
     VStack::<Message, B>::new_generic()
         .spacing(12.0)
         .push(
-            crate::atoms::Rectangle::<B>::new(Length::Fixed(120.0), Length::Fixed(80.0))
+            crate::elements::atoms::Rectangle::<B>::new(Length::Fixed(120.0), Length::Fixed(80.0))
                 .color(color)
                 .radius(12.0)
                 .border(1.0, palette.text_secondary.scale_alpha(0.1)),

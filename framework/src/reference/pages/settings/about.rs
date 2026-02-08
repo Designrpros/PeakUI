@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
@@ -19,7 +19,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
                     .spacing(24.0)
                     .align_x(Alignment::Center)
                     .push(
-                        Image::new(crate::assets::Asset::MeshBackground.path())
+                        Image::new(crate::engine::assets::Asset::MeshBackground.path())
                             .width(Length::Fixed(120.0))
                             .height(Length::Fixed(120.0))
                             .radius(60.0),
@@ -44,7 +44,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .push(Divider::<IcedBackend>::new())
             // Implementation Reference
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "About System",
                     VStack::new_generic()
                         .spacing(16.0)

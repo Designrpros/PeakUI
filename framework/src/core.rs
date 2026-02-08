@@ -1,4 +1,4 @@
-pub use crate::accessibility::{AccessibilityNode, AccessibilityRole};
+pub use crate::engine::accessibility::{AccessibilityNode, AccessibilityRole};
 pub use crate::backend::{AIBackend, Backend, IcedBackend, TextSpan};
 pub use crate::semantic::{
     ChatCompletionMessage, DataProvider, IntelligenceProvider, SemanticNode, SemanticRecord,
@@ -293,11 +293,11 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         Box::new(self)
     }
 
-    fn on_tap_gesture(self, message: Message) -> crate::gestures::TapGesture<Message, B, Self>
+    fn on_tap_gesture(self, message: Message) -> crate::engine::gestures::TapGesture<Message, B, Self>
     where
         Self: Sized,
     {
-        crate::gestures::TapGesture::new(self, message)
+        crate::engine::gestures::TapGesture::new(self, message)
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode, TypographyLabState};
 use crate::reference::views::ComponentDoc;
@@ -62,7 +62,7 @@ In **PeakUI**, typography is semantic. Instead of choosing raw font sizes for ev
 }
 
 fn create_preview<B: Backend>(lab: &TypographyLabState) -> VStack<Message, B> {
-    let mut text_item = crate::dsl::text(lab.text.clone());
+    let mut text_item = crate::dev::dsl::text(lab.text.clone());
 
     if lab.is_bold {
         text_item = text_item.bold();
@@ -156,7 +156,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                             .caption2()
                             .bold()
                             .secondary(),
-                        crate::controls::TextInput::<Message>::new(
+                        crate::elements::controls::TextInput::<Message>::new(
                             self.lab.text.clone(),
                             "Enter text...",
                             |s| Message::UpdateTypographyText(s),
@@ -171,7 +171,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                             .bold()
                             .secondary(),
                         hstack![
-                            crate::controls::Slider::<Message, IcedBackend>::new(
+                            crate::elements::controls::Slider::<Message, IcedBackend>::new(
                                 12.0..=72.0,
                                 self.lab.size,
                                 |v| Message::UpdateTypographySize(v),
@@ -188,10 +188,10 @@ impl View<Message, IcedBackend> for TypographyInspector {
                 .push(Divider::new())
                 .push(
                     vstack![
-                        crate::controls::Toggle::new("Bold", self.lab.is_bold, |b| {
+                        crate::elements::controls::Toggle::new("Bold", self.lab.is_bold, |b| {
                             Message::ToggleTypographyBold(b)
                         }),
-                        crate::controls::Toggle::new("Italic", self.lab.is_italic, |b| {
+                        crate::elements::controls::Toggle::new("Italic", self.lab.is_italic, |b| {
                             Message::ToggleTypographyItalic(b)
                         }),
                     ]

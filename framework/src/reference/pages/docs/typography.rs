@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{Message, RenderMode, TypographyLabState};
 use crate::reference::views::SimulatorView;
@@ -68,7 +68,7 @@ pub fn view(
             let preview_content = match render_mode {
                 RenderMode::Canvas => {
                     let preview = create_preview::<IcedBackend>(lab);
-                    crate::containers::Card::new(
+                    crate::layout::containers::Card::new(
                         ScrollView::new(
                             VStack::new_generic()
                                 .padding(48)
@@ -80,7 +80,7 @@ pub fn view(
                 }
                 RenderMode::Terminal => {
                     let ansi = create_preview::<TermBackend>(lab).view(ctx);
-                    crate::containers::Card::new(
+                    crate::layout::containers::Card::new(
                         CodeBlock::new(ansi).transparent()
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
@@ -92,7 +92,7 @@ pub fn view(
                 RenderMode::Neural => {
                     let node = create_preview::<AIBackend>(lab).view(ctx);
                     let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-                    crate::containers::Card::new(
+                    crate::layout::containers::Card::new(
                         CodeBlock::new(json).transparent()
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
@@ -104,7 +104,7 @@ pub fn view(
                 RenderMode::Spatial => {
                     let spatial_node = create_preview::<crate::core::SpatialBackend>(lab).view(ctx);
                     let empty_node = spatial_node.to_empty();
-                    crate::containers::Card::new(
+                    crate::layout::containers::Card::new(
                         ProxyView::new(move |ctx| {
                             View::<Message, IcedBackend>::view(&SimulatorView::new(empty_node.clone()), ctx)
                         })

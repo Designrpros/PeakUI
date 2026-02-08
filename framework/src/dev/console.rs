@@ -1,6 +1,6 @@
-use crate::atoms::Text;
+use crate::elements::atoms::Text;
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
-use crate::scroll_view::ScrollView;
+use crate::layout::scroll_view::ScrollView;
 use iced::{Element, Renderer, Theme};
 
 pub struct Console<Message: 'static, B: Backend = IcedBackend> {

@@ -1,5 +1,5 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::{IconLabState, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
@@ -111,13 +111,13 @@ pub fn view(
                 .width(Length::Fill)
                 .align_x(iced::Alignment::Center);
 
-            crate::containers::Section::new(
+            crate::layout::containers::Section::new(
                 "Library",
                 vstack![section_content, footer].spacing(40.0),
             )
             .width(Length::Fill)
         } else {
-            crate::containers::Section::new("Library", section_content).width(Length::Fill)
+            crate::layout::containers::Section::new("Library", section_content).width(Length::Fill)
         }
     };
 

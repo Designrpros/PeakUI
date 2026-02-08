@@ -1,4 +1,4 @@
-use crate::navigation::PageResult;
+use crate::engine::navigation::PageResult;
 use crate::prelude::*;
 use crate::reference::app::Message;
 
@@ -29,7 +29,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .push(Divider::<IcedBackend>::new())
             // Key Bindings Section
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Key Bindings",
                     VStack::<Message, IcedBackend>::new_generic()
                         .spacing(16.0)
@@ -42,7 +42,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> PageResult<Message> {
             .push(Divider::<IcedBackend>::new())
             // Implementation Reference
             .push(
-                crate::containers::Section::new(
+                crate::layout::containers::Section::new(
                     "Implementation",
                     crate::views::CodeBlock::rust(
                         r#"
