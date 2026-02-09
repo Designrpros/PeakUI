@@ -36,10 +36,12 @@ pub enum Page {
     Typography,
     Layout,
     Accessibility,
+    SideEffects,
 
     // Components -> Atoms
     Text,
     Icon,
+    Emoji,
     Divider,
     Button,
     Shapes,
@@ -48,6 +50,7 @@ pub enum Page {
     WebView,
 
     // Components -> Containers
+    Spacer,
     VStack,
     HStack,
     ZStack,
@@ -87,11 +90,7 @@ pub enum Page {
     PeakDB,
     PeakCloud,
     PeakHub,
-    SwarmDashboard,
-
-    // Applications
     PeakDesktop,
-    PeakOSCore,
 
     // Settings ("Settings" mode)
     Appearance,
@@ -130,15 +129,18 @@ impl ToString for Page {
             Page::Typography => "Typography".to_string(),
             Page::Layout => "Layout".to_string(),
             Page::Accessibility => "Accessibility".to_string(),
+            Page::SideEffects => "Side Effects".to_string(),
 
             Page::Text => "Text".to_string(),
             Page::Icon => "Icon".to_string(),
+            Page::Emoji => "Emoji".to_string(),
             Page::Divider => "Divider".to_string(),
             Page::Button => "Button".to_string(),
             Page::Shapes => "Shapes".to_string(),
             Page::Image => "Image".to_string(),
             Page::Video => "Video".to_string(),
             Page::WebView => "WebView".to_string(),
+            Page::Spacer => "Spacer".to_string(),
             Page::VStack => "VStack".to_string(),
             Page::HStack => "HStack".to_string(),
             Page::ZStack => "ZStack".to_string(),
@@ -171,9 +173,7 @@ impl ToString for Page {
             Page::PeakDB => "PeakDB".to_string(),
             Page::PeakCloud => "PeakCloud".to_string(),
             Page::PeakHub => "Peak Hub".to_string(),
-            Page::SwarmDashboard => "Swarm Dashboard".to_string(),
             Page::PeakDesktop => "PeakDesktop".to_string(),
-            Page::PeakOSCore => "PeakOS Core".to_string(),
 
             Page::Appearance => "Appearance".to_string(),
             Page::Scaling => "Scaling".to_string(),
@@ -212,9 +212,11 @@ impl From<String> for Page {
             "colors" => Page::Colors,
             "typography" => Page::Typography,
             "layout" => Page::Layout,
+            "side effects" | "sideeffects" | "side-effects" => Page::SideEffects,
 
             "text" => Page::Text,
             "icon" => Page::Icon,
+            "emoji" => Page::Emoji,
             "divider" => Page::Divider,
             "button" => Page::Button,
             "shapes" => Page::Shapes,
@@ -222,6 +224,7 @@ impl From<String> for Page {
             "video" => Page::Video,
             "webview" | "web_view" => Page::WebView,
 
+            "spacer" => Page::Spacer,
             "vstack" => Page::VStack,
             "hstack" => Page::HStack,
             "zstack" => Page::ZStack,
@@ -254,9 +257,7 @@ impl From<String> for Page {
             "peakdb" | "db" => Page::PeakDB,
             "peakcloud" | "cloud" => Page::PeakCloud,
             "peakhub" | "hub" => Page::PeakHub,
-            "swarm" | "dashboard" | "swarmdashboard" => Page::SwarmDashboard,
             "peakdesktop" => Page::PeakDesktop,
-            "peakos core" | "peakoscore" => Page::PeakOSCore,
 
             "appearance" | "theme" => Page::Appearance,
             "scaling" => Page::Scaling,
@@ -305,10 +306,12 @@ impl Page {
             Page::Typography => "/docs/typography".to_string(),
             Page::Layout => "/docs/layout".to_string(),
             Page::Accessibility => "/docs/accessibility".to_string(),
+            Page::SideEffects => "/docs/side-effects".to_string(),
 
             // Components (Atoms)
             Page::Text => "/components/text".to_string(),
             Page::Icon => "/components/icon".to_string(),
+            Page::Emoji => "/components/emoji".to_string(),
             Page::Divider => "/components/divider".to_string(),
             Page::Button => "/components/button".to_string(),
             Page::Shapes => "/components/shapes".to_string(),
@@ -317,6 +320,7 @@ impl Page {
             Page::WebView => "/components/webview".to_string(),
 
             // Components (Containers)
+            Page::Spacer => "/components/spacer".to_string(),
             Page::VStack => "/components/vstack".to_string(),
             Page::HStack => "/components/hstack".to_string(),
             Page::ZStack => "/components/zstack".to_string(),
@@ -354,9 +358,7 @@ impl Page {
             Page::PeakDB => "/core/peak-db".to_string(),
             Page::PeakCloud => "/core/peak-cloud".to_string(),
             Page::PeakHub => "/core/peak-hub".to_string(),
-            Page::SwarmDashboard => "/swarm-dashboard".to_string(),
             Page::PeakDesktop => "/core/peak-desktop".to_string(),
-            Page::PeakOSCore => "/core/peak-os-core".to_string(),
 
             // Settings
             Page::Appearance => "/settings/appearance".to_string(),
@@ -413,6 +415,7 @@ impl Page {
 
             "/components/text" => Page::Text,
             "/components/icon" => Page::Icon,
+            "/components/emoji" => Page::Emoji,
             "/components/divider" => Page::Divider,
             "/components/button" => Page::Button,
             "/components/shapes" => Page::Shapes,
@@ -420,6 +423,7 @@ impl Page {
             "/components/video" => Page::Video,
             "/components/webview" => Page::WebView,
 
+            "/components/spacer" => Page::Spacer,
             "/components/vstack" => Page::VStack,
             "/components/hstack" => Page::HStack,
             "/components/zstack" => Page::ZStack,
@@ -452,9 +456,7 @@ impl Page {
             "/core/peak-db" => Page::PeakDB,
             "/core/peak-cloud" => Page::PeakCloud,
             "/core/peak-hub" => Page::PeakHub,
-            "/swarm-dashboard" => Page::SwarmDashboard,
             "/core/peak-desktop" => Page::PeakDesktop,
-            "/core/peak-os-core" => Page::PeakOSCore,
 
             "/settings/appearance" => Page::Appearance,
             "/settings/scaling" => Page::Scaling,
@@ -495,6 +497,7 @@ impl Page {
             | Page::Colors
             | Page::Layout
             | Page::Accessibility
+            | Page::SideEffects
             | Page::Intelligence
             | Page::PeakOSDetail
             | Page::PeakUIDetail
@@ -505,6 +508,8 @@ impl Page {
 
             Page::Text
             | Page::Icon
+            | Page::Emoji
+            | Page::Spacer
             | Page::Divider
             | Page::Button
             | Page::Shapes
@@ -540,9 +545,7 @@ impl Page {
             | Page::PeakDB
             | Page::PeakCloud
             | Page::PeakHub
-            | Page::SwarmDashboard
-            | Page::PeakDesktop
-            | Page::PeakOSCore => "Data".to_string(),
+            | Page::PeakDesktop => "Data".to_string(),
 
             Page::Appearance | Page::Scaling | Page::Shortcuts | Page::About | Page::Updates => {
                 "Settings".to_string()
@@ -566,14 +569,17 @@ impl Page {
             Page::Colors,
             Page::Layout,
             Page::Accessibility,
+            Page::SideEffects,
             Page::Text,
             Page::Icon,
+            Page::Emoji,
             Page::Divider,
             Page::Button,
             Page::Shapes,
             Page::Image,
             Page::Video,
             Page::WebView,
+            Page::Spacer,
             Page::VStack,
             Page::HStack,
             Page::ZStack,

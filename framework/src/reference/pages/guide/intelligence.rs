@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::Message;
+use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageResult {
     AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
@@ -109,7 +108,7 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageRes
                 Box::new(Text::new("• Role: Precise component purpose (e.g., `button`, `text_field`, `neural_sudo`).")),
                 Box::new(Text::new("• Content: The semantic value, stripped of styling and visual noise.")),
                 Box::new(Text::new("• Neural Tag: A unique key that allows an AI to target and interact with specific elements without visual searching.")),
-                Box::new(code_block("// How a component defines its 'Eyes'\nfn describe(&self, _ctx: &Context) -> SemanticNode {\n    SemanticNode::new(\"action_button\")\n        .label(\"Execute Transaction\")\n        .tag(\"main-action-1\")\n}")),
+                Box::new(code_block("// How a component defines its 'Eyes'\nfn describe(&self, _ctx: &Context) -> SemanticNode {\n    SemanticNode::new(\"action_button\")\n        .with_label(\"Execute Transaction\")\n        // .with_neural_tag(\"main-action-1\") // Targeted by AI assistants\n}")),
             ],
         );
 
@@ -131,6 +130,17 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageRes
             ],
         );
 
+        let neural_sudo = doc_section(
+            "4. Neural Sudo (Safety & Security)",
+            vec![
+                Box::new(Text::new("Critical or destructive AI actions are intercepted by the Neural Sudo layer. This ensures that an AI agent cannot execute restricted commands without explicit human authorization.")),
+                Box::new(Text::new("• Action Interception: Commands like 'Execute Shell' or 'Delete Record' trigger a SudoRequest.")),
+                Box::new(Text::new("• Human-in-the-Loop: The framework pauses the action and presents a confirmation UI to the user.")),
+                Box::new(Text::new("• Stateless Approval: The AI only receives the result of the action (Approved/Denied), maintaining strict security boundaries.")),
+                Box::new(code_block("// Example: Securing a sensitive command\nif action.requires_sudo() {\n    ctx.emit(Message::SudoRequest(action));\n}\n\n// Approval triggers the final execution\nMessage::SudoApprove => action.execute(),")),
+            ],
+        );
+
         // --- Final Assembly ---
         VStack::new_generic()
             .width(Length::Fill)
@@ -146,6 +156,7 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageRes
             .push(semantic_tree)
             .push(action_bridge)
             .push(contextual_awareness)
+            .push(neural_sudo)
             .push(Space::<IcedBackend>::new(
                 Length::Fill,
                 Length::Fixed(120.0),

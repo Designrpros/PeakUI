@@ -42,7 +42,7 @@ Performs a search throughout the documentation.
 Controls the appearance of the application.
 **Format:**
 - `{"SetTheme": "Dark"}` (or `Light`)
-- `{"SetThemeKind": "Peak"}` (or `Matrix`, `Cyber`)
+- `{"SetThemeKind": "Peak"}` (or `Mountain`)
 
 ---
 
@@ -72,6 +72,14 @@ Controls the appearance of the application.
 - `UpdateSizingWidthType` / `UpdateSizingHeightType`: `{"UpdateSizingWidthType": "Fill"}` (Options: `Fixed`, `Fill`, `Shrink`)
 - `UpdateSizingFixedWidth`: `{"UpdateSizingFixedWidth": 300}`
 - `UpdateSizingFixedHeight`: `{"UpdateSizingFixedHeight": 100}`
+
+### Emoji Lab
+- `UpdateEmojiScale`: `{"UpdateEmojiScale": 1.5}`
+- `UpdateEmojiEmoji`: `{"UpdateEmojiEmoji": "🚀"}`
+
+### Spacer Lab
+- `UpdateSpacerWidth`: `{"UpdateSpacerWidth": 20.0}`
+- `UpdateSpacerHeight`: `{"UpdateSpacerHeight": 40.0}`
 
 ---
 
@@ -107,4 +115,3 @@ Button::label("Click Me")
 
 ---
 *Note: This API is currently enabled only in the Desktop build.*
- Wildebeest

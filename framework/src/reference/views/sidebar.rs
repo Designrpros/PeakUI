@@ -1,6 +1,6 @@
 use super::super::app::Message;
-use crate::reference::AppPage;
 use crate::prelude::*;
+use crate::reference::AppPage;
 
 pub struct SidebarView {
     pub active_tab: AppPage,
@@ -138,6 +138,12 @@ impl SidebarView {
                 AppPage::Accessibility,
                 *active_tab == AppPage::Accessibility,
             ))
+            .push(sidebar_item(
+                "Side Effects",
+                "zap",
+                AppPage::SideEffects,
+                *active_tab == AppPage::SideEffects,
+            ))
     }
 
     fn view_components_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
@@ -157,6 +163,12 @@ impl SidebarView {
                 "sparkles",
                 AppPage::Icon,
                 *active_tab == AppPage::Icon,
+            ))
+            .push(sidebar_item(
+                "Emoji",
+                "smile",
+                AppPage::Emoji,
+                *active_tab == AppPage::Emoji,
             ))
             .push(sidebar_item(
                 "Divider",
@@ -196,6 +208,12 @@ impl SidebarView {
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("CONTAINERS"))
+            .push(sidebar_item(
+                "Spacer",
+                "move-vertical",
+                AppPage::Spacer,
+                *active_tab == AppPage::Spacer,
+            ))
             .push(sidebar_item(
                 "VStack",
                 "rows-3",
@@ -316,12 +334,6 @@ impl SidebarView {
                 AppPage::PeakDB,
                 *active_tab == AppPage::PeakDB,
             ))
-            .push(sidebar_item(
-                "Swarm Dashboard",
-                "layout-dashboard",
-                AppPage::SwarmDashboard,
-                *active_tab == AppPage::SwarmDashboard,
-            ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAKCLOUD"))
             .push(sidebar_item(
@@ -332,12 +344,6 @@ impl SidebarView {
             ))
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("PEAK HUB"))
-            .push(sidebar_item(
-                "PeakOS Core",
-                "cpu",
-                AppPage::PeakOSCore,
-                *active_tab == AppPage::PeakOSCore,
-            ))
             .push(sidebar_item(
                 "Peak Hub",
                 "activity",

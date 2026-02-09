@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::Message;
+use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
     AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
@@ -116,9 +115,10 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
             "The Neural Standard",
             vec![
                 Box::new(Text::new("Unlike traditional frameworks, PeakUI is built for AI agents. This is achieved through two core protocols:")),
-                Box::new(Text::new("1. Semantic Serialisation: Every component can describe its purpose in a low-bandwidth format (BSON/JSON), reducing AI data consumption by 99.99%.")),
+                Box::new(Text::new("1. Semantic Serialisation: Every component can describe its purpose in a low-bandwidth, optimized JSON format, reducing AI data consumption by 99.99%.")),
                 Box::new(Text::new("2. Action Bridge: A deterministic API that allows AI agents to trigger UI events with high precision, bypassing unstable vision-based interaction.")),
-                Box::new(code_block("impl View for MyComponent {\n    fn describe(&self) -> SemanticNode {\n        SemanticNode::new(\"action_button\")\n          .label(\"Transact\")\n          .sudo(\"Financial Risk\")\n    }\n}")),
+                Box::new(Text::new("3. Neural Sudo: A foundational security layer that intercepts critical AI actions for human-in-the-loop confirmation, ensuring 'Safety-First Intelligence'.")),
+                Box::new(code_block("impl View for MyComponent {\n    fn describe(&self) -> SemanticNode {\n        SemanticNode::new(\"action_button\")\n          .with_label(\"Transact\")\n          // Protection logic is handled via Neural Sudo\n    }\n}")),
             ],
         );
 

@@ -1,7 +1,7 @@
 use super::super::app::Message;
-use crate::reference::AppPage as ReferenceAppPage;
 use super::super::pages;
 use crate::prelude::*;
+use crate::reference::AppPage as ReferenceAppPage;
 
 use super::state::ViewState;
 
@@ -31,6 +31,7 @@ impl CanvasView {
                 &self.state.accessibility_lab,
                 self.state.render_mode,
             ),
+            ReferenceAppPage::SideEffects => pages::docs::side_effects::view(context, is_mobile),
 
             ReferenceAppPage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             ReferenceAppPage::Intelligence => {
@@ -38,20 +39,14 @@ impl CanvasView {
             }
 
             // Ecosystem
+            ReferenceAppPage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
+
+            // Legacy
+            ReferenceAppPage::ApiSchema => pages::docs::api_schema::view(context, is_mobile),
+            ReferenceAppPage::PeakSuite => pages::guide::peak_suite::view(context, is_mobile),
             ReferenceAppPage::PeakDB => pages::core::peak_db::view(context, is_mobile),
             ReferenceAppPage::PeakCloud => pages::core::peak_cloud::view(context, is_mobile),
             ReferenceAppPage::PeakHub => pages::core::peak_hub::view(context, is_mobile),
-            ReferenceAppPage::SwarmDashboard => {
-                let view =
-                    super::swarm_dashboard::SwarmDashboardView::new(context.peak_id.to_string());
-                crate::engine::navigation::PageResult::new(view)
-            }
-            ReferenceAppPage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
-            ReferenceAppPage::PeakOSCore => pages::core::peak_os_core::view(context, is_mobile),
-
-            // Legacy
-            ReferenceAppPage::ApiSchema => pages::core::peak_os_core::view(context, is_mobile), // Redirect to new page
-            ReferenceAppPage::PeakSuite => pages::guide::peak_suite::view(context, is_mobile),
 
             // Concepts (Overview is legacy/fallback)
             ReferenceAppPage::Overview => pages::guide::introduction::view(context, is_mobile),
@@ -84,6 +79,12 @@ impl CanvasView {
                 self.state.search_query.clone(),
                 self.state.icon_limit,
             ),
+            ReferenceAppPage::Emoji => pages::components::emoji::view(
+                context,
+                &self.state.emoji_lab,
+                self.state.render_mode,
+                self.state.search_query.clone(),
+            ),
             ReferenceAppPage::Button => pages::components::button::view(
                 context,
                 &self.state.button_lab,
@@ -92,8 +93,12 @@ impl CanvasView {
             ReferenceAppPage::Shapes => {
                 pages::components::shapes::view(context, self.state.render_mode)
             }
-            ReferenceAppPage::Image => pages::components::image::view(context, self.state.render_mode),
-            ReferenceAppPage::Video => pages::components::video::view(context, self.state.render_mode),
+            ReferenceAppPage::Image => {
+                pages::components::image::view(context, self.state.render_mode)
+            }
+            ReferenceAppPage::Video => {
+                pages::components::video::view(context, self.state.render_mode)
+            }
             ReferenceAppPage::WebView => {
                 pages::components::web_view::view(context, self.state.render_mode)
             }
@@ -102,6 +107,11 @@ impl CanvasView {
             }
 
             // Containers (Phase 4)
+            ReferenceAppPage::Spacer => pages::components::spacer::view(
+                context,
+                &self.state.spacer_lab,
+                self.state.render_mode,
+            ),
             ReferenceAppPage::VStack => {
                 pages::components::vstack::view(context, self.state.render_mode)
             }
@@ -117,7 +127,9 @@ impl CanvasView {
             ReferenceAppPage::ScrollView => {
                 pages::components::scroll_view::view(context, self.state.render_mode)
             }
-            ReferenceAppPage::Card => pages::components::card::view(context, self.state.render_mode),
+            ReferenceAppPage::Card => {
+                pages::components::card::view(context, self.state.render_mode)
+            }
 
             // Navigation (Phase 4)
             ReferenceAppPage::Sidebar => {
@@ -193,7 +205,9 @@ impl CanvasView {
             ReferenceAppPage::PeakDBDetail => {
                 pages::landing::peak_db::view(context, is_mobile, self.state.db_records.to_vec())
             }
-            ReferenceAppPage::PeakRelayDetail => pages::landing::peak_relay::view(context, is_mobile),
+            ReferenceAppPage::PeakRelayDetail => {
+                pages::landing::peak_relay::view(context, is_mobile)
+            }
             ReferenceAppPage::PeakHubDetail => pages::landing::peak_hub::view(context, is_mobile),
 
             // Fallback

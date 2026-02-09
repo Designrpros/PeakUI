@@ -130,9 +130,11 @@ pub struct App {
     pub button_lab: Arc<ButtonLabState>,
     pub typography_lab: Arc<TypographyLabState>,
     pub layout_lab: Arc<LayoutLabState>,
+    pub spacer_lab: Arc<SpacerLabState>,
     pub sizing_lab: Arc<SizingLabState>,
     pub accessibility_lab: Arc<AccessibilityLabState>,
     pub icon_lab: Arc<IconLabState>,
+    pub emoji_lab: Arc<EmojiLabState>,
     pub render_mode: RenderMode,
     pub show_landing: bool,
     // Layout States
@@ -297,6 +299,35 @@ impl Default for IconLabState {
         }
     }
 }
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct EmojiLabState {
+    pub selected_emoji: String,
+    pub size: f32,
+}
+
+impl Default for EmojiLabState {
+    fn default() -> Self {
+        Self {
+            selected_emoji: "🚀".to_string(),
+            size: 48.0,
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct SpacerLabState {
+    pub width: f32,
+    pub height: f32,
+}
+
+impl Default for SpacerLabState {
+    fn default() -> Self {
+        Self {
+            width: 40.0,
+            height: 40.0,
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum SizingType {
@@ -403,9 +434,11 @@ impl Default for App {
             button_lab: Arc::new(ButtonLabState::default()),
             typography_lab: Arc::new(TypographyLabState::default()),
             layout_lab: Arc::new(LayoutLabState::default()),
+            spacer_lab: Arc::new(SpacerLabState::default()),
             sizing_lab: Arc::new(SizingLabState::default()),
             accessibility_lab: Arc::new(AccessibilityLabState::default()),
             icon_lab: Arc::new(IconLabState::default()),
+            emoji_lab: Arc::new(EmojiLabState::default()),
             render_mode: RenderMode::Canvas,
             show_landing: true,
             sidebar_width: 260.0,

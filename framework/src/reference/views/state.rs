@@ -1,6 +1,7 @@
 use super::super::app::{
-    AIProviderChoice, AccessibilityLabState, App, ButtonLabState, IconLabState, InspectorTab,
-    LayoutLabState, RenderMode, SizingLabState, SudoAction, TypographyLabState,
+    AIProviderChoice, AccessibilityLabState, App, ButtonLabState, EmojiLabState, IconLabState,
+    InspectorTab, LayoutLabState, RenderMode, SizingLabState, SpacerLabState, SudoAction,
+    TypographyLabState,
 };
 use crate::reference::AppPage;
 use crate::views::chat::ChatMessage;
@@ -30,6 +31,8 @@ pub struct ViewState {
     pub sizing_lab: Arc<SizingLabState>,
     pub accessibility_lab: Arc<AccessibilityLabState>,
     pub icon_lab: Arc<IconLabState>,
+    pub emoji_lab: Arc<EmojiLabState>,
+    pub spacer_lab: Arc<SpacerLabState>,
 
     pub render_mode: RenderMode,
     pub is_thinking: bool,
@@ -66,6 +69,8 @@ impl ViewState {
             sizing_lab: app.sizing_lab.clone(),
             accessibility_lab: app.accessibility_lab.clone(),
             icon_lab: app.icon_lab.clone(),
+            emoji_lab: app.emoji_lab.clone(),
+            spacer_lab: app.spacer_lab.clone(),
             render_mode: app.render_mode,
             is_thinking: app.is_thinking,
             chat_messages: app.chat_messages.clone(),

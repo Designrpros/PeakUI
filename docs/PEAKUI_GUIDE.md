@@ -31,7 +31,7 @@ if let Some(pos) = self.context_menu_pos {
 }
 ```
 
-## 3. The Golden Rule
+## 3. Reference Implementation
 > **"Look at the Showcase."**
 
 The most up-to-date, comprehensive documentation is the code itself. Open `src/reference/app.rs` to see how the whole app connects.
@@ -130,7 +130,11 @@ PeakUI uses a token-based design system found in `peak-theme`.
 
 ### Interactive "Labs"
 
-If you need to test a component (like a Button or Slider) with various configurations, look at the **Component Labs** in the Showcase (`reference/pages/button.rs`). These show how to bind UI controls to internal state for real-time adjustments.
+If you need to test a component (like a Button, Slider, or **Spacer**) with various configurations, look at the **Component Labs** in the Showcase (`reference/pages/components/`). These show how to bind UI controls to internal state for real-time adjustments.
+
+Recent additions include:
+*   **Emoji Lab**: Test unicode rendering and spatial emoji positioning.
+*   **Spacer Lab**: Visualize invisible layout primitives and gutter orchestration.
 
 ## 4. Contributing
 

@@ -338,6 +338,24 @@ impl App {
                 Task::none()
             }
 
+            // Emoji Lab Handlers
+            Message::UpdateEmojiLabEmoji(emoji) => {
+                Arc::make_mut(&mut self.emoji_lab).selected_emoji = emoji;
+                Task::none()
+            }
+            Message::UpdateEmojiLabSize(size) => {
+                Arc::make_mut(&mut self.emoji_lab).size = size;
+                Task::none()
+            }
+            Message::UpdateSpacerWidth(width) => {
+                Arc::make_mut(&mut self.spacer_lab).width = width;
+                Task::none()
+            }
+            Message::UpdateSpacerHeight(height) => {
+                Arc::make_mut(&mut self.spacer_lab).height = height;
+                Task::none()
+            }
+
             // Typography Lab Handlers
             Message::UpdateTypographyText(text) => {
                 Arc::make_mut(&mut self.typography_lab).text = text;

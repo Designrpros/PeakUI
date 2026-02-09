@@ -1,6 +1,5 @@
 use peak_ui::core::{Context, TermBackend};
 use peak_ui::prelude::*;
-use peak_ui::prelude::{Button, Slider, Text, Toggle};
 
 #[test]
 fn test_button_atom() {

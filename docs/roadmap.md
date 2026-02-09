@@ -19,8 +19,8 @@ This roadmap outlines the evolution of the PeakUI framework, tracking the journe
 - [x] **Intelligence Bridge**: OS-wide action relay for AI-to-System communication.
 - [x] **PeakDB Router**: Provider-agnostic data scaling (Local / Remote / Swarm).
 - [x] **Neural Sudo**: Protective security modifiers for restricted AI actions.
-- [x] **Component Labs**: Interactive playgrounds for Buttons and Typography.
-- [ ] **State Management**: Implementation of conflict-free replicate data types (CRDTs).
+- [x] **Component Labs**: Interactive playgrounds for Buttons, Typography, Emoji, and Spacers.
+- [ ] **Conflict-Free State**: Implementation of CRDTs for multi-agent synchronization.
 
 ---
 

@@ -21,14 +21,15 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
         "Side Effects",
         "Perform asynchronous operations safely using the Command pattern.",
         r#"
-fn update(msg: Message, model: &mut Model) -> Command<Message> {
+fn update(msg: Message, model: &mut Model) -> Task<Message> {
     match msg {
         Message::FetchData => {
-            Command::perform(do_fetch(), Message::DataReceived)
+            // Task::perform(do_fetch(), Message::DataReceived)
+            Task::none()
         }
         Message::DataReceived(data) => {
             model.data = data;
-            Command::none()
+            Task::none()
         }
     }
 }

@@ -15,7 +15,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
             .size(if is_narrow { 42.0 } else { 56.0 })
             .bold()
             .color(mode.text_primary),
-        text("PeakUI unifies AI-readability and human accessibility through a single semantic tree and the AccessibilityBridge.")
+        text("PeakUI unifies AI-readability and human accessibility through a single semantic tree and the Neural Exposure API.")
             .size(18.0)
             .color(mode.text_secondary),
     ]
@@ -116,7 +116,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
             ))
             .push(theory_item_manual::<IcedBackend>(
                 "Screen Readers",
-                "The AccessibilityBridge maps semantic roles to platform-native roles (e.g., AccessKit for Desktop)."
+                "The semantic tree maps directly to platform-native accessibility roles during rendering."
             )),
     ]
     .spacing(24.0);

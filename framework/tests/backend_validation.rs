@@ -1,6 +1,4 @@
-use peak_ui::atoms::Text;
 use peak_ui::core::{AIBackend, Backend, Context, IcedBackend, SpatialBackend, TermBackend};
-use peak_ui::layout::VStack;
 use peak_ui::prelude::*;
 
 #[test]

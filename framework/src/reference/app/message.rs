@@ -35,6 +35,15 @@ pub enum Message {
     UpdateIconLabIcon(String),
     UpdateIconLabSize(f32),
     UpdateIconLabColor(Option<Color>),
+
+    // Emoji Lab
+    UpdateEmojiLabEmoji(String),
+    UpdateEmojiLabSize(f32),
+
+    // Spacer Lab
+    UpdateSpacerWidth(f32),
+    UpdateSpacerHeight(f32),
+
     SetInspectorTab(InspectorTab),
     SetApiKey(String),
     SetAIProvider(AIProviderChoice),

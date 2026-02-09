@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::Message;
+use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
     AppPageResult::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
@@ -116,18 +115,19 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
             "Source Organization",
             vec![
                 Box::new(Text::new("Within `crates/peak-ui`, the source is structured to mirror the logical flow of a modern UI engine.")),
-                Box::new(code_block("src/\n├── core.rs         # Traits: View, App, Backend\n├── accessibility.rs # The A11y & Neural Bridge\n├── atoms/          # Basic components (Text, Button)\n├── layout/         # Spatial & Linear engines\n└── reference/      # The Showcase Application")),
+                Box::new(code_block("src/\n|-- core.rs               # Traits: View, App, Backend\n|-- engine/accessibility.rs # The A11y & Neural Bridge\n|-- elements/atoms/       # Basic components (Text, Button)\n|-- layout/               # Spatial & Linear engines\n`-- reference/            # The Showcase Application")),
                 Box::new(Text::new("This separation ensures that as we add support for new platforms (like VR/AR or TUI), the core logic remains untouched.")),
             ],
         );
 
         let spatial_engines = doc_section(
-            "Spatial & Volumetric Engines",
+            "Experimental: Spatial Layer",
             vec![
-                Box::new(Text::new("A unique aspect of the PeakUI structure is its dedicated spatial reasoning layer found in `src/layout/spatial`.")),
+                Box::new(Text::new("PeakUI is designed for spatial computing. While the core spatial reasoning layer is currently in active development, the following protocols are being refined:")),
                 Box::new(Text::new("• `bounding_box.rs`: Handles 3D collision and hit-testing for spatial environments (Vision Pro, Meta Quest).")),
                 Box::new(Text::new("• `billboarding.rs`: Logic for components that always face the user in 3D space.")),
                 Box::new(Text::new("• `depth.rs`: Managing Z-index and physical physical layering.")),
+                Box::new(Text::new("Note: These features are currently available in the `spatial-engine` branch and internal research tracks.")),
             ],
         );
 

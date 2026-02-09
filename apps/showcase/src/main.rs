@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 fn main() -> Result {
     #[cfg(not(target_arch = "wasm32"))]
     {
+        dotenvy::dotenv().ok();
         env_logger::try_init().ok();
         log::info!("PeakUI Showcase Native started");
 
