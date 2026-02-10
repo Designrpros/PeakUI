@@ -79,7 +79,7 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
                                 move |_| iced::widget::container::Style {
                                     background: Some(s_color.into()),
                                     border: iced::Border {
-                                        radius: r,
+                                        radius: r.into(),
                                         color: b_color,
                                         width: 1.0,
                                     },
@@ -95,7 +95,7 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
                         let s = shadow;
                         move |_| iced::widget::container::Style {
                             border: iced::Border {
-                                radius: r,
+                                radius: r.into(),
                                 color: b_color,
                                 width: 1.0,
                             },

@@ -126,40 +126,35 @@ impl ContentView {
                     .neural_tag("header-search")
                     .view(context);
 
-                // Styled "Search Field" Container
-                let search_container = container(
+                let colors = &context.theme.colors;
+                let search_container = IcedBackend::container(
                     iced::widget::row!()
                         .spacing(8)
-                        .align_y(Alignment::Center)
+                        .align_y(iced::Alignment::Center)
                         .push(
                             Icon::<IcedBackend>::new("search")
                                 .size(14.0)
                                 .secondary()
                                 .view(context),
                         )
-                        .push(search_input),
-                )
-                .padding([6, 12])
-                .width(if is_mobile {
-                    Length::Fill
-                } else {
-                    Length::Fixed(320.0)
-                })
-                .max_width(320.0)
-                .style(move |theme: &iced::Theme| {
-                    let palette = theme.extended_palette();
-                    container::Style {
-                        // "remove the background" - User Request
-                        background: None,
-                        // "only a border radius searchfield should be visible"
-                        border: Border {
-                            radius: 8.0.into(),
-                            width: 1.0,
-                            color: palette.background.strong.color.scale_alpha(0.2),
-                        },
-                        ..Default::default()
-                    }
-                });
+                        .push(search_input)
+                        .into(),
+                    iced::Padding::from([6, 12]),
+                    if is_mobile {
+                        Length::Fill
+                    } else {
+                        Length::Fixed(320.0)
+                    },
+                    Length::Shrink,
+                    None,                                 // Transparent
+                    1.0,                                  // border width
+                    8.0,                                  // radius
+                    Some(colors.border.scale_alpha(0.6)), // Using border color with alpha
+                    None,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                );
 
                 header_row = header_row.push(search_container);
             }
@@ -182,16 +177,20 @@ impl ContentView {
             );
 
             // Transparent Floating Header Container
-            container(header_row)
-                .width(Length::Fill)
-                .height(Length::Shrink) // ✅ Only take space needed, don't block clicks below
-                .style(move |_| container::Style {
-                    background: None,
-                    border: Border::default(),
-                    shadow: Shadow::default(),
-                    ..Default::default()
-                })
-                .into()
+            IcedBackend::container(
+                header_row.into(),
+                iced::Padding::ZERO,
+                Length::Fill,
+                Length::Shrink,
+                None,
+                0.0,
+                0.0,
+                None,
+                None,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            )
         });
 
         // Combine Header + Content using ZStack for "Floating" effect
@@ -297,17 +296,25 @@ impl ContentView {
         // Unified Floating Dock: Both mobile and desktop use stack layout for a consistent floating dock experience
         let final_view: Element<'static, Message> = iced::widget::stack![
             split_view.view(context),
-            container(tab_bar.view(context))
-                .width(Length::Fill)
-                .height(Length::Fill) // Need full height for align_y to position at bottom
-                .align_x(Alignment::Center)
-                .align_y(Alignment::End)
-                .padding(Padding {
+            IcedBackend::container(
+                tab_bar.view(context),
+                Padding {
                     top: 0.0,
                     right: 20.0,
                     bottom: context.safe_area.bottom,
                     left: 20.0,
-                })
+                },
+                Length::Fill,
+                Length::Fill,
+                None, // Transparent outer
+                0.0,
+                0.0,
+                None,
+                None,
+                Alignment::Center,
+                Alignment::End,
+                context,
+            )
         ]
         .into();
 

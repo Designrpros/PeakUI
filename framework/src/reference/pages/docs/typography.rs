@@ -1,8 +1,7 @@
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode, TypographyLabState};
 use crate::reference::views::SimulatorView;
+use crate::reference::AppPageResult;
 use crate::views::CodeBlock;
 
 pub fn view(
@@ -82,7 +81,7 @@ pub fn view(
                 RenderMode::Terminal => {
                     let ansi = create_preview::<TermBackend>(lab).view(ctx);
                     crate::layout::containers::Card::new(
-                        CodeBlock::new(ansi).transparent()
+                        CodeBlock::new(ansi).transparent().on_copy(Message::CopyCode)
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
                     .padding(0)
@@ -94,7 +93,7 @@ pub fn view(
                     let node = create_preview::<AIBackend>(lab).view(ctx);
                     let json = serde_json::to_string_pretty(&node).unwrap_or_default();
                     crate::layout::containers::Card::new(
-                        CodeBlock::new(json).transparent()
+                        CodeBlock::new(json).transparent().on_copy(Message::CopyCode)
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
                     .padding(0)
@@ -131,7 +130,7 @@ pub fn view(
                 .spacing(24.0)
                 .width(Length::Fill)
                 .push(Text::new("Usage").title2().bold())
-                .push(CodeBlock::rust(code))
+                .push(CodeBlock::rust(code).on_copy(Message::CopyCode))
         };
 
         // --- 4. Theory Section ---

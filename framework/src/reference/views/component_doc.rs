@@ -1,6 +1,6 @@
+use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::elements::atoms::Text;
 use crate::elements::controls::Button;
-use crate::core::{Backend, Context, ScrollDirection, View};
 use crate::layout::{HStack, VStack};
 use crate::style::Variant;
 use crate::views::{CodeBlock, MarkdownView};
@@ -20,6 +20,7 @@ pub struct ComponentDoc<Message: 'static, B: Backend> {
     render_mode: crate::reference::app::RenderMode,
     on_render_mode_change:
         Option<Arc<dyn Fn(crate::reference::app::RenderMode) -> Message + Send + Sync>>,
+    on_copy: Option<Arc<dyn Fn(String) -> Message + Send + Sync>>,
     props_table: Option<String>,
     extra_content: Option<Arc<dyn View<Message, B>>>,
     _phantom: PhantomData<B>,
@@ -43,6 +44,7 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
             spatial_preview: None,
             render_mode: crate::reference::app::RenderMode::Canvas,
             on_render_mode_change: None,
+            on_copy: None,
             props_table: None,
             extra_content: None,
             _phantom: PhantomData,
@@ -74,6 +76,11 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
         f: impl Fn(crate::reference::app::RenderMode) -> Message + Send + Sync + 'static,
     ) -> Self {
         self.on_render_mode_change = Some(Arc::new(f));
+        self
+    }
+
+    pub fn on_copy(mut self, f: impl Fn(String) -> Message + Send + Sync + 'static) -> Self {
+        self.on_copy = Some(Arc::new(f));
         self
     }
 
@@ -306,11 +313,17 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
 
         // 3. Code Block with Copy (Using the Shared CodeBlock component)
         let code_snippet = self.code_snippet.clone();
+        let on_copy = self.on_copy.clone();
 
         let code_area = crate::layout::containers::Section::<Message, B>::new_generic(
             "Usage",
             crate::core::ProxyView::new(move |ctx| {
-                View::<Message, B>::view(&CodeBlock::<Message>::rust(code_snippet.clone()), ctx)
+                let mut cb = CodeBlock::<Message>::rust(code_snippet.clone());
+                if let Some(on_copy) = &on_copy {
+                    let on_copy = on_copy.clone();
+                    cb = cb.on_copy(move |s| (on_copy)(s));
+                }
+                View::<Message, B>::view(&cb, ctx)
             }),
         )
         .width(Length::Fill);

@@ -73,12 +73,20 @@ impl App {
             };
 
             let theme = self.context().theme;
-            return container(content)
-                .style(move |_| container::Style {
-                    background: Some(theme.colors.background.into()),
-                    ..Default::default()
-                })
-                .into();
+            return IcedBackend::container(
+                content,
+                Padding::ZERO,
+                Length::Fill,
+                Length::Fill,
+                Some(theme.colors.background),
+                0.0,
+                0.0,
+                None,
+                None,
+                Alignment::Start,
+                Alignment::Start,
+                &context,
+            );
         }
 
         // 1. Prepare Content

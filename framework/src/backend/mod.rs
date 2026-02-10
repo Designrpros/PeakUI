@@ -1,4 +1,4 @@
-use crate::style::{Context, Intent, ScrollDirection, Variant};
+use crate::style::{Context, Intent, Radius, ScrollDirection, Variant};
 use iced::{Alignment, Color, Length, Padding};
 use nalgebra::Vector3;
 use std::sync::Arc;
@@ -166,7 +166,7 @@ pub trait Backend: Sized + Clone + 'static {
     ) -> Self::AnyView<Message>;
 
     fn circle<Message: 'static>(
-        radius: f32,
+        radius: f32, // Circles still use a single radius value
         color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message>;
@@ -193,11 +193,11 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn rectangle<Message: 'static>(
+    fn rectangle<Message: 'static, R: Into<Radius>>(
         width: Length,
         height: Length,
         color: Option<Color>,
-        radius: f32,
+        radius: R,
         border_width: f32,
         border_color: Option<Color>,
         context: &Context,
@@ -262,37 +262,37 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn image<Message: 'static>(
-        path: impl Into<String>,
+    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         width: Length,
         height: Length,
-        radius: f32,
+        radius: R,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn video<Message: 'static>(
-        path: impl Into<String>,
+    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         width: Length,
         height: Length,
-        radius: f32,
+        radius: R,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn web_view<Message: 'static>(
+    fn web_view<Message: 'static, R: Into<Radius>>(
         url: String,
         width: Length,
         height: Length,
-        radius: f32,
+        radius: R,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn container<Message: 'static>(
+    fn container<Message: 'static, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         padding: Padding,
         width: Length,
         height: Length,
         background: Option<Color>,
-        radius: f32,
+        radius: R,
         border_width: f32,
         border_color: Option<Color>,
         shadow: Option<iced::Shadow>,

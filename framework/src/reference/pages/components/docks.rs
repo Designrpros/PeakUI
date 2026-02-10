@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::Message;
+use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     vstack::<Message, IcedBackend>()
@@ -36,7 +35,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                 move |_| container::Style {
                     background: Some(bg_color.into()),
                     border: Border {
-                        radius,
+                        radius: radius.into(),
                         ..Default::default()
                     },
                     ..Default::default()

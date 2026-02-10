@@ -76,27 +76,11 @@ pub fn view(_context: &Context, is_mobile: bool, _api_key: String) -> AppPageRes
 
         // --- Helper: Code Block ---
         let code_block = |code: &'static str| {
-            Box::new(ProxyView::<Message, IcedBackend>::new(move |ctx| {
-                let t = ctx.theme;
-                iced::widget::container(
-                    Text::<IcedBackend>::new(code)
-                        .size(14.0)
-                        .color(t.colors.text_primary)
-                        .view(ctx),
-                )
-                .padding(24)
-                .width(Length::Fill)
-                .style(move |_| iced::widget::container::Style {
-                    background: Some(t.colors.surface.scale_alpha(0.5).into()),
-                    border: iced::Border {
-                        radius: 12.0.into(),
-                        color: t.colors.border.scale_alpha(0.2),
-                        width: 1.0,
-                    },
-                    ..Default::default()
-                })
-                .into()
-            })) as Box<dyn View<Message, IcedBackend>>
+            Box::new(
+                crate::views::CodeBlock::new(code.to_string())
+                    .language("rust")
+                    .on_copy(Message::CopyCode),
+            ) as Box<dyn View<Message, IcedBackend>>
         };
 
         // --- Sections ---

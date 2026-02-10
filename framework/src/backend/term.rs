@@ -1,5 +1,5 @@
 use super::{Backend, TextSpan};
-use crate::style::{Context, Intent, ScrollDirection, Variant};
+use crate::style::{Context, Intent, Radius, ScrollDirection, Variant};
 use iced::{Alignment, Color, Length, Padding};
 use nalgebra::Vector3;
 use std::sync::Arc;
@@ -193,11 +193,11 @@ impl Backend for TermBackend {
         "=".to_string()
     }
 
-    fn rectangle<Message: 'static>(
+    fn rectangle<Message: 'static, R: Into<Radius>>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
-        _radius: f32,
+        _radius: R,
         _border_width: f32,
         _border_color: Option<Color>,
         _context: &Context,
@@ -291,43 +291,43 @@ impl Backend for TermBackend {
         children.join(" | ")
     }
 
-    fn image<Message: 'static>(
-        path: impl Into<String>,
+    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         _width: Length,
         _height: Length,
-        _radius: f32,
+        _radius: R,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[IMG: {}]", path.into())
     }
 
-    fn video<Message: 'static>(
-        path: impl Into<String>,
+    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         _width: Length,
         _height: Length,
-        _radius: f32,
+        _radius: R,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[VIDEO: {}]", path.into())
     }
 
-    fn web_view<Message: 'static>(
+    fn web_view<Message: 'static, R: Into<Radius>>(
         url: String,
         _width: Length,
         _height: Length,
-        _radius: f32,
+        _radius: R,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[WEB: {}]", url)
     }
 
-    fn container<Message: 'static>(
+    fn container<Message: 'static, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
         _height: Length,
         _background: Option<Color>,
-        _radius: f32,
+        _radius: R,
         _border_width: f32,
         _border_color: Option<Color>,
         _shadow: Option<iced::Shadow>,

@@ -172,19 +172,20 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
         if context.is_slim() {
             if self.force_sidebar_on_slim {
                 // Mobile Sidebar View
-                container(self.sidebar.view(context))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style({
-                        let bg_color = theme.colors.background;
-                        let text_color = theme.colors.text_primary;
-                        move |_| container::Style {
-                            background: Some(bg_color.into()),
-                            text_color: Some(text_color),
-                            ..Default::default()
-                        }
-                    })
-                    .into()
+                IcedBackend::container(
+                    self.sidebar.view(context),
+                    iced::Padding::ZERO,
+                    Length::Fill,
+                    Length::Fill,
+                    Some(theme.colors.background),
+                    0.0,
+                    0.0,
+                    None,
+                    None,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                )
             } else {
                 // Mobile Content View (with optional back button)
                 let mut content_col = column![]
@@ -201,18 +202,20 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                             .width(Length::Shrink)
                             .view(context);
 
-                    content_col = content_col.push(
-                        container(back_button)
-                            .padding([16, 20])
-                            .width(Length::Fill)
-                            .style({
-                                let bg_color = theme.colors.background;
-                                move |_| container::Style {
-                                    background: Some(bg_color.into()),
-                                    ..Default::default()
-                                }
-                            }),
-                    );
+                    content_col = content_col.push(IcedBackend::container(
+                        back_button,
+                        iced::Padding::from([16, 20]),
+                        Length::Fill,
+                        Length::Shrink,
+                        Some(theme.colors.background),
+                        0.0,
+                        0.0,
+                        None,
+                        None,
+                        iced::Alignment::Start,
+                        iced::Alignment::Start,
+                        context,
+                    ));
                 }
 
                 let content_view = self.content.view(context);
@@ -223,18 +226,20 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                         .height(Length::Fill),
                 );
 
-                let base_content = container(content_col)
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style({
-                        let bg_color = theme.colors.background;
-                        let text_color = theme.colors.text_primary;
-                        move |_| container::Style {
-                            background: Some(bg_color.into()),
-                            text_color: Some(text_color),
-                            ..Default::default()
-                        }
-                    });
+                let base_content = IcedBackend::container(
+                    content_col.into(),
+                    iced::Padding::ZERO,
+                    Length::Fill,
+                    Length::Fill,
+                    Some(theme.colors.background),
+                    0.0,
+                    0.0,
+                    None,
+                    None,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                );
 
                 // Use Stack to support Inspector Overlay
                 let mut stack = iced::widget::stack![base_content]
@@ -283,7 +288,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                             move |_| container::Style {
                                 background: Some(bg.into()),
                                 border: iced::Border {
-                                    radius: r, // Top corners rounded - simplified to all for now
+                                    radius: r.into(), // Top corners rounded - simplified to all for now
                                     ..Default::default()
                                 },
                                 ..Default::default()
@@ -315,24 +320,26 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
 
             let mut main_row = row![
                 // 1. Sidebar
-                container(self.sidebar.view(context))
-                    .width(Length::Fixed(sidebar_width))
-                    .height(Length::Fill)
-                    .style({
-                        let bg = if theme.colors.background.r < 0.1 {
-                            iced::Color::from_rgb8(28, 28, 30)
-                        } else {
-                            let mut c = theme.colors.surface_variant;
-                            c.a = 0.5; // High transparency for glass
-                            c
-                        };
-                        let text_color = theme.colors.text_primary;
-                        move |_| container::Style {
-                            background: Some(bg.into()),
-                            text_color: Some(text_color),
-                            ..Default::default()
-                        }
+                IcedBackend::container(
+                    self.sidebar.view(context),
+                    iced::Padding::ZERO,
+                    Length::Fixed(sidebar_width),
+                    Length::Fill,
+                    Some(if theme.colors.background.r < 0.1 {
+                        iced::Color::from_rgb8(28, 28, 30)
+                    } else {
+                        let mut c = theme.colors.surface_variant;
+                        c.a = 0.5;
+                        c
                     }),
+                    0.0,
+                    0.0,
+                    None,
+                    None,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                )
             ]
             .width(Length::Fill)
             .height(Length::Fill);
@@ -380,20 +387,20 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                 );
             }
 
-            main_row = main_row.push(
-                container(self.content.view(context))
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .style({
-                        let bg_color = theme.colors.background;
-                        let text_color = theme.colors.text_primary;
-                        move |_| container::Style {
-                            background: Some(bg_color.into()),
-                            text_color: Some(text_color),
-                            ..Default::default()
-                        }
-                    }),
-            );
+            main_row = main_row.push(IcedBackend::container(
+                self.content.view(context),
+                iced::Padding::ZERO,
+                Length::Fill,
+                Length::Fill,
+                Some(theme.colors.background),
+                0.0,
+                0.0,
+                None,
+                None,
+                iced::Alignment::Start,
+                iced::Alignment::Start,
+                context,
+            ));
 
             // 3. Inspector (Optional)
             if let Some(inspector) = &self.inspector {
@@ -438,32 +445,26 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                     );
                 }
 
-                main_row = main_row.push(
-                    container(inspector.view(context))
-                        .width(Length::Fixed(inspector_width))
-                        .height(Length::Fill)
-                        .style({
-                            let bg = if theme.colors.background.r < 0.1 {
-                                iced::Color::from_rgb8(28, 28, 30)
-                            } else {
-                                let mut c = theme.colors.surface;
-                                c.a = 0.5; // Slightly more transparent than sidebar
-                                c
-                            };
-                            let div_color = theme.colors.divider;
-                            let text_color = theme.colors.text_primary;
-                            move |_| container::Style {
-                                background: Some(bg.into()),
-                                border: iced::Border {
-                                    color: div_color,
-                                    width: 1.0,
-                                    ..Default::default()
-                                },
-                                text_color: Some(text_color),
-                                ..Default::default()
-                            }
-                        }),
-                );
+                main_row = main_row.push(IcedBackend::container(
+                    inspector.view(context),
+                    iced::Padding::from(16),
+                    Length::Fixed(inspector_width),
+                    Length::Fill,
+                    Some(if theme.colors.background.r < 0.1 {
+                        iced::Color::from_rgb8(28, 28, 30)
+                    } else {
+                        let mut c = theme.colors.surface;
+                        c.a = 0.5;
+                        c
+                    }),
+                    1.0,
+                    0.0,
+                    Some(theme.colors.divider), // Border
+                    None,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                ));
             }
 
             if (self.is_resizing_sidebar || self.is_resizing_inspector) && self.on_none.is_some() {
@@ -511,7 +512,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
                     .width(Length::Fill)
                     .height(Length::Fill)
                     .style({
-                        let bg_color = theme.colors.background;
+                        let bg_color = IcedBackend::apply_gamma(theme.colors.background, 2.2);
                         move |_| container::Style {
                             background: Some(bg_color.into()),
                             ..Default::default()

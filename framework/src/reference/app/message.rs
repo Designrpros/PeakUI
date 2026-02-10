@@ -17,6 +17,7 @@ pub enum Message {
     SetThemeKind(peak_theme::PeakTheme),
     SetScaling(f32),
     CopyCode(String),
+    ClearCopiedFeedback,
     SetRenderMode(RenderMode),
     OpenContextMenu(Point),
     CloseContextMenu,

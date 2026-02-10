@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -28,6 +28,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .spatial(spatial_preview)
     .render_mode(render_mode)
     .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_copy(|s| Message::CopyCode(s))
     .theory(
        "### Multi-Kernel Imaging\nImages in PeakUI are more than just bitmapped data. They are responsive assets that adapt their representation based on the active kernel.\n\n- **Canvas (GUI)**: Renders high-resolution textures with optional hardware acceleration.\n- **Terminal (TUI)**: Automatically converts image color and luminance into high-density ASCII or ANSI block characters.\n- **Neural (AI)**: Provides semantic metadata (like ALT text or AI-generated descriptions) to the LLM instead of raw pixels."
     )

@@ -1,8 +1,8 @@
 use crate::core::{AIBackend, Backend, IcedBackend, ScrollDirection, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{LayoutLabState, Message, RenderMode, SizingType};
+use crate::reference::AppPageResult;
 
 pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> AppPageResult {
     let mode = ctx.theme.colors;
@@ -54,39 +54,51 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
     .spacing(8.0);
 
     let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
-        RenderMode::Canvas => crate::layout::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
-            .padding(32)
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .into_box(),
-        RenderMode::Terminal => {
-            let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
-            crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
+        RenderMode::Canvas => {
+            crate::layout::containers::Card::new(create_preview::<IcedBackend>(ctx, lab))
+                .padding(32)
                 .width(Length::Fill)
                 .height(Length::Shrink)
                 .into_box()
+        }
+        RenderMode::Terminal => {
+            let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
+            crate::layout::containers::Card::new(
+                CodeBlock::new(ansi)
+                    .transparent()
+                    .on_copy(Message::CopyCode),
+            )
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Shrink)
+            .into_box()
         }
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-            crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
-                .width(Length::Fill)
-                .height(Length::Shrink)
-                .into_box()
+            crate::layout::containers::Card::new(
+                CodeBlock::new(json)
+                    .transparent()
+                    .on_copy(Message::CopyCode),
+            )
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Shrink)
+            .into_box()
         }
         RenderMode::Spatial => {
             let spatial_node = create_preview::<SpatialBackend>(ctx, lab).view(ctx);
             let empty_node = spatial_node.to_empty();
-            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
-                .width(Length::Fill)
-                .height(Length::Fixed(400.0))
-                .into_box()
+            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(
+                empty_node,
+            ))
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Fixed(400.0))
+            .into_box()
         }
     };
 
@@ -144,7 +156,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
         text("Usage").title2().bold(),
         text("Layouts are composed using three primary stacks. By nesting these stacks, you can build any interface structure while maintaining clean, declarative code.")
             .secondary(),
-        CodeBlock::new(generate_code(lab)),
+        CodeBlock::new(generate_code(lab)).on_copy(Message::CopyCode),
     ]
     .spacing(24.0);
 

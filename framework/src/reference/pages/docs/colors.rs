@@ -1,8 +1,8 @@
 use crate::core::{AIBackend, Backend, ScrollDirection};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
+use crate::reference::AppPageResult;
 use serde_json; // Added missing import
 use std::borrow::Cow;
 
@@ -41,39 +41,51 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .hide_indicators();
 
     let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
-        RenderMode::Canvas => crate::layout::containers::Card::new(create_preview::<IcedBackend>(palette))
-            .padding(24)
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .into_box(),
-        RenderMode::Terminal => {
-            let ansi = create_preview::<TermBackend>(palette).view(ctx);
-            crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
+        RenderMode::Canvas => {
+            crate::layout::containers::Card::new(create_preview::<IcedBackend>(palette))
+                .padding(24)
                 .width(Length::Fill)
                 .height(Length::Shrink)
                 .into_box()
+        }
+        RenderMode::Terminal => {
+            let ansi = create_preview::<TermBackend>(palette).view(ctx);
+            crate::layout::containers::Card::new(
+                CodeBlock::new(ansi)
+                    .transparent()
+                    .on_copy(Message::CopyCode),
+            )
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Shrink)
+            .into_box()
         }
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(palette).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-            crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
-                .width(Length::Fill)
-                .height(Length::Shrink)
-                .into_box()
+            crate::layout::containers::Card::new(
+                CodeBlock::new(json)
+                    .transparent()
+                    .on_copy(Message::CopyCode),
+            )
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Shrink)
+            .into_box()
         }
         RenderMode::Spatial => {
             let spatial_node = create_preview::<crate::core::SpatialBackend>(palette).view(ctx);
             let empty_node = spatial_node.to_empty();
-            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(empty_node))
-                .background(iced::Color::from_rgb8(30, 30, 30))
-                .padding(0)
-                .width(Length::Fill)
-                .height(Length::Fixed(400.0))
-                .into_box()
+            crate::layout::containers::Card::new(crate::reference::views::SimulatorView::new(
+                empty_node,
+            ))
+            .background(iced::Color::from_rgb8(30, 30, 30))
+            .padding(0)
+            .width(Length::Fill)
+            .height(Length::Fixed(400.0))
+            .into_box()
         }
     };
 

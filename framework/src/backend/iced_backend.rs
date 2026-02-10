@@ -1,6 +1,6 @@
 use super::{Backend, TextSpan};
 use crate::core::View;
-use crate::style::{Context, Intent, Variant};
+use crate::style::{Context, Intent, Radius, Variant};
 use iced::{widget::Id, Alignment, Color, Length, Padding, Renderer, Theme};
 use nalgebra::Vector3;
 use std::sync::Arc;
@@ -12,6 +12,31 @@ fn scale_length(l: Length, scale: f32) -> Length {
     match l {
         Length::Fixed(p) => Length::Fixed(p * scale),
         _ => l,
+    }
+}
+#[cfg(target_arch = "wasm32")]
+impl IcedBackend {
+    pub fn apply_gamma(color: Color, _base_factor: f32) -> Color {
+        // Calibrated Perceptual Gamma
+        // Highlights: Darken slightly (Gamma ~0.8) to preserve saturation and "warmth"
+        // Low-lights: Brighten significantly (Gamma ~2.2) to reveal detail
+        let lightness = (color.r + color.g + color.b) / 3.0;
+        let gamma_factor = 0.82 + (1.0 - lightness) * 1.4; // Pivot around mid-gray
+        let inv_gamma = 1.0 / gamma_factor;
+
+        Color {
+            r: color.r.powf(inv_gamma),
+            g: color.g.powf(inv_gamma),
+            b: color.b.powf(inv_gamma),
+            a: color.a,
+        }
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl IcedBackend {
+    pub fn apply_gamma(color: Color, _factor: f32) -> Color {
+        color
     }
 }
 
@@ -168,7 +193,7 @@ impl Backend for IcedBackend {
             .map(|s| {
                 let mut span = Span::new(s.content.to_string());
                 if let Some(c) = s.color {
-                    span = span.color(c);
+                    span = span.color(Self::apply_gamma(c, 2.2));
                 }
                 if let Some(f) = s.font {
                     span = span.font(f);
@@ -223,7 +248,7 @@ impl Backend for IcedBackend {
             }
         });
 
-        let mut text_color = base_color;
+        let mut text_color = Self::apply_gamma(base_color, 2.2);
         if is_dim {
             text_color.a *= 0.8;
         }
@@ -262,7 +287,7 @@ impl Backend for IcedBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         let theme = &context.theme;
-        let final_color = color.unwrap_or(theme.colors.text_primary);
+        let final_color = Self::apply_gamma(color.unwrap_or(theme.colors.text_primary), 2.2);
 
         let mut scale = context.theme.scaling;
         if scale <= 0.0 {
@@ -346,6 +371,7 @@ impl Backend for IcedBackend {
         _context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
+        let final_color = color;
         container(
             iced::widget::Space::new()
                 .width(Length::Fixed(radius * 2.0))
@@ -354,7 +380,7 @@ impl Backend for IcedBackend {
         .width(radius * 2.0)
         .height(radius * 2.0)
         .style(move |_| container::Style {
-            background: color.map(iced::Background::Color),
+            background: final_color.map(iced::Background::Color),
             border: iced::Border {
                 radius: radius.into(),
                 ..Default::default()
@@ -495,7 +521,9 @@ impl Backend for IcedBackend {
             .width(width)
             .height(height)
             .style(move |_| container::Style {
-                background: color.map(iced::Background::Color),
+                background: color
+                    .map(|c| Self::apply_gamma(c, 2.2))
+                    .map(iced::Background::Color),
                 border: iced::Border {
                     radius: 1000.0.into(),
                     ..Default::default()
@@ -505,16 +533,18 @@ impl Backend for IcedBackend {
             .into()
     }
 
-    fn rectangle<Message: 'static>(
+    fn rectangle<Message: 'static, R: Into<Radius>>(
         width: Length,
         height: Length,
         color: Option<Color>,
-        radius: f32,
+        radius: R,
         border_width: f32,
         border_color: Option<Color>,
-        _context: &Context,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
+        let radius: Radius = radius.into();
+        let scale = context.theme.scaling;
 
         container(
             iced::widget::Space::new()
@@ -524,18 +554,16 @@ impl Backend for IcedBackend {
         .width(width)
         .height(height)
         .style({
+            let color = color;
             let b_color = border_color.unwrap_or(Color::TRANSPARENT);
             move |_| container::Style {
-                background: color.map(iced::Background::Color),
+                background: color
+                    .map(|c| Self::apply_gamma(c, 2.2))
+                    .map(iced::Background::Color),
                 border: iced::Border {
-                    color: b_color,
-                    width: border_width,
-                    radius: if cfg!(target_arch = "wasm32") {
-                        0.0
-                    } else {
-                        radius
-                    }
-                    .into(),
+                    color: Self::apply_gamma(b_color, 2.2),
+                    width: border_width * scale,
+                    radius: (radius * scale).into(),
                 },
                 ..Default::default()
             }
@@ -613,6 +641,9 @@ impl Backend for IcedBackend {
                     _ => theme.colors.on_primary,
                 };
 
+                let color = Self::apply_gamma(color, 2.2);
+                let text_color = Self::apply_gamma(text_color, 2.2);
+
                 match variant {
                     Variant::Solid => button::Style {
                         background: Some(if status == button::Status::Hovered {
@@ -677,11 +708,17 @@ impl Backend for IcedBackend {
                         ..Default::default()
                     },
                     Variant::Compact => button::Style {
-                        background: None,
+                        background: if status == button::Status::Hovered {
+                            let mut c = color;
+                            c.a = 0.1;
+                            Some(c.into())
+                        } else {
+                            None
+                        },
                         text_color: color,
                         border: iced::Border {
                             width: 0.0,
-                            radius: 0.0.into(),
+                            radius: 4.0.into(),
                             color: iced::Color::TRANSPARENT,
                         },
                         ..Default::default()
@@ -879,14 +916,16 @@ impl Backend for IcedBackend {
             .into()
     }
 
-    fn image<Message: 'static>(
-        path: impl Into<String>,
+    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         width: Length,
         height: Length,
-        radius: f32,
-        _context: &Context,
+        radius: R,
+        context: &Context,
     ) -> Self::AnyView<Message> {
         let p: String = path.into();
+        let radius: Radius = radius.into();
+        let scale = context.theme.scaling;
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -894,20 +933,34 @@ impl Backend for IcedBackend {
             use iced::widget::image as iced_image;
 
             match wasm_portal::get_image(p) {
-                wasm_portal::ImageState::Loaded(handle) => container(
-                    iced_image(handle)
+                wasm_portal::ImageState::Loaded(handle) => {
+                    let img = iced_image(handle)
                         .width(width)
                         .height(height)
-                        .content_fit(iced::ContentFit::Cover),
-                )
-                .style(move |_| container::Style {
-                    border: iced::Border {
-                        radius: radius.into(),
-                        ..Default::default()
-                    },
-                    ..Default::default()
-                })
-                .into(),
+                        .content_fit(iced::ContentFit::Cover);
+
+                    let overlay = container(iced::widget::Space::new().width(width).height(height))
+                        .style(move |_| container::Style {
+                            background: Some(iced::Background::Color(Color::from_rgba(
+                                1.0, 1.0, 1.0, 0.08, // Increased lift for 1.8 gamma parity
+                            ))),
+                            border: iced::Border {
+                                radius: (radius * scale).into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        });
+
+                    container(iced::widget::stack![img, overlay])
+                        .style(move |_| container::Style {
+                            border: iced::Border {
+                                radius: (radius * scale).into(),
+                                ..Default::default()
+                            },
+                            ..Default::default()
+                        })
+                        .into()
+                }
                 wasm_portal::ImageState::Loading => {
                     container(iced::widget::Space::new().width(width).height(height))
                         .style(move |_| container::Style {
@@ -915,7 +968,7 @@ impl Backend for IcedBackend {
                                 1.0, 1.0, 1.0, 0.1,
                             ))),
                             border: iced::Border {
-                                radius: radius.into(),
+                                radius: (radius * scale).into(),
                                 ..Default::default()
                             },
                             ..Default::default()
@@ -929,7 +982,7 @@ impl Backend for IcedBackend {
                                 1.0, 0.0, 0.0,
                             ))),
                             border: iced::Border {
-                                radius: radius.into(),
+                                radius: (radius * scale).into(),
                                 ..Default::default()
                             },
                             ..Default::default()
@@ -959,7 +1012,7 @@ impl Backend for IcedBackend {
             )
             .style(move |_| container::Style {
                 border: iced::Border {
-                    radius: radius.into(),
+                    radius: (radius * scale).into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -968,11 +1021,11 @@ impl Backend for IcedBackend {
         }
     }
 
-    fn video<Message: 'static>(
-        path: impl Into<String>,
+    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+        path: S,
         width: Length,
         height: Length,
-        _radius: f32,
+        _radius: R,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         let _p: String = path.into();
@@ -982,16 +1035,18 @@ impl Backend for IcedBackend {
             .into()
     }
 
-    fn web_view<Message: 'static>(
+    fn web_view<Message: 'static, R: Into<Radius>>(
         url: String,
         width: Length,
         height: Length,
-        radius: f32,
-        _context: &Context,
+        radius: R,
+        context: &Context,
     ) -> Self::AnyView<Message> {
+        let radius: Radius = radius.into();
+        let scale = context.theme.scaling;
         #[cfg(target_arch = "wasm32")]
         {
-            return wasm_portal::WebView::new(url, width, height, radius).into();
+            return wasm_portal::WebView::new(url, width, height, radius * scale).into();
         }
 
         #[cfg(not(target_arch = "wasm32"))]
@@ -1014,7 +1069,7 @@ impl Backend for IcedBackend {
             .style(move |_| container::Style {
                 background: Some(Color::BLACK.into()),
                 border: iced::Border {
-                    radius: radius.into(),
+                    radius: (radius * scale).into(),
                     ..Default::default()
                 },
                 ..Default::default()
@@ -1023,13 +1078,13 @@ impl Backend for IcedBackend {
         }
     }
 
-    fn container<Message: 'static>(
+    fn container<Message: 'static, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         padding: Padding,
         width: Length,
         height: Length,
         background: Option<Color>,
-        radius: f32,
+        radius: R,
         border_width: f32,
         border_color: Option<Color>,
         shadow: Option<iced::Shadow>,
@@ -1038,6 +1093,7 @@ impl Backend for IcedBackend {
         context: &Context,
     ) -> Self::AnyView<Message> {
         use iced::widget::container;
+        let radius: Radius = radius.into();
         let scale = context.theme.scaling;
 
         let mut c = container(content)
@@ -1050,11 +1106,13 @@ impl Backend for IcedBackend {
             .width(scale_length(width, scale))
             .height(scale_length(height, scale))
             .style(move |_| container::Style {
-                background: background.map(iced::Background::Color),
+                background: background
+                    .map(|c| Self::apply_gamma(c, 2.2))
+                    .map(iced::Background::Color),
                 border: iced::Border {
                     radius: (radius * scale).into(),
                     width: border_width * scale,
-                    color: border_color.unwrap_or(iced::Color::TRANSPARENT),
+                    color: Self::apply_gamma(border_color.unwrap_or(iced::Color::TRANSPARENT), 2.2),
                 },
                 shadow: shadow.unwrap_or_default(),
                 ..Default::default()
@@ -1293,7 +1351,7 @@ impl Backend for IcedBackend {
         c.style(move |_| container::Style {
             background: Some(bg.into()),
             border: iced::Border {
-                radius,
+                radius: radius.into(),
                 color: Color::from_rgba(1.0, 1.0, 1.0, 0.15),
                 width: 1.0 * scale,
             },
@@ -1355,12 +1413,17 @@ pub mod wasm_portal {
         url: String,
         width: Length,
         height: Length,
-        radius: f32,
+        radius: crate::style::Radius,
         id: u64,
     }
 
     impl WebView {
-        pub fn new(url: String, width: Length, height: Length, radius: f32) -> Self {
+        pub fn new(
+            url: String,
+            width: Length,
+            height: Length,
+            radius: crate::style::Radius,
+        ) -> Self {
             use std::collections::hash_map::DefaultHasher;
             use std::hash::{Hash, Hasher};
             let mut hasher = DefaultHasher::new();
@@ -1465,7 +1528,16 @@ pub mod wasm_portal {
                 .set_property("height", &format!("{}px", bounds.height))
                 .unwrap();
             style
-                .set_property("border-radius", &format!("{}px", self.radius))
+                .set_property(
+                    "border-radius",
+                    &format!(
+                        "{}px {}px {}px {}px",
+                        self.radius.top_left,
+                        self.radius.top_right,
+                        self.radius.bottom_right,
+                        self.radius.bottom_left
+                    ),
+                )
                 .unwrap();
 
             // Handle visibility (if bounds are zero or outside viewport, we could hide it)

@@ -149,6 +149,9 @@ pub struct App {
     // Chat State
     pub show_chat_overlay: bool,
     pub chat_messages: Arc<Vec<ChatMessage>>,
+    pub typewriter_text: String,
+    pub is_typing: bool,
+    pub last_copied_code: Option<String>,
     pub chat_input: String,
 
     // AI Integration
@@ -167,7 +170,6 @@ pub struct App {
     pub peak_id: String,
 
     // Typewriter Effect
-    pub typewriter_text: String,
     pub typewriter_index: usize,
     pub typewriter_phrase_index: usize,
     pub is_deleting: bool,
@@ -197,6 +199,7 @@ impl App {
             Size::new(self.window_width, self.window_height),
             self.localization.clone(),
         )
+        .with_last_copied_code(self.last_copied_code.as_deref().map(Arc::from))
     }
 }
 
@@ -444,6 +447,8 @@ impl Default for App {
             sidebar_width: 260.0,
             inspector_width: 320.0,
             inspector_tab: InspectorTab::App,
+            is_typing: false,
+            last_copied_code: None,
             is_resizing_sidebar: false,
             is_resizing_inspector: false,
             context_menu_pos: None,

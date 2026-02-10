@@ -281,7 +281,7 @@ if pressure.value > 80.0 {
         .width(Length::Fill)
         .push(section_header("Every UI is an API", "No Cameras Required", is_mobile))
         .push(Text::new("An industrial robot does not need a camera to see the screen. With PeakUI's semantic state, the UI itself becomes a structured API.").body().secondary())
-        .push(Container::new(CodeBlock::new(code).language("rust")).width(Length::Fill));
+        .push(Container::new(CodeBlock::new(code).language("rust").on_copy(Message::CopyCode)).width(Length::Fill));
 
     Container::new(content).padding(if is_mobile { 24.0 } else { 80.0 }).width(Length::Fill)
 }

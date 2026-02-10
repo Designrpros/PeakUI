@@ -1,6 +1,6 @@
-use crate::elements::atoms::Icon;
 use crate::core::{Backend, Context, TextSpan, View};
-use crate::style::{Intent, ScrollDirection, Variant};
+use crate::elements::atoms::Icon;
+use crate::style::{Intent, Radius, ScrollDirection, Variant};
 use iced::{Color, Length};
 
 pub struct CodeBlock<Message: 'static + Send + Sync = ()> {
@@ -61,12 +61,16 @@ where
     Message: Clone + Send + Sync + 'static,
 {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        let theme_mode = context.theme;
+        let bg_color = Color::from_rgb8(20, 20, 20); // Darker code area
+        let header_bg = Color::from_rgb8(45, 45, 45); // Distinct header
+        let border_color = Color::from_rgb8(64, 64, 64);
 
-        // VS Code Colors
-        let bg_color = Color::from_rgb8(30, 30, 30); // #1E1E1E
-        let header_bg = Color::from_rgb8(37, 37, 38); // #252526
-        let border_color = theme_mode.colors.border.scale_alpha(0.5);
+        // Feedback Logic
+        let is_recently_copied = context
+            .last_copied_code
+            .as_deref()
+            .map(|c| c == self.code)
+            .unwrap_or(false);
 
         // 1. Window Chrome (Header)
         let header_items = vec![
@@ -83,19 +87,35 @@ where
                 context,
             ),
             B::space(Length::Fill, Length::Shrink, context),
-            if let Some(on_copy) = &self.on_copy {
-                let msg = on_copy(self.code.clone());
+            {
+                let msg = if is_recently_copied {
+                    None
+                } else {
+                    self.on_copy.as_ref().map(|f| f(self.code.clone()))
+                };
 
                 let btn_content = B::hstack(
                     vec![
-                        Icon::<B>::new("copy")
+                        Icon::<B>::new(if is_recently_copied { "check" } else { "copy" })
                             .size(10.0)
-                            .color(Color::from_rgb8(150, 150, 150))
+                            .color(if is_recently_copied {
+                                Color::from_rgb8(100, 200, 100)
+                            } else {
+                                Color::from_rgb8(150, 150, 150)
+                            })
                             .view(context),
                         B::text(
-                            "Copy".to_string(),
+                            if is_recently_copied {
+                                "Copied!".to_string()
+                            } else {
+                                "Copy".to_string()
+                            },
                             10.0,
-                            Some(Color::from_rgb8(150, 150, 150)),
+                            Some(if is_recently_copied {
+                                Color::from_rgb8(100, 200, 100)
+                            } else {
+                                Color::from_rgb8(150, 150, 150)
+                            }),
                             false,
                             false,
                             None,
@@ -116,23 +136,25 @@ where
 
                 B::button(
                     btn_content,
-                    Some(msg),
-                    Variant::Ghost,
-                    Intent::Neutral,
+                    msg,
+                    Variant::Compact,
+                    if is_recently_copied {
+                        Intent::Success
+                    } else {
+                        Intent::Secondary
+                    },
                     Length::Shrink,
                     Length::Shrink,
                     true,
                     context,
                 )
-            } else {
-                B::space(Length::Fixed(0.0), Length::Shrink, context)
             },
         ];
 
         let header = B::hstack(
             header_items,
             12.0,
-            iced::Padding::from([8, 12]),
+            iced::Padding::from([10, 16]),
             Length::Fill,
             Length::Shrink,
             iced::Alignment::Start,
@@ -150,7 +172,7 @@ where
             } else {
                 header_bg
             }),
-            0.0, // Top radius handled by outer container? Or 0 here.
+            Radius::new(8.0, 8.0, 0.0, 0.0), // Round top only
             0.0,
             None,
             None,
@@ -170,7 +192,6 @@ where
             ScrollDirection::Both,
             context,
         );
-        // Note: scroll_view usually enables scrolling if
 
         let code_container = B::container(
             scroll_area,
@@ -182,7 +203,7 @@ where
             } else {
                 bg_color
             }),
-            0.0,
+            Radius::new(0.0, 0.0, 8.0, 8.0), // Round bottom only
             0.0,
             None,
             None,
@@ -212,7 +233,7 @@ where
                 Color::TRANSPARENT
             } else {
                 bg_color
-            }), // Background of the whole block
+            }), // Background of lowest layer
             8.0,
             if self.is_transparent { 0.0 } else { 1.0 },
             Some(if self.is_transparent {
@@ -233,6 +254,7 @@ fn highlight_rust<Message, B: Backend>(content: &str, context: &Context) -> B::A
 where
     Message: 'static + Clone + Send + Sync,
 {
+    let trimmed_content = trim_common_indentation(content);
     let mut spans: Vec<TextSpan> = Vec::new();
 
     // VS Code Dark Theme Palette
@@ -244,7 +266,8 @@ where
     let c_plain = Color::from_rgb8(212, 212, 212); // White/Grey
 
     // Very naive tokenization (split by whitespace but keep delimiters)
-    let tokens = content.split_inclusive(|c: char| c.is_whitespace() || "(){}[],.;:".contains(c));
+    let tokens =
+        trimmed_content.split_inclusive(|c: char| c.is_whitespace() || "(){}[],.;:".contains(c));
 
     for token in tokens {
         let trimmed = token.trim();
@@ -283,4 +306,37 @@ where
     }
 
     B::rich_text(spans, 13.0, Length::Fill, iced::Alignment::Start, context)
+}
+
+fn trim_common_indentation(s: &str) -> String {
+    let lines: Vec<&str> = s.lines().collect();
+    if lines.is_empty() {
+        return s.to_string();
+    }
+
+    // Find first non-empty line to determine base indentation
+    let first_line = lines.iter().find(|l| !l.trim().is_empty());
+    if first_line.is_none() {
+        return s.trim().to_string();
+    }
+
+    let indent = first_line
+        .unwrap()
+        .chars()
+        .take_while(|c| c.is_whitespace())
+        .count();
+
+    lines
+        .into_iter()
+        .map(|l| {
+            if l.len() >= indent && l[..indent].trim().is_empty() {
+                &l[indent..]
+            } else {
+                l.trim_start()
+            }
+        })
+        .collect::<Vec<&str>>()
+        .join("\n")
+        .trim()
+        .to_string()
 }

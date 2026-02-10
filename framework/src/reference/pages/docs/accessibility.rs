@@ -48,7 +48,9 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
             .into_box(),
         RenderMode::Terminal => {
             let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
-             Box::new(crate::layout::containers::Card::new(CodeBlock::new(ansi).transparent())
+             Box::new(crate::layout::containers::Card::new(
+                CodeBlock::new(ansi).transparent().on_copy(Message::CopyCode),
+            )
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)
@@ -57,7 +59,9 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         RenderMode::Neural => {
             let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
-             Box::new(crate::layout::containers::Card::new(CodeBlock::new(json).transparent())
+             Box::new(crate::layout::containers::Card::new(
+                CodeBlock::new(json).transparent().on_copy(Message::CopyCode),
+            )
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
                 .width(Length::Fill)

@@ -271,7 +271,23 @@ impl App {
                 self.theme = theme;
                 Task::none()
             }
-            Message::CopyCode(code) => crate::prelude::clipboard::write(code),
+            Message::CopyCode(code) => {
+                self.last_copied_code = Some(code.clone());
+                Task::batch(vec![
+                    crate::prelude::clipboard::write(code),
+                    Task::future(async {
+                        #[cfg(target_arch = "wasm32")]
+                        wasmtimer::tokio::sleep(std::time::Duration::from_secs(2)).await;
+                        #[cfg(not(target_arch = "wasm32"))]
+                        tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+                        Message::ClearCopiedFeedback
+                    }),
+                ])
+            }
+            Message::ClearCopiedFeedback => {
+                self.last_copied_code = None;
+                Task::none()
+            }
             Message::OpenUrl(url) => {
                 #[cfg(target_arch = "wasm32")]
                 {

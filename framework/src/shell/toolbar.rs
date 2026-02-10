@@ -186,7 +186,7 @@ impl<Message: 'static + Send + Sync> View<Message, IcedBackend> for ToolbarGroup
                     iced::widget::container::Style {
                         background: Some(bg_color.into()),
                         border: Border {
-                            radius,
+                            radius: radius.into(),
                             color: border_color,
                             width: 1.0,
                         },

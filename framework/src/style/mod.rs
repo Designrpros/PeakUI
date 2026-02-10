@@ -81,6 +81,8 @@ pub struct Context {
     pub is_inside_scrollable: bool,
     /// A monotonically increasing tick count for animations and dynamic state.
     pub tick: u64,
+    /// The code snippet that was most recently copied to the clipboard (for feedback).
+    pub last_copied_code: Option<Arc<str>>,
 }
 
 impl Default for Context {
@@ -98,6 +100,7 @@ impl Default for Context {
             billboarding: false,
             is_inside_scrollable: false,
             tick: 0,
+            last_copied_code: None,
         }
     }
 }
@@ -147,6 +150,7 @@ impl Context {
             billboarding: false,
             is_inside_scrollable: false,
             tick: 0,
+            last_copied_code: None,
         }
     }
 
@@ -213,7 +217,7 @@ impl Context {
         }
     }
 
-    pub fn radius(&self, radius: f32) -> iced::border::Radius {
+    pub fn radius(&self, radius: impl Into<Radius>) -> Radius {
         radius.into()
     }
 
@@ -230,6 +234,77 @@ impl Context {
         match l {
             Length::Fixed(f) => Length::Fixed(f * self.theme.scaling),
             _ => l,
+        }
+    }
+
+    pub fn with_last_copied_code(mut self, code: Option<Arc<str>>) -> Self {
+        self.last_copied_code = code;
+        self
+    }
+}
+
+/// A struct representing the corner radii of a rectangle.
+#[derive(Debug, Clone, Copy, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+pub struct Radius {
+    pub top_left: f32,
+    pub top_right: f32,
+    pub bottom_right: f32,
+    pub bottom_left: f32,
+}
+
+impl Radius {
+    pub fn new(top_left: f32, top_right: f32, bottom_right: f32, bottom_left: f32) -> Self {
+        Self {
+            top_left,
+            top_right,
+            bottom_right,
+            bottom_left,
+        }
+    }
+}
+
+impl From<f32> for Radius {
+    fn from(radius: f32) -> Self {
+        Self {
+            top_left: radius,
+            top_right: radius,
+            bottom_right: radius,
+            bottom_left: radius,
+        }
+    }
+}
+
+impl From<[f32; 4]> for Radius {
+    fn from(radii: [f32; 4]) -> Self {
+        Self {
+            top_left: radii[0],
+            top_right: radii[1],
+            bottom_right: radii[2],
+            bottom_left: radii[3],
+        }
+    }
+}
+
+impl std::ops::Mul<f32> for Radius {
+    type Output = Self;
+
+    fn mul(self, rhs: f32) -> Self {
+        Self {
+            top_left: self.top_left * rhs,
+            top_right: self.top_right * rhs,
+            bottom_right: self.bottom_right * rhs,
+            bottom_left: self.bottom_left * rhs,
+        }
+    }
+}
+
+impl From<Radius> for iced::border::Radius {
+    fn from(radius: Radius) -> Self {
+        Self {
+            top_left: radius.top_left,
+            top_right: radius.top_right,
+            bottom_right: radius.bottom_right,
+            bottom_left: radius.bottom_left,
         }
     }
 }

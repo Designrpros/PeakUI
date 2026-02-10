@@ -1,4 +1,4 @@
-use crate::core::{Backend, Context, IcedBackend, ScrollDirection, TermBackend, View};
+use crate::core::{Backend, Context, IcedBackend, ScrollDirection, View};
 use iced::Length;
 
 /// A scrollable container that wraps content and provides styled scrollbars.
@@ -11,35 +11,9 @@ pub struct ScrollView<Message: 'static + Send + Sync, B: Backend = IcedBackend> 
     direction: ScrollDirection,
 }
 
-impl<Message: 'static + Send + Sync> ScrollView<Message, IcedBackend> {
-    /// Creates a new `ScrollView` for the Iced backend.
-    pub fn new(content: impl View<Message, IcedBackend> + 'static) -> Self {
-        Self::new_generic(content)
-    }
-
-    /// Creates a new `ScrollView` for the Iced backend from a boxed view.
-    pub fn from_boxed(content: Box<dyn View<Message, IcedBackend>>) -> Self {
-        Self {
-            content,
-            width: Length::Fill,
-            height: Length::Fill,
-            id: None,
-            show_indicators: true,
-            direction: ScrollDirection::Vertical,
-        }
-    }
-}
-
-impl<Message: 'static + Send + Sync> ScrollView<Message, TermBackend> {
-    /// Creates a new `ScrollView` for the Term backend (TUI).
-    pub fn new_tui(content: impl View<Message, TermBackend> + 'static) -> Self {
-        Self::new_generic(content)
-    }
-}
-
 impl<Message: 'static + Send + Sync, B: Backend> ScrollView<Message, B> {
     /// Creates a new generic `ScrollView` with the given content.
-    pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new(content: impl View<Message, B> + 'static) -> Self {
         Self {
             content: Box::new(content),
             width: Length::Fill,
@@ -50,7 +24,22 @@ impl<Message: 'static + Send + Sync, B: Backend> ScrollView<Message, B> {
         }
     }
 
-    /// Sets the width of the `ScrollView`.
+    /// Alias for `new`.
+    pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
+        Self::new(content)
+    }
+
+    /// Creates a new `ScrollView` from a boxed view.
+    pub fn from_boxed(content: Box<dyn View<Message, B>>) -> Self {
+        Self {
+            content,
+            width: Length::Fill,
+            height: Length::Fill,
+            id: None,
+            show_indicators: true,
+            direction: ScrollDirection::Vertical,
+        }
+    }
     pub fn width(mut self, width: Length) -> Self {
         self.width = width;
         self
