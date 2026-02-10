@@ -16,12 +16,11 @@ fn scale_length(l: Length, scale: f32) -> Length {
 }
 #[cfg(target_arch = "wasm32")]
 impl IcedBackend {
-    pub fn apply_gamma(color: Color, _base_factor: f32) -> Color {
+    pub fn apply_gamma(color: Color, _factor: f32) -> Color {
         // Calibrated Perceptual Gamma
-        // Highlights: Darken slightly (Gamma ~0.8) to preserve saturation and "warmth"
-        // Low-lights: Brighten significantly (Gamma ~2.2) to reveal detail
+        // Lightness-aware pivot: Darken highlights slightly, brighten low-lights significantly
         let lightness = (color.r + color.g + color.b) / 3.0;
-        let gamma_factor = 0.82 + (1.0 - lightness) * 1.4; // Pivot around mid-gray
+        let gamma_factor = 0.82 + (1.0 - lightness) * 1.4;
         let inv_gamma = 1.0 / gamma_factor;
 
         Color {
@@ -942,7 +941,8 @@ impl Backend for IcedBackend {
                     let overlay = container(iced::widget::Space::new().width(width).height(height))
                         .style(move |_| container::Style {
                             background: Some(iced::Background::Color(Color::from_rgba(
-                                1.0, 1.0, 1.0, 0.08, // Increased lift for 1.8 gamma parity
+                                1.0, 1.0, 1.0,
+                                0.08, // Subtle lift to match the theme's gamma pivot
                             ))),
                             border: iced::Border {
                                 radius: (radius * scale).into(),
