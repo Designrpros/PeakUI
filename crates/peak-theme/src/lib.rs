@@ -97,11 +97,14 @@ impl ThemeTokens {
 
         #[cfg(target_arch = "wasm32")]
         {
+            // Apply global color calibration for WASM rendering engine
+            // Handled systemically by the Backend now.
+
+            // Moderate glass for WASM (some browsers support backdrop-filter,
+            // but Iced-Canvas might not. Keeping it solid for safety but enabling radius).
             tokens.glass_opacity = 1.0;
             tokens.blur_radius = 0.0;
-            tokens.radius = 0.0;
-            tokens.shadow_blur = 0.0;
-            tokens.shadow_offset = [0.0, 0.0];
+            // Radius and Shadows are supported in Iced-Canvas/WGPU-WASM
         }
 
         tokens

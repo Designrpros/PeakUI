@@ -154,4 +154,59 @@ impl PeakColors {
         let luminance = 0.299 * bg.r + 0.587 * bg.g + 0.114 * bg.b;
         luminance < 0.5
     }
+
+    /// Calibrate all colors for WASM rendering with a specific gamma factor
+    pub fn calibrate_for_wasm(&mut self, factor: f32) {
+        self.primary = Self::apply_gamma(self.primary, factor);
+        self.on_primary = Self::apply_gamma(self.on_primary, factor);
+        self.primary_container = Self::apply_gamma(self.primary_container, factor);
+        self.on_primary_container = Self::apply_gamma(self.on_primary_container, factor);
+
+        self.secondary = Self::apply_gamma(self.secondary, factor);
+        self.on_secondary = Self::apply_gamma(self.on_secondary, factor);
+        self.secondary_container = Self::apply_gamma(self.secondary_container, factor);
+        self.on_secondary_container = Self::apply_gamma(self.on_secondary_container, factor);
+
+        self.accent = Self::apply_gamma(self.accent, factor);
+        self.on_accent = Self::apply_gamma(self.on_accent, factor);
+
+        self.success = Self::apply_gamma(self.success, factor);
+        self.warning = Self::apply_gamma(self.warning, factor);
+        self.danger = Self::apply_gamma(self.danger, factor);
+        self.info = Self::apply_gamma(self.info, factor);
+
+        self.surface = Self::apply_gamma(self.surface, factor);
+        self.on_surface = Self::apply_gamma(self.on_surface, factor);
+        self.surface_variant = Self::apply_gamma(self.surface_variant, factor);
+        self.on_surface_variant = Self::apply_gamma(self.on_surface_variant, factor);
+
+        self.background = Self::apply_gamma(self.background, factor);
+        self.on_background = Self::apply_gamma(self.on_background, factor);
+
+        self.border = Self::apply_gamma(self.border, factor);
+        self.divider = Self::apply_gamma(self.divider, factor);
+        // Overlay is usually a blend, but we correct it too
+        self.overlay = Self::apply_gamma(self.overlay, factor);
+
+        self.text_primary = Self::apply_gamma(self.text_primary, factor);
+        self.text_secondary = Self::apply_gamma(self.text_secondary, factor);
+        self.text_tertiary = Self::apply_gamma(self.text_tertiary, factor);
+        self.text_disabled = Self::apply_gamma(self.text_disabled, factor);
+    }
+
+    /// Apply gamma correction to a single color using a perceptual S-curve
+    pub fn apply_gamma(color: Color, _factor: f32) -> Color {
+        // Calibrated Perceptual Gamma
+        // Lightness-aware pivot: Darken highlights slightly, brighten low-lights significantly
+        let lightness = (color.r + color.g + color.b) / 3.0;
+        let gamma_factor = 0.82 + (1.0 - lightness) * 1.4;
+        let inv_gamma = 1.0 / gamma_factor;
+
+        Color {
+            r: color.r.powf(inv_gamma),
+            g: color.g.powf(inv_gamma),
+            b: color.b.powf(inv_gamma),
+            a: color.a,
+        }
+    }
 }

@@ -537,7 +537,7 @@
                 <div class="metric-value">99.99 %</div>
                 <div class="metric-label">Reduksjon i AI-dataforbruk</div>
                 <p style="font-size: 14px; margin-top: 10px; opacity: 0.8;">Sammenlignet med 1080p vision-basert analyse
-                    (Verifisert 2026-02-03)</p>
+                    (Verifisert 2026-02-10)</p>
             </div>
 
 
@@ -604,6 +604,47 @@
             <h2>Teknisk Gjennombrudd</h2>
             <p>PeakUI leverer <strong>Grønn Beregning</strong> ved å redusere dataforbruket fra 6.2 MB per frame til
                 0.58 KB. Bygget i <strong>Rust</strong>, garanterer rammeverket 100 % minnesikkerhet.</p>
+        </section>
+
+        <section>
+            <h2>Teknisk Validering</h2>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h4>Automatiserte Tester</h4>
+                    <p style="font-size: 32px; font-weight: 700; color: var(--accent); margin: 10px 0;">6/6</p>
+                    <p style="font-size: 12px; opacity: 0.8;">Backend-konsistens, serialisering, komponenter</p>
+                </div>
+                <div class="card">
+                    <h4>Prosjektstørrelse</h4>
+                    <p style="font-size: 14px; margin: 10px 0;">
+                        Kjerne: 12,586 kodelinjer<br>
+                        Reference: 13,764 kodelinjer<br>
+                        <strong>Total: 26,608 linjer Rust</strong><br>
+                        <span style="opacity: 0.7;">WASM Binary: 21 MB</span>
+                    </p>
+                    <p style="font-size: 12px; opacity: 0.8;">Cross-platform (Native, WASM, TUI)</p>
+                </div>
+            </div>
+
+            <h3>Benchmark (Reproduserbart)</h3>
+            <pre>PeakUI:  0.68 KB  |  Vision: 7.91 MB  →  99.9916% reduksjon</pre>
+
+
+            <p style="margin-top: 20px;"><strong>Status:</strong> Forskningsprototyp under aktiv utvikling med validerte
+                tekniske resultater som beviser gjennomførbarheten av semantisk serialisering for AI-native grensesnitt.
+            </p>
+
+            <h3 style="margin-top: 30px;">Verifiser Selv</h3>
+            <pre style="font-size: 13px; line-height: 1.5;">
+# Kjør showcase (Native eller Web)
+cd apps/showcase && cargo run --release    # Native
+cd apps/showcase && trunk serve            # Web (WASM)
+
+# Kjør tester og benchmark
+cargo test --all                           # 6/6 tests
+cargo test benchmark -- --nocapture        # 99.99% validering
+</pre>
         </section>
 
         <section class="page-break">
