@@ -64,7 +64,6 @@ native = [
     "tokio",
     "iced/wgpu",
     "iced/tokio",
-    "peak-db",
     "peak-core/native",
     "peak-theme/native",
     "peak-intelligence/native",
@@ -74,3 +73,4 @@ tokio = ["iced/tokio"]
 wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]
 webview = ["wry"]
 tui = [] # Gated TUI backend
+neural = ["peak-db"]

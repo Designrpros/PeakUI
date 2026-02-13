@@ -64,3 +64,6 @@ native = ["tokio", "sysinfo", "portable-pty", "walkdir", "directories", "tokio-s
 llm = ["llama-server"]
 voice = ["whisper-rs", "tts", "cpal"]
 wasm = []
+
+[dev-dependencies]
+tempfile = "3.10"

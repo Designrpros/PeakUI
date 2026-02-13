@@ -83,20 +83,46 @@ For advanced testing, use the included `verify_exposure.py` script to validate s
 
 ---
 
-## Getting Started
+## Getting Started (v0.1.0 Early Access)
 
-The recommended way to explore PeakUI is through the **Showcase App**, a component laboratory simulating a modern Operating System.
+PeakUI is currently in active development. The best way to get started is by forking this repository and using our integrated developer CLI.
 
-### Desktop Experience (GUI)
-Run with full GPU acceleration:
+### 1. Environment Setup
+
+Clone your fork and run the automated setup script to install the **PeakUI CLI**:
 
 ```bash
-cargo run --release --example showcase
+git clone https://github.com/YOUR_USERNAME/PeakUI.git
+cd PeakUI
+./scripts/setup.sh
 ```
 
+### 2. The PeakUI CLI (`cargo peakui`)
 
+Once installed, you can manage your projects using the `cargo peakui` subcommand.
+
+#### Initialize a New Project
+Create a fresh PeakUI application using the interactive TUI wizard:
+```bash
+cargo peakui init my-project
+```
+
+#### Run Your Application
+PeakUI's unified runner handles cross-platform development seamlessly:
+- **Native**: `cargo peakui run` (Defaults to native GPU-accelerated desktop)
+- **Web**: `cargo peakui run --web` (Launches WASM build via Trunk)
+- **Multi-Platform**: `cargo peakui run --all` (Simultaneously starts Native and Web environments)
 
 ---
+
+## Exploring the Framework
+
+The core of PeakUI is best explored through the **Showcase App**, which demonstrates our high-performance UI components and the Intelligence-Native bridge.
+
+```bash
+# From the PeakUI root directory
+cargo peakui run --all
+```
 
 ## Technical Core
 

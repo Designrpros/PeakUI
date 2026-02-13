@@ -155,12 +155,9 @@ impl VoiceManager {
     }
 }
 
+#[cfg(feature = "native")]
 pub static VOICE: Lazy<TokioMutex<VoiceManager>> = Lazy::new(|| {
-    #[cfg(not(target_arch = "wasm32"))]
     let home = std::env::var("HOME").unwrap_or_else(|_| "/root".into());
-    #[cfg(target_arch = "wasm32")]
-    let home = "/tmp";
-
     let path = std::path::PathBuf::from(home).join(".peak/intelligence/voice");
     TokioMutex::new(futures::executor::block_on(VoiceManager::new(path)))
 });

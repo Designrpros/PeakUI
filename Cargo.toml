@@ -2,5 +2,6 @@
 members = [
     "framework",
     "apps/showcase",
+    "crates/peakui-cli",
 ]
 resolver = "2"

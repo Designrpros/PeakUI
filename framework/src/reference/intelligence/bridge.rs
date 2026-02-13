@@ -256,7 +256,15 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                     #[cfg(feature = "native")]
                     "web_search" => {
                         let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
-                        peak_intelligence::tools::web_search_routed(query)
+                        let brave_key = args
+                            .get("brave_key")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
+                        let tavily_key = args
+                            .get("tavily_key")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
+                        peak_intelligence::tools::web_search_routed(query, brave_key, tavily_key)
                             .await
                             .map_err(|e| e.to_string())
                     }
@@ -267,10 +275,21 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                             .and_then(|v| v.as_str())
                             .unwrap_or("")
                             .to_string();
+                        let brave_key = args
+                            .get("brave_key")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
+                        let tavily_key = args
+                            .get("tavily_key")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string());
                         let (tx, rx) = futures::channel::oneshot::channel();
 
                         wasm_bindgen_futures::spawn_local(async move {
-                            let res = peak_intelligence::tools::web_search_routed(&query).await;
+                            let res = peak_intelligence::tools::web_search_routed(
+                                &query, brave_key, tavily_key,
+                            )
+                            .await;
                             let _ = tx.send(res.map_err(|e| e.to_string()));
                         });
 

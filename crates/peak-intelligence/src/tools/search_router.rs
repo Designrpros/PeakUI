@@ -7,8 +7,8 @@ use std::env;
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 pub trait SearchProvider {
     fn name(&self) -> &'static str;
-    async fn search(&self, query: &str) -> Result<Value>;
-    fn is_available(&self) -> bool;
+    async fn search(&self, query: &str, api_key: Option<String>) -> Result<Value>;
+    fn is_available(&self, has_arg_key: bool) -> bool;
 }
 
 // 1. BRAVE SEARCH (PRIMARY/PAID)
@@ -21,16 +21,21 @@ impl SearchProvider for BraveSearchProvider {
         "Brave Search"
     }
 
-    fn is_available(&self) -> bool {
-        env::var("BRAVE_SEARCH_API_KEY").is_ok() || option_env!("BRAVE_SEARCH_API_KEY").is_some()
+    fn is_available(&self, has_arg_key: bool) -> bool {
+        has_arg_key
+            || env::var("BRAVE_SEARCH_API_KEY").is_ok()
+            || option_env!("BRAVE_SEARCH_API_KEY").is_some()
     }
 
-    async fn search(&self, query: &str) -> Result<Value> {
-        let api_key = env::var("BRAVE_SEARCH_API_KEY").unwrap_or_else(|_| {
-            option_env!("BRAVE_SEARCH_API_KEY")
-                .unwrap_or_default()
-                .to_string()
-        });
+    async fn search(&self, query: &str, arg_key: Option<String>) -> Result<Value> {
+        let api_key = arg_key
+            .or_else(|| {
+                env::var("BRAVE_SEARCH_API_KEY")
+                    .ok()
+                    .or_else(|| option_env!("BRAVE_SEARCH_API_KEY").map(|s| s.to_string()))
+            })
+            .ok_or_else(|| anyhow::anyhow!("Brave Search API key not found"))?;
+
         let client = reqwest::Client::new();
         let res = client
             .get("https://api.search.brave.com/res/v1/web/search")
@@ -68,16 +73,19 @@ impl SearchProvider for TavilySearchProvider {
         "Tavily Search"
     }
 
-    fn is_available(&self) -> bool {
-        env::var("TAVILY_API_KEY").is_ok() || option_env!("TAVILY_API_KEY").is_some()
+    fn is_available(&self, has_arg_key: bool) -> bool {
+        has_arg_key || env::var("TAVILY_API_KEY").is_ok() || option_env!("TAVILY_API_KEY").is_some()
     }
 
-    async fn search(&self, query: &str) -> Result<Value> {
-        let api_key = env::var("TAVILY_API_KEY").unwrap_or_else(|_| {
-            option_env!("TAVILY_API_KEY")
-                .unwrap_or_default()
-                .to_string()
-        });
+    async fn search(&self, query: &str, arg_key: Option<String>) -> Result<Value> {
+        let api_key = arg_key
+            .or_else(|| {
+                env::var("TAVILY_API_KEY")
+                    .ok()
+                    .or_else(|| option_env!("TAVILY_API_KEY").map(|s| s.to_string()))
+            })
+            .ok_or_else(|| anyhow::anyhow!("Tavily Search API key not found"))?;
+
         let client = reqwest::Client::new();
         let res = client
             .post("https://api.tavily.com/search")
@@ -117,7 +125,7 @@ impl SearchProvider for DuckDuckGoScraper {
     fn name(&self) -> &'static str {
         "DuckDuckGo Scraper (Free)"
     }
-    fn is_available(&self) -> bool {
+    fn is_available(&self, _has_arg_key: bool) -> bool {
         // Scraper only works reliably on Native due to CORS in browsers
         #[cfg(target_arch = "wasm32")]
         return false;
@@ -125,7 +133,7 @@ impl SearchProvider for DuckDuckGoScraper {
         return true;
     }
 
-    async fn search(&self, query: &str) -> Result<Value> {
+    async fn search(&self, query: &str, _api_key: Option<String>) -> Result<Value> {
         crate::tools::web_search(query).await
     }
 }
@@ -157,11 +165,28 @@ impl SearchRouter {
         Self { providers }
     }
 
-    pub async fn execute(&self, query: &str) -> Result<Value> {
+    pub async fn execute(
+        &self,
+        query: &str,
+        brave_key: Option<String>,
+        tavily_key: Option<String>,
+    ) -> Result<Value> {
         for provider in &self.providers {
-            if provider.is_available() {
+            let has_arg_key = match provider.name() {
+                "Brave Search" => brave_key.is_some(),
+                "Tavily Search" => tavily_key.is_some(),
+                _ => false,
+            };
+
+            if provider.is_available(has_arg_key) {
                 log::info!("🔍 Attempting search with: {}", provider.name());
-                match provider.search(query).await {
+                let arg_key = match provider.name() {
+                    "Brave Search" => brave_key.clone(),
+                    "Tavily Search" => tavily_key.clone(),
+                    _ => None,
+                };
+
+                match provider.search(query, arg_key).await {
                     Ok(results) => {
                         // Ensure it's not an empty result array from an API error
                         if results.as_array().map(|a| !a.is_empty()).unwrap_or(false) {
@@ -204,7 +229,7 @@ mod tests {
         // Since we don't have API keys in the test env, it should fall back to DDG
         // if native, or fail if wasm.
         let router = SearchRouter::new();
-        let res = router.execute("rust programming").await;
+        let res = router.execute("rust programming", None, None).await;
 
         #[cfg(not(target_arch = "wasm32"))]
         {

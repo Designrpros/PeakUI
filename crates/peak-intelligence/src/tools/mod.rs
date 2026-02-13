@@ -181,6 +181,7 @@ pub fn read_dir(path: &str) -> Result<Value> {
     }
 }
 
+#[allow(dead_code)]
 pub fn scan_wifi() -> Result<Value> {
     #[cfg(all(feature = "native", target_os = "linux"))]
     {
@@ -262,6 +263,7 @@ pub fn search_files(query: &str, base_path: &str) -> Result<Value> {
     }
 }
 
+#[allow(dead_code)]
 pub fn connect_wifi(ssid: &str, _password: &str) -> Result<Value> {
     #[cfg(all(feature = "native", target_os = "linux"))]
     {
@@ -341,7 +343,20 @@ pub fn get_system_snapshot() -> Result<Value> {
     Err(anyhow::anyhow!("System snapshot not supported on web"))
 }
 
+#[cfg(feature = "native")]
+pub mod fs_tools;
+pub mod registry;
 pub mod search_router;
+pub mod search_tool;
+#[cfg(feature = "native")]
+pub mod system_tools;
+#[cfg(feature = "native")]
+pub mod terminal_tools;
+#[cfg(feature = "voice")]
+pub mod voice_tools;
+
+#[allow(unused_imports)]
+pub use registry::{IntelligenceTool, ToolRegistry};
 
 pub async fn web_search(query: &str) -> Result<Value> {
     // Check if we are being called via the router to avoid infinite recursion
@@ -414,9 +429,13 @@ pub async fn web_search(query: &str) -> Result<Value> {
     Ok(json!(results))
 }
 
-pub async fn web_search_routed(query: &str) -> Result<Value> {
+pub async fn web_search_routed(
+    query: &str,
+    brave_key: Option<String>,
+    tavily_key: Option<String>,
+) -> Result<Value> {
     let router = search_router::SearchRouter::new();
-    router.execute(query).await
+    router.execute(query, brave_key, tavily_key).await
 }
 
 #[cfg(test)]
