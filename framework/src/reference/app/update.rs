@@ -484,12 +484,10 @@ impl App {
 
                 // Hot-reload intelligence bridge with new key
                 let provider = match self.ai_provider {
-                    AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
-                    AIProviderChoice::LlamaCpp => {
-                        peak_os_intelligence::llm::ModelProvider::LlamaCpp
-                    }
+                    AIProviderChoice::Ollama => peak_intelligence::llm::ModelProvider::Ollama,
+                    AIProviderChoice::LlamaCpp => peak_intelligence::llm::ModelProvider::LlamaCpp,
                     AIProviderChoice::OpenRouter => {
-                        peak_os_intelligence::llm::ModelProvider::OpenRouter
+                        peak_intelligence::llm::ModelProvider::OpenRouter
                     }
                 };
 
@@ -497,7 +495,7 @@ impl App {
                     crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
                         provider,
                         match provider {
-                            peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                            peak_intelligence::llm::ModelProvider::Ollama => "llama3",
                             _ => "google/gemini-3-flash-preview",
                         },
                         if key.is_empty() { None } else { Some(key) },
@@ -518,12 +516,10 @@ impl App {
 
                 // Hot-reload intelligence bridge with new provider
                 let model_provider = match provider {
-                    AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
-                    AIProviderChoice::LlamaCpp => {
-                        peak_os_intelligence::llm::ModelProvider::LlamaCpp
-                    }
+                    AIProviderChoice::Ollama => peak_intelligence::llm::ModelProvider::Ollama,
+                    AIProviderChoice::LlamaCpp => peak_intelligence::llm::ModelProvider::LlamaCpp,
                     AIProviderChoice::OpenRouter => {
-                        peak_os_intelligence::llm::ModelProvider::OpenRouter
+                        peak_intelligence::llm::ModelProvider::OpenRouter
                     }
                 };
 
@@ -531,7 +527,7 @@ impl App {
                     crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
                         model_provider,
                         match model_provider {
-                            peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                            peak_intelligence::llm::ModelProvider::Ollama => "llama3",
                             _ => "google/gemini-3-flash-preview",
                         },
                         if self.api_key.is_empty() {
@@ -746,6 +742,14 @@ impl App {
                 self.icon_limit += 100;
                 Task::none()
             }
+            Message::ProcessToolResult(tool_name, result) => {
+                self.is_thinking = false;
+                Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
+                    role: ChatRole::System,
+                    content: format!("[result:{}] {}", tool_name, result),
+                });
+                self.ai_chat_completion()
+            }
         };
 
         self.export_neural_view();
@@ -755,9 +759,13 @@ impl App {
     pub fn start_ai_chat(&mut self, content: String) -> Task<Message> {
         Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
             role: ChatRole::User,
-            content: content.clone(),
+            content,
         });
 
+        self.ai_chat_completion()
+    }
+
+    pub fn ai_chat_completion(&mut self) -> Task<Message> {
         // TOKEN OPTIMIZATION & SAFETY SWITCH
         const MAX_CONTEXT_CHARS: usize = 16_000;
         const MAX_HISTORY_MESSAGES: usize = 20;
@@ -839,6 +847,18 @@ impl App {
                 let target_msg = match action {
                     Action::Shell(cmd) => Message::ExecuteShell(cmd),
                     Action::Navigate(page) => Message::SetTab(page.clone()),
+                    Action::WebSearch(query) => Message::ProcessToolResult(
+                        "web_search".to_string(),
+                        serde_json::json!({"query": query}),
+                    ),
+                    Action::ReadFile(path) => Message::ProcessToolResult(
+                        "read_file".to_string(),
+                        serde_json::json!({"path": path}),
+                    ),
+                    Action::WriteFile { path, content } => Message::ProcessToolResult(
+                        "write_file".to_string(),
+                        serde_json::json!({"path": path, "content": content}),
+                    ),
                     _ => Message::None,
                 };
 
@@ -908,6 +928,64 @@ impl App {
                 }
                 Action::Teleport { .. } | Action::Scale { .. } | Action::Rotate { .. } => {
                     log::info!("AI Spatial Action received: {:?}", action);
+                }
+                Action::WebSearch(query) => {
+                    log::info!("AI requesting Web Search: {}", query);
+                    let provider = self.intelligence.clone();
+                    tasks.push(
+                        provider
+                            .execute_tool(
+                                "web_search".to_string(),
+                                serde_json::json!({"query": query}),
+                            )
+                            .map(|res| match res {
+                                Ok(val) => {
+                                    Message::ProcessToolResult("web_search".to_string(), val)
+                                }
+                                Err(e) => Message::ProcessToolResult(
+                                    "web_search".to_string(),
+                                    serde_json::json!({"error": e}),
+                                ),
+                            }),
+                    );
+                }
+                Action::ReadFile(path) => {
+                    log::info!("AI requesting Read File: {}", path);
+                    let provider = self.intelligence.clone();
+                    tasks.push(
+                        provider
+                            .execute_tool(
+                                "read_file".to_string(),
+                                serde_json::json!({"path": path}),
+                            )
+                            .map(|res| match res {
+                                Ok(val) => Message::ProcessToolResult("read_file".to_string(), val),
+                                Err(e) => Message::ProcessToolResult(
+                                    "read_file".to_string(),
+                                    serde_json::json!({"error": e}),
+                                ),
+                            }),
+                    );
+                }
+                Action::WriteFile { path, content } => {
+                    log::info!("AI requesting Write File: {}", path);
+                    let provider = self.intelligence.clone();
+                    tasks.push(
+                        provider
+                            .execute_tool(
+                                "write_file".to_string(),
+                                serde_json::json!({"path": path, "content": content}),
+                            )
+                            .map(|res| match res {
+                                Ok(val) => {
+                                    Message::ProcessToolResult("write_file".to_string(), val)
+                                }
+                                Err(e) => Message::ProcessToolResult(
+                                    "write_file".to_string(),
+                                    serde_json::json!({"error": e}),
+                                ),
+                            }),
+                    );
                 }
             }
         }

@@ -3,6 +3,7 @@
 use super::{HttpError, HttpResponse};
 use serde::Serialize;
 // use std::collections::HashMap; // Removed unused import
+use futures::StreamExt;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Headers, Request, RequestInit, RequestMode, Response};
@@ -119,4 +120,52 @@ pub async fn post_json_with_headers<T: Serialize>(
         status,
         body: response_body,
     })
+}
+
+pub fn post_json_stream<T: Serialize + 'static>(
+    url: &str,
+    body: &T,
+    headers_map: std::collections::HashMap<String, String>,
+) -> impl futures::Stream<Item = Result<String, String>> {
+    let url = url.to_string();
+    let json_body = serde_json::to_string(body).unwrap_or_default();
+
+    async_stream::stream! {
+        let client = reqwest::Client::new();
+        let mut rb = client.post(&url)
+            .header("Content-Type", "application/json")
+            .body(json_body);
+
+        for (key, value) in headers_map {
+            rb = rb.header(key, value);
+        }
+
+        let res = rb.send().await;
+
+        match res {
+            Ok(response) => {
+                if !response.status().is_success() {
+                    yield Err(format!("Request failed with status: {}", response.status()));
+                    return;
+                }
+
+                let mut stream = response.bytes_stream();
+                while let Some(item) = stream.next().await {
+                    match item {
+                        Ok(bytes) => {
+                            if let Ok(text) = String::from_utf8(bytes.to_vec()) {
+                                yield Ok(text);
+                            }
+                        }
+                        Err(e) => {
+                            yield Err(e.to_string());
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                yield Err(e.to_string());
+            }
+        }
+    }
 }

@@ -1,10 +1,6 @@
-#[cfg(feature = "native")]
 mod mcp;
-#[cfg(feature = "native")]
 mod terminal;
-#[cfg(feature = "native")]
 mod tools;
-#[cfg(feature = "native")]
 mod voice;
 
 #[cfg(feature = "voice")]
@@ -12,36 +8,21 @@ use crate::voice::VoiceManager;
 #[cfg(feature = "voice")]
 use voice::VOICE;
 
-#[cfg(feature = "native")]
-use crate::mcp::{
+use mcp::{
     CallToolParams, CallToolResult, JsonRpcRequest, JsonRpcResponse, ListToolsResult, Tool,
     ToolContent,
 };
-#[cfg(feature = "native")]
-use crate::terminal::TerminalManager;
-#[cfg(feature = "native")]
 use once_cell::sync::Lazy;
-#[cfg(feature = "native")]
 use peak_intelligence::kernel;
-#[cfg(feature = "native")]
 use serde_json::json;
-#[cfg(feature = "native")]
+use terminal::TerminalManager;
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
-#[cfg(feature = "native")]
 use tokio::sync::mpsc;
-#[cfg(feature = "native")]
 use tokio::time::{sleep, Duration};
 
-#[cfg(feature = "native")]
 static TERMINAL: Lazy<TerminalManager> = Lazy::new(TerminalManager::new);
 // No longer here
 
-#[cfg(not(feature = "native"))]
-fn main() {
-    println!("Native features disabled. Use --features native to run.");
-}
-
-#[cfg(feature = "native")]
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Verify Icebreaker Core Linkage
@@ -121,7 +102,6 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "native")]
 async fn handle_request(req: JsonRpcRequest, tx: mpsc::Sender<String>) -> JsonRpcResponse {
     match req.method.as_str() {
         "tools/list" => {
@@ -264,6 +244,23 @@ async fn handle_request(req: JsonRpcRequest, tx: mpsc::Sender<String>) -> JsonRp
                         },
                         "required": ["text"]
                     }),
+                },
+                Tool {
+                    name: "web_search".into(),
+                    description: "Search the web for real-time information.".into(),
+                    input_schema: json!({
+                        "type": "object",
+                        "properties": {
+                            "query": { "type": "string" }
+                        },
+                        "required": ["query"]
+                    }),
+                },
+                Tool {
+                    name: "get_system_snapshot".into(),
+                    description: "Get a comprehensive snapshot of system health and metrics."
+                        .into(),
+                    input_schema: json!({ "type": "object", "properties": {} }),
                 },
             ];
 
@@ -477,6 +474,16 @@ async fn handle_request(req: JsonRpcRequest, tx: mpsc::Sender<String>) -> JsonRp
                                     .await
                                     .map(|samples| json!({ "samples": samples }))
                             }
+                            "web_search" => {
+                                let query = p
+                                    .arguments
+                                    .as_ref()
+                                    .and_then(|a| a.get("query"))
+                                    .and_then(|v| v.as_str())
+                                    .unwrap_or("");
+                                tools::web_search_routed(query).await
+                            }
+                            "get_system_snapshot" => tools::get_system_snapshot(),
                             _ => {
                                 return JsonRpcResponse::error(
                                     req.id,

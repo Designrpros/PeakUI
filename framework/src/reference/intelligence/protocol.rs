@@ -37,6 +37,12 @@ pub enum Action {
         y: f32,
         z: f32,
     },
+    #[serde(alias = "web_search", alias = "WebSearch")]
+    WebSearch(String),
+    #[serde(alias = "read_file", alias = "ReadFile")]
+    ReadFile(String),
+    #[serde(alias = "write_file", alias = "WriteFile")]
+    WriteFile { path: String, content: String },
     #[serde(alias = "unknown", alias = "Unknown")]
     Unknown(String),
 }
@@ -132,46 +138,70 @@ impl ActionParser {
         result.trim().to_string()
     }
 
-    /// Splits text into parts of either plain text or parsed Actions
+    /// Splits text into parts of either plain text, parsed Actions, or Tool Results
     pub fn split_text_and_actions(text: &str) -> Vec<ContentPart> {
         let mut parts = Vec::new();
         let mut search_pos = 0;
 
-        while let Some(start_rel) = text[search_pos..].find("[action: ") {
+        while let Some(start_rel) = text[search_pos..]
+            .find("[action: ")
+            .or_else(|| text[search_pos..].find("[result:"))
+        {
             let start = search_pos + start_rel;
 
-            // Push the text BEFORE the action if not empty
+            // Push the text BEFORE the part if not empty
             if start > search_pos {
                 parts.push(ContentPart::Text(text[search_pos..start].to_string()));
             }
 
-            let start_json = start + "[action: ".len();
-
-            let mut end = None;
-            if let Some(end_rel) = text[start_json..].find(")]") {
-                end = Some(start_json + end_rel);
-            } else if let Some(end_rel) = text[start_json..].find(']') {
-                end = Some(start_json + end_rel);
-            }
-
-            if let Some(end_pos) = end {
-                let json_slice = &text[start_json..end_pos].trim();
-                if let Ok(action) = serde_json::from_str::<Action>(json_slice) {
-                    parts.push(ContentPart::Action(action));
-                } else {
-                    parts.push(ContentPart::Action(Action::Unknown(json_slice.to_string())));
+            let rest = &text[start..];
+            if rest.starts_with("[action: ") {
+                let start_json = start + "[action: ".len();
+                let mut end = None;
+                if let Some(end_rel) = text[start_json..].find(")]") {
+                    end = Some(start_json + end_rel);
+                } else if let Some(end_rel) = text[start_json..].find(']') {
+                    end = Some(start_json + end_rel);
                 }
 
-                // Move past terminator
-                search_pos = end_pos
-                    + if text[end_pos..].starts_with(")]") {
-                        2
+                if let Some(end_pos) = end {
+                    let json_slice = &text[start_json..end_pos].trim();
+                    if let Ok(action) = serde_json::from_str::<Action>(json_slice) {
+                        parts.push(ContentPart::Action(action));
                     } else {
-                        1
-                    };
+                        parts.push(ContentPart::Action(Action::Unknown(json_slice.to_string())));
+                    }
+                    search_pos = end_pos
+                        + if text[end_pos..].starts_with(")]") {
+                            2
+                        } else {
+                            1
+                        };
+                } else {
+                    break;
+                }
+            } else if rest.starts_with("[result:") {
+                let tag_end_rel = text[start..].find(']').unwrap_or(0);
+                let tag_end = start + tag_end_rel;
+                let tool_name = text[start + "[result:".len()..tag_end].to_string();
+                let start_json = tag_end + 1;
+
+                // Find next marker or end of string
+                let end_pos = text[start_json..]
+                    .find("[action: ")
+                    .or_else(|| text[start_json..].find("[result:"))
+                    .map(|rel| start_json + rel)
+                    .unwrap_or(text.len());
+
+                let json_str = text[start_json..end_pos].trim();
+                if let Ok(value) = serde_json::from_str::<serde_json::Value>(json_str) {
+                    parts.push(ContentPart::ToolResult(tool_name, value));
+                } else {
+                    parts.push(ContentPart::Text(text[start..end_pos].to_string()));
+                }
+                search_pos = end_pos;
             } else {
-                // If no terminator, just treat the rest as text
-                break;
+                search_pos += 1; // Safeguard
             }
         }
 
@@ -188,6 +218,7 @@ impl ActionParser {
 pub enum ContentPart {
     Text(String),
     Action(Action),
+    ToolResult(String, serde_json::Value),
 }
 
 #[cfg(test)]

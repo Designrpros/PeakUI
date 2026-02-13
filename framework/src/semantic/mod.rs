@@ -144,6 +144,9 @@ pub struct ChatCompletionMessage {
 }
 
 pub trait IntelligenceProvider: Send + Sync {
+    fn model(&self) -> &str;
+    fn provider(&self) -> peak_intelligence::llm::ModelProvider;
+
     fn chat(
         &self,
         messages: Vec<ChatCompletionMessage>,

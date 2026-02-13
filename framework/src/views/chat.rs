@@ -75,7 +75,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AI
                 top: 20.0,
                 bottom: 20.0,
                 left: 12.0,
-                right: 12.0,
+                right: 0.0,
             },
             Length::Fill,
             Length::Shrink, // Only as tall as content? No, vstack for content list usually shrinks.
@@ -272,7 +272,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Ch
                 0.0,
                 Padding {
                     top: 0.0,
-                    right: 12.0,
+                    right: 20.0,
                     bottom: 0.0,
                     left: 0.0,
                 },
@@ -302,6 +302,12 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Ch
                         assistant_children
                             .push(View::<Message, B>::view(&ToolCard::new(action), context));
                     }
+                    ContentPart::ToolResult(name, result) => {
+                        assistant_children.push(View::<Message, B>::view(
+                            &ToolResultView::new(name, result),
+                            context,
+                        ));
+                    }
                 }
             }
 
@@ -318,7 +324,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Ch
 
             B::container(
                 assistant_col,
-                Padding::from(12),
+                Padding::new(12.0).right(20.0).left(12.0),
                 Length::Fill,
                 Length::Shrink, // Container height
                 None,           // Transparent
@@ -362,6 +368,9 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for To
             Action::Teleport { .. } => "move",
             Action::Scale { .. } => "maximize",
             Action::Rotate { .. } => "rotate-cw",
+            Action::WebSearch(_) => "search",
+            Action::ReadFile(_) => "file-text",
+            Action::WriteFile { .. } => "save",
             Action::Unknown(_) => "help-circle",
         };
 
@@ -383,6 +392,9 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for To
                 "Rotate",
                 format!("{} to [{:.0}, {:.0}, {:.0}]", target, x, y, z),
             ),
+            Action::WebSearch(query) => ("Web Search", query.clone()),
+            Action::ReadFile(path) => ("Read File", path.clone()),
+            Action::WriteFile { path, .. } => ("Write File", path.clone()),
             Action::Unknown(raw) => ("Action", raw.clone()),
         };
 
@@ -452,6 +464,156 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for To
 
     fn describe(&self, _context: &Context) -> SemanticNode {
         SemanticNode::new("tool_card").with_label(format!("{:?}", self.action))
+    }
+}
+
+pub struct ToolResultView {
+    name: String,
+    result: serde_json::Value,
+}
+
+impl ToolResultView {
+    pub fn new(name: String, result: serde_json::Value) -> Self {
+        Self { name, result }
+    }
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ToolResultView {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let t = context.theme;
+
+        if self.name == "web_search" {
+            if let Some(items) = self.result.as_array() {
+                let mut card_list = Vec::new();
+                for item in items {
+                    card_list.push(View::<Message, B>::view(
+                        &WebResultCard::new(item.clone()),
+                        context,
+                    ));
+                }
+                return B::vstack(
+                    card_list,
+                    8.0,
+                    Padding::ZERO,
+                    Length::Fill,
+                    Length::Shrink,
+                    iced::Alignment::Start,
+                    iced::Alignment::Start,
+                    context,
+                );
+            }
+        }
+
+        // Default Tool Result View (Raw-ish but constrained)
+        let content = B::text(
+            format!("Tool '{}' Result: {}", self.name, self.result),
+            12.0,
+            Some(t.colors.text_secondary),
+            false,
+            true,
+            None,
+            None,
+            Length::Fill,
+            iced::Alignment::Start,
+            context,
+        );
+
+        B::container(
+            content,
+            Padding::from(12),
+            Length::Fill,
+            Length::Shrink,
+            Some(t.colors.surface.scale_alpha(0.1)),
+            8.0,
+            1.0,
+            Some(t.colors.border.scale_alpha(0.3)),
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        )
+    }
+}
+
+pub struct WebResultCard {
+    data: serde_json::Value,
+}
+
+impl WebResultCard {
+    pub fn new(data: serde_json::Value) -> Self {
+        Self { data }
+    }
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for WebResultCard {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let t = context.theme;
+        let title = self.data["title"].as_str().unwrap_or("Untitled");
+        let snippet = self.data["snippet"].as_str().unwrap_or("");
+        let link = self.data["link"].as_str().unwrap_or("");
+
+        let content = B::vstack(
+            vec![
+                B::text(
+                    title.to_string(),
+                    12.0,
+                    Some(t.colors.primary),
+                    true,
+                    false,
+                    None,
+                    None,
+                    Length::Fill,
+                    iced::Alignment::Start,
+                    context,
+                ),
+                B::text(
+                    format!("{}", link),
+                    10.0,
+                    Some(t.colors.text_secondary.scale_alpha(0.7)),
+                    false,
+                    true,
+                    None,
+                    None,
+                    Length::Fill,
+                    iced::Alignment::Start,
+                    context,
+                ),
+                B::text(
+                    snippet.to_string(),
+                    11.0,
+                    None,
+                    false,
+                    false,
+                    None,
+                    None,
+                    Length::Fill,
+                    iced::Alignment::Start,
+                    context,
+                ),
+            ],
+            4.0,
+            Padding::ZERO,
+            Length::Fill,
+            Length::Shrink,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        );
+
+        B::container(
+            content,
+            Padding::from(12),
+            Length::Fill,
+            Length::Shrink,
+            Some(t.colors.surface.scale_alpha(0.2)),
+            8.0,
+            1.0,
+            Some(t.colors.border.scale_alpha(0.4)),
+            None,
+            iced::Alignment::Start,
+            iced::Alignment::Start,
+            context,
+        )
     }
 }
 

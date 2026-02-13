@@ -10,7 +10,6 @@ pub mod mcp;
 pub mod steam;
 #[cfg(feature = "native")]
 pub mod terminal;
-#[cfg(feature = "native")]
 pub mod tools;
 #[cfg(feature = "native")]
 pub mod voice;

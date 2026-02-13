@@ -102,6 +102,7 @@ pub enum Message {
     TypewriterTick(wasmtimer::std::Instant),
     #[cfg(not(target_arch = "wasm32"))]
     TypewriterTick(std::time::Instant),
+    ProcessToolResult(String, serde_json::Value), // name, result
     Unknown(String),
     None,
 }

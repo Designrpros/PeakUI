@@ -88,6 +88,22 @@ impl HttpClient {
     ) -> Result<HttpResponse, HttpError> {
         wasm::post_json_with_headers(url, body, headers).await
     }
+
+    /// Perform a POST request and return a stream of text chunks
+    pub fn post_json_stream<T: Serialize + 'static>(
+        url: &str,
+        body: &T,
+        headers: std::collections::HashMap<String, String>,
+    ) -> impl futures::Stream<Item = Result<String, String>> {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            native::post_json_stream(url, body, headers)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            wasm::post_json_stream(url, body, headers)
+        }
+    }
 }
 
 impl Default for HttpClient {

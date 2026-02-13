@@ -1,6 +1,6 @@
 use crate::core::IntelligenceProvider;
 use iced::Task;
-use peak_os_intelligence::llm::{LlmClient, Message, ModelProvider};
+use peak_intelligence::llm::{LlmClient, Message, ModelProvider};
 use serde_json::Value;
 use std::sync::Arc;
 
@@ -24,6 +24,14 @@ impl PeakIntelligenceBridge {
 }
 
 impl IntelligenceProvider for PeakIntelligenceBridge {
+    fn model(&self) -> &str {
+        self.client.model()
+    }
+
+    fn provider(&self) -> ModelProvider {
+        self.client.provider()
+    }
+
     fn chat(
         &self,
         messages: Vec<crate::core::ChatCompletionMessage>,
@@ -41,11 +49,15 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                 let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
 
                 let system_instruction = format!(
-                    "You are the PeakOS Intelligence Bridge. You perceive the UI as a Dense JSON tree (r=role, c=content, ch=children, l=label, t=tag).\n\n\
-                     You can trigger UI actions by including valid JSON in your response using the EXACT format [action: {{...}})].\n\n\
+                    "You are the PeakOS Intelligence Bridge. You perceive the UI as a Dense JSON tree.\n\n\
+                     You can trigger UI actions and external tools by including valid JSON in your response using the format [action: {{...}})].\n\n\
                      REQUIRED ACTION SCHEMA:\n{}\n\n\
+                     CRITICAL TOOLS:\n\
+                     - Use 'WebSearch' for any information you don't know.\n\
+                     - Use 'WriteFile' to save documents or code.\n\
+                     - Use 'Navigate' to move between pages.\n\n\
                      CRITICAL: You MUST terminate actions with ')]'. \n\
-                     Example: To navigate to introduction, output: [action: {{\"Navigate\": \"Introduction\"}})]",
+                     Example: [action: {{\"WebSearch\": \"latest rust version\"}})]",
                     schema_json
                 );
 
@@ -235,14 +247,62 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
     }
 
     fn execute_tool(&self, name: String, args: Value) -> Task<std::result::Result<Value, String>> {
-        // For now, this is a stub. In a real scenario, this would route to PeakOS tool handlers.
+        let name_clone = name.clone();
+
         Task::perform(
             async move {
-                Ok(serde_json::json!({
-                    "status": "success",
-                    "tool": name,
-                    "args": args
-                }))
+                match name_clone.as_str() {
+                    #[cfg(not(target_arch = "wasm32"))]
+                    #[cfg(feature = "native")]
+                    "web_search" => {
+                        let query = args.get("query").and_then(|v| v.as_str()).unwrap_or("");
+                        peak_intelligence::tools::web_search_routed(query)
+                            .await
+                            .map_err(|e| e.to_string())
+                    }
+                    #[cfg(target_arch = "wasm32")]
+                    "web_search" => {
+                        let query = args
+                            .get("query")
+                            .and_then(|v| v.as_str())
+                            .unwrap_or("")
+                            .to_string();
+                        let (tx, rx) = futures::channel::oneshot::channel();
+
+                        wasm_bindgen_futures::spawn_local(async move {
+                            let res = peak_intelligence::tools::web_search_routed(&query).await;
+                            let _ = tx.send(res.map_err(|e| e.to_string()));
+                        });
+
+                        rx.await.map_err(|e| e.to_string())?
+                    }
+                    #[cfg(feature = "native")]
+                    "get_system_snapshot" => {
+                        peak_intelligence::tools::get_system_snapshot().map_err(|e| e.to_string())
+                    }
+                    #[cfg(feature = "native")]
+                    "read_file" => {
+                        let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("");
+                        peak_intelligence::tools::read_file(path).map_err(|e| e.to_string())
+                    }
+                    #[cfg(feature = "native")]
+                    "write_file" => {
+                        let path = args.get("path").and_then(|v| v.as_str()).unwrap_or("");
+                        let content = args.get("content").and_then(|v| v.as_str()).unwrap_or("");
+                        peak_intelligence::tools::write_file(path, content)
+                            .map_err(|e| e.to_string())
+                    }
+                    #[cfg(feature = "native")]
+                    "list_processes" => {
+                        peak_intelligence::tools::list_processes().map_err(|e| e.to_string())
+                    }
+                    _ => Ok(serde_json::json!({
+                        "status": "success",
+                        "tool": name_clone,
+                        "args": args,
+                        "message": "Tool stub executed (logic not yet linked or platform not supported)"
+                    })),
+                }
             },
             |res| res,
         )

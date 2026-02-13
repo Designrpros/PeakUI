@@ -31,12 +31,15 @@ tokio-stream = { version = "0.1", features = ["io-util"], optional = true }
 url = { version = "2.5", features = ["serde"] }
 urlencoding = "2.1"
 uuid = { version = "1.10", features = ["v4", "serde", "js"] }
+bytes = "1.6"
+async-stream = "0.3"
+async-trait = "0.1"
 
 # Git Dependency (Optional - causes issues on Alpine/musl)
 llama-server = { git = "https://github.com/hecrj/llama-server.git", rev = "e7e016577ce11ff419628f5eca23732949990894", optional = true }
 
 # Voice Integration (Optional)
-whisper-rs = { version = "0.13", optional = true }
+whisper-rs = { version = "0.14", optional = true }
 tts = { version = "0.26", optional = true }
 cpal = { version = "0.15", optional = true }
 
@@ -44,17 +47,19 @@ cpal = { version = "0.15", optional = true }
 reqwest = { version = "0.12", features = ["json", "rustls-tls", "socks", "gzip", "stream"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+reqwest = { version = "0.12", features = ["json", "stream"] }
+wasm-streams = "0.4"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 web-sys = { version = "0.3", features = [
-    "Headers", "Request", "RequestInit", "RequestMode", "Response", "Window"
+    "Headers", "Request", "RequestInit", "RequestMode", "Response", "Window", "ReadableStream", "ReadableStreamDefaultReader"
 ] }
-getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
-getrandom = { version = "0.3", features = ["wasm_js"] }
+getrandom = { version = "0.2", features = ["js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 
 [features]
-default = []
+default = ["native", "llm"]
 native = ["tokio", "sysinfo", "portable-pty", "walkdir", "directories", "tokio-stream"]
 llm = ["llama-server"]
 voice = ["whisper-rs", "tts", "cpal"]

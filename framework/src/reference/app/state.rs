@@ -381,9 +381,9 @@ impl Default for App {
     fn default() -> Self {
         let settings = Settings::load();
         let provider = match settings.ai_provider {
-            AIProviderChoice::Ollama => peak_os_intelligence::llm::ModelProvider::Ollama,
-            AIProviderChoice::LlamaCpp => peak_os_intelligence::llm::ModelProvider::LlamaCpp,
-            AIProviderChoice::OpenRouter => peak_os_intelligence::llm::ModelProvider::OpenRouter,
+            AIProviderChoice::Ollama => peak_intelligence::llm::ModelProvider::Ollama,
+            AIProviderChoice::LlamaCpp => peak_intelligence::llm::ModelProvider::LlamaCpp,
+            AIProviderChoice::OpenRouter => peak_intelligence::llm::ModelProvider::OpenRouter,
         };
 
         let db = Arc::new(crate::reference::data::db::PeakDBBridge::new());
@@ -411,7 +411,7 @@ impl Default for App {
             crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
                 provider,
                 match provider {
-                    peak_os_intelligence::llm::ModelProvider::Ollama => "llama3",
+                    peak_intelligence::llm::ModelProvider::Ollama => "llama3",
                     _ => "google/gemini-3-flash-preview",
                 },
                 if settings.api_key.is_empty() {

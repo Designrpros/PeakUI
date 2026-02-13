@@ -447,7 +447,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
 
                 main_row = main_row.push(IcedBackend::container(
                     inspector.view(context),
-                    iced::Padding::from(16),
+                    iced::Padding::ZERO,
                     Length::Fixed(inspector_width),
                     Length::Fill,
                     Some(if theme.colors.background.r < 0.1 {
