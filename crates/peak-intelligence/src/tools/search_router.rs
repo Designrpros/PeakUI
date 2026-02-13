@@ -188,3 +188,41 @@ impl SearchRouter {
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_search_router_new() {
+        let router = SearchRouter::new();
+        assert!(!router.providers.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_search_router_fallback() {
+        // Since we don't have API keys in the test env, it should fall back to DDG
+        // if native, or fail if wasm.
+        let router = SearchRouter::new();
+        let res = router.execute("rust programming").await;
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // On native, DDG scraper should work even without keys
+            assert!(res.is_ok());
+        }
+    }
+
+    #[test]
+    fn test_provider_names() {
+        let providers: Vec<Box<dyn SearchProvider>> = vec![
+            Box::new(BraveSearchProvider),
+            Box::new(TavilySearchProvider),
+            Box::new(DuckDuckGoScraper),
+        ];
+
+        assert_eq!(providers[0].name(), "Brave Search");
+        assert_eq!(providers[1].name(), "Tavily Search");
+        assert_eq!(providers[2].name(), "DuckDuckGo Scraper (Free)");
+    }
+}

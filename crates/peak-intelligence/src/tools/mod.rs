@@ -71,10 +71,48 @@ pub fn kill_process(_pid_str: &str) -> Result<Value> {
     Err(anyhow::anyhow!("Process management not supported on web"))
 }
 
+#[cfg(feature = "native")]
+fn resolve_path(path: &str) -> std::path::PathBuf {
+    use std::path::PathBuf;
+    let path_str = path.trim();
+
+    // 1. Handle Tilde ~
+    if path_str.starts_with('~') {
+        if let Some(user_dirs) = directories::UserDirs::new() {
+            let home = user_dirs.home_dir();
+            if path_str == "~" {
+                return home.to_path_buf();
+            }
+            if path_str.starts_with("~/") {
+                return home.join(&path_str[2..]);
+            }
+        }
+    }
+
+    // 2. Handle common OS X/Linux shortcuts if relative
+    if !path_str.starts_with('/') {
+        if let Some(user_dirs) = directories::UserDirs::new() {
+            let home = user_dirs.home_dir();
+
+            // Detect if it's likely a home-relative path
+            let lower = path_str.to_lowercase();
+            if lower.starts_with("desktop/")
+                || lower.starts_with("documents/")
+                || lower.starts_with("downloads/")
+            {
+                return home.join(path_str);
+            }
+        }
+    }
+
+    PathBuf::from(path_str)
+}
+
 pub fn read_file(path: &str) -> Result<Value> {
     #[cfg(feature = "native")]
     {
-        let content = fs::read_to_string(path)?;
+        let resolved = resolve_path(path);
+        let content = fs::read_to_string(resolved)?;
         Ok(json!(content))
     }
     #[cfg(not(feature = "native"))]
@@ -87,7 +125,14 @@ pub fn read_file(path: &str) -> Result<Value> {
 pub fn write_file(path: &str, content: &str) -> Result<Value> {
     #[cfg(feature = "native")]
     {
-        fs::write(path, content)?;
+        let resolved = resolve_path(path);
+
+        // Ensure parent directory exists
+        if let Some(parent) = resolved.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        fs::write(resolved, content)?;
         Ok(json!("Successfully wrote file"))
     }
     #[cfg(not(feature = "native"))]
@@ -100,8 +145,9 @@ pub fn write_file(path: &str, content: &str) -> Result<Value> {
 pub fn read_dir(path: &str) -> Result<Value> {
     #[cfg(feature = "native")]
     {
+        let resolved = resolve_path(path);
         let mut entries = Vec::new();
-        for entry in fs::read_dir(path)? {
+        for entry in fs::read_dir(resolved)? {
             let entry = entry?;
             let metadata = entry.metadata()?;
             entries.push(json!({
@@ -182,11 +228,12 @@ pub fn scan_wifi() -> Result<Value> {
 pub fn search_files(query: &str, base_path: &str) -> Result<Value> {
     #[cfg(feature = "native")]
     {
+        let resolved = resolve_path(base_path);
         let mut results = Vec::new();
         let max_results = 20;
         let query_lower = query.to_lowercase();
 
-        for entry in WalkDir::new(base_path)
+        for entry in WalkDir::new(resolved)
             .max_depth(3) // Stay shallow for performance
             .into_iter()
             .filter_map(|e| e.ok())
@@ -370,4 +417,88 @@ pub async fn web_search(query: &str) -> Result<Value> {
 pub async fn web_search_routed(query: &str) -> Result<Value> {
     let router = search_router::SearchRouter::new();
     router.execute(query).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn test_resolve_path_tilde() {
+        #[cfg(feature = "native")]
+        {
+            let resolved = resolve_path("~/test.txt");
+            if let Some(user_dirs) = directories::UserDirs::new() {
+                let expected = user_dirs.home_dir().join("test.txt");
+                assert_eq!(resolved, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_resolve_path_shortcuts() {
+        #[cfg(feature = "native")]
+        {
+            let resolved = resolve_path("Desktop/test.txt");
+            if let Some(user_dirs) = directories::UserDirs::new() {
+                let expected = user_dirs.home_dir().join("Desktop/test.txt");
+                assert_eq!(resolved, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_file_operations() -> Result<()> {
+        #[cfg(feature = "native")]
+        {
+            let test_path = "test_file_ops.txt";
+            let test_content = "Hello, PeakOS!";
+
+            // 1. Write
+            write_file(test_path, test_content)?;
+
+            // 2. Read
+            let read_content = read_file(test_path)?;
+            assert_eq!(read_content.as_str().unwrap(), test_content);
+
+            // 3. Clean up
+            fs::remove_file(test_path)?;
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_read_dir() -> Result<()> {
+        #[cfg(feature = "native")]
+        {
+            let res = read_dir(".")?;
+            assert!(res.is_array());
+            assert!(res.as_array().unwrap().len() > 0);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_system_snapshot() -> Result<()> {
+        #[cfg(feature = "native")]
+        {
+            let snapshot = get_system_snapshot()?;
+            assert!(snapshot["memory"]["total"].is_number());
+            assert!(snapshot["os_name"].is_string());
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_list_processes() -> Result<()> {
+        #[cfg(feature = "native")]
+        {
+            let processes = list_processes()?;
+            assert!(processes.is_array());
+            // There should be at least one process (the test runner itself)
+            assert!(processes.as_array().unwrap().len() > 0);
+        }
+        Ok(())
+    }
 }

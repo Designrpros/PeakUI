@@ -54,7 +54,7 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                      REQUIRED ACTION SCHEMA:\n{}\n\n\
                      CRITICAL TOOLS:\n\
                      - Use 'WebSearch' for any information you don't know.\n\
-                     - Use 'WriteFile' to save documents or code.\n\
+                     - Use 'WriteFile' to save documents or code. (Prefer absolute paths or shortcuts like '~/Desktop/').\n\
                      - Use 'Navigate' to move between pages.\n\n\
                      CRITICAL: You MUST terminate actions with ')]'. \n\
                      Example: [action: {{\"WebSearch\": \"latest rust version\"}})]",
