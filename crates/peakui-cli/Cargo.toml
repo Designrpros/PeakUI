@@ -21,3 +21,4 @@ tempfile = "3.10"
 indicatif = "0.17"
 tokio = { version = "1.38", features = ["full"] }
 colored = "2.1"
+convert_case = "0.6"
