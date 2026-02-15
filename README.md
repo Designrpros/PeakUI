@@ -51,6 +51,12 @@ PeakUI is the first framework designed for the Agentic Era.
 - **Spatial Engine**: A full 3D coordinate system with hierarchical depth, enabling agents to navigate interfaces via volumetric raycasting.
 - **Sovereign Interface**: Move beyond accessibility hacks; the UI communicates its exact "Intent" through a deterministic semantic protocol.
 - **Neural Exposure API**: An optional TCP-based API server (Port 8081) that allows external AI agents to "remote control" the application, retrieve UI schemas, and execute commands via raw network sockets.
+- **Modular Intelligence**: AI features are isolated behind the `intelligence` feature flag, allowing for ultra-lean "Light" builds by default while preserving the full Cortex experience when needed.
+
+### 3. Integrated AI Assistant
+The PeakUI AI Assistant (powered by the Cortex engine) is now available across all platforms:
+- **Native**: Supports local LLM acceleration and full system integration.
+- **Web (WASM)**: A high-performance, edge-ready AI interface that connects to remote intelligence models.
 
 ---
 
@@ -109,8 +115,9 @@ cargo peakui init my-project
 
 #### Run Your Application
 PeakUI's unified runner handles cross-platform development seamlessly:
-- **Native**: `cargo peakui run` (Defaults to native GPU-accelerated desktop)
-- **Web**: `cargo peakui run --web` (Launches WASM build via Trunk)
+- **Native**: `cargo peakui run` (Defaults to native GPU-accelerated desktop with all features)
+- **Web**: `cargo peakui run --web` (Launches WASM build; defaults to "Light" build)
+- **Intelligence**: `cargo peakui run --web --features intelligence` (Enables full AI Assistant on WASM)
 - **Multi-Platform**: `cargo peakui run --all` (Simultaneously starts Native and Web environments)
 
 ---
