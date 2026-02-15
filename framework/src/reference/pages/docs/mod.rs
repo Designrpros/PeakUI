@@ -1,4 +1,5 @@
 pub mod accessibility;
+#[cfg(feature = "intelligence")]
 pub mod api_schema;
 pub mod architecture;
 pub mod colors;

@@ -55,7 +55,8 @@ impl SidebarView {
 
     fn view_guide_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
-        self.base_sidebar(context)
+        let guide = self
+            .base_sidebar(context)
             .push(self.branding_section(context))
             .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("GETTING STARTED"))
@@ -76,13 +77,17 @@ impl SidebarView {
                 "folder-tree",
                 AppPage::ProjectStructure,
                 *active_tab == AppPage::ProjectStructure,
-            ))
-            .push(sidebar_item(
-                "Intelligence",
-                "brain-circuit",
-                AppPage::Intelligence,
-                *active_tab == AppPage::Intelligence,
-            ))
+            ));
+
+        #[cfg(feature = "intelligence")]
+        let guide = guide.push(sidebar_item(
+            "Intelligence",
+            "brain-circuit",
+            AppPage::Intelligence,
+            *active_tab == AppPage::Intelligence,
+        ));
+
+        guide
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("RESOURCES"))
             .push(
@@ -354,7 +359,8 @@ impl SidebarView {
 
     fn view_settings_sidebar(&self, context: &Context) -> VStack<Message, IcedBackend> {
         let active_tab = &self.active_tab;
-        self.base_sidebar(context)
+        let settings = self
+            .base_sidebar(context)
             .push(self.branding_section(context))
             .push(Space::<IcedBackend>::new(0.0.into(), 24.0.into()))
             .push(sidebar_section_header("USER PREFERENCES"))
@@ -375,13 +381,17 @@ impl SidebarView {
                 "command",
                 AppPage::Shortcuts,
                 *active_tab == AppPage::Shortcuts,
-            ))
-            .push(sidebar_item(
-                "AI Assistant",
-                "brain-circuit",
-                AppPage::SettingsAI,
-                *active_tab == AppPage::SettingsAI,
-            ))
+            ));
+
+        #[cfg(feature = "intelligence")]
+        let settings = settings.push(sidebar_item(
+            "AI Assistant",
+            "brain-circuit",
+            AppPage::SettingsAI,
+            *active_tab == AppPage::SettingsAI,
+        ));
+
+        settings
             .push(Space::<IcedBackend>::new(0.0.into(), 16.0.into()))
             .push(sidebar_section_header("SYSTEM"))
             .push(sidebar_item(

@@ -23,6 +23,7 @@ pub enum Page {
     Roadmap,
     #[serde(alias = "peaksuite", alias = "PeakSuite")]
     PeakSuite,
+    #[cfg(feature = "intelligence")]
     #[serde(alias = "intelligence", alias = "Intelligence")]
     Intelligence,
 
@@ -70,6 +71,7 @@ pub enum Page {
     PieChart,
 
     // API Schema
+    #[cfg(feature = "intelligence")]
     ApiSchema,
 
     // Showcase ("Components" mode)
@@ -98,6 +100,7 @@ pub enum Page {
     Shortcuts,
     About,
     Updates,
+    #[cfg(feature = "intelligence")]
     #[serde(alias = "settingsai", alias = "SettingsAI", alias = "settings_ai")]
     SettingsAI,
 
@@ -119,6 +122,7 @@ impl ToString for Page {
             Page::Introduction => "Introduction".to_string(),
             Page::Roadmap => "Roadmap".to_string(),
             Page::PeakSuite => "PeakSuite".to_string(),
+            #[cfg(feature = "intelligence")]
             Page::Intelligence => "Intelligence".to_string(),
             Page::Overview => "Overview".to_string(),
             Page::Architecture => "Architecture".to_string(),
@@ -157,6 +161,7 @@ impl ToString for Page {
             Page::LineChart => "Line Chart".to_string(),
             Page::PieChart => "Pie Chart".to_string(),
 
+            #[cfg(feature = "intelligence")]
             Page::ApiSchema => "API Schema".to_string(),
 
             Page::ShowcaseButtons => "Buttons".to_string(),
@@ -180,6 +185,7 @@ impl ToString for Page {
             Page::Shortcuts => "Shortcuts".to_string(),
             Page::About => "About".to_string(),
             Page::Updates => "Updates".to_string(),
+            #[cfg(feature = "intelligence")]
             Page::SettingsAI => "AI".to_string(),
 
             Page::PeakOSDetail => "PeakOS Detail".to_string(),
@@ -201,6 +207,7 @@ impl From<String> for Page {
             "introduction" | "intro" | "start" => Page::Introduction,
             "roadmap" => Page::Roadmap,
             "peaksuite" | "community" => Page::PeakSuite,
+            #[cfg(feature = "intelligence")]
             "intelligence" | "ai_overview" => Page::Intelligence,
             "overview" => Page::Overview,
             "architecture" => Page::Architecture,
@@ -241,6 +248,7 @@ impl From<String> for Page {
             "linechart" | "line-chart" => Page::LineChart,
             "piechart" | "pie-chart" => Page::PieChart,
 
+            #[cfg(feature = "intelligence")]
             "api schema" | "apischema" | "api-schema" => Page::ApiSchema,
 
             "buttons" | "showcasebuttons" => Page::ShowcaseButtons,
@@ -264,6 +272,7 @@ impl From<String> for Page {
             "shortcuts" => Page::Shortcuts,
             "about" => Page::About,
             "updates" => Page::Updates,
+            #[cfg(feature = "intelligence")]
             "ai" | "settingsai" | "settings_ai" => Page::SettingsAI,
 
             "peakosdetail" | "peakos detail" | "peakos-detail" => Page::PeakOSDetail,
@@ -294,6 +303,7 @@ impl Page {
             Page::Introduction => "/guide/introduction".to_string(),
             Page::Roadmap => "/guide/roadmap".to_string(),
             Page::PeakSuite => "/guide/peak-suite".to_string(),
+            #[cfg(feature = "intelligence")]
             Page::Intelligence => "/intelligence".to_string(),
 
             // Docs
@@ -339,6 +349,7 @@ impl Page {
             Page::LineChart => "/components/line-chart".to_string(),
             Page::PieChart => "/components/pie-chart".to_string(),
 
+            #[cfg(feature = "intelligence")]
             Page::ApiSchema => "/api-schema".to_string(),
 
             // Showcase
@@ -366,6 +377,7 @@ impl Page {
             Page::Shortcuts => "/settings/shortcuts".to_string(),
             Page::About => "/settings/about".to_string(),
             Page::Updates => "/settings/updates".to_string(),
+            #[cfg(feature = "intelligence")]
             Page::SettingsAI => "/settings/ai".to_string(),
 
             // Details
@@ -401,6 +413,7 @@ impl Page {
             "/guide/introduction" => Page::Introduction,
             "/guide/roadmap" => Page::Roadmap,
             "/guide/peak-suite" | "/guide/community" => Page::PeakSuite,
+            #[cfg(feature = "intelligence")]
             "/intelligence" => Page::Intelligence,
 
             "/docs/overview" => Page::Overview,
@@ -440,6 +453,7 @@ impl Page {
             "/components/line-chart" => Page::LineChart,
             "/components/pie-chart" => Page::PieChart,
 
+            #[cfg(feature = "intelligence")]
             "/api-schema" => Page::ApiSchema,
 
             "/showcase/buttons" => Page::ShowcaseButtons,
@@ -463,6 +477,7 @@ impl Page {
             "/settings/shortcuts" => Page::Shortcuts,
             "/settings/about" => Page::About,
             "/settings/updates" => Page::Updates,
+            #[cfg(feature = "intelligence")]
             "/settings/ai" => Page::SettingsAI,
 
             "/landing/peakos" => Page::PeakOSDetail,
@@ -497,13 +512,15 @@ impl Page {
             | Page::Colors
             | Page::Layout
             | Page::Accessibility
-            | Page::SideEffects
-            | Page::Intelligence
-            | Page::PeakOSDetail
+            | Page::SideEffects => "Start".to_string(),
+            #[cfg(feature = "intelligence")]
+            Page::Intelligence => "Start".to_string(),
+            Page::PeakOSDetail
             | Page::PeakUIDetail
             | Page::PeakDBDetail
             | Page::PeakRelayDetail
             | Page::PeakHubDetail => "Start".to_string(),
+            #[cfg(feature = "intelligence")]
             Page::SettingsAI => "Settings".to_string(),
 
             Page::Text
@@ -541,11 +558,11 @@ impl Page {
             | Page::UseMemo
             | Page::UseCallback => "Catalog".to_string(),
 
-            Page::ApiSchema
-            | Page::PeakDB
-            | Page::PeakCloud
-            | Page::PeakHub
-            | Page::PeakDesktop => "Data".to_string(),
+            #[cfg(feature = "intelligence")]
+            Page::ApiSchema => "Data".to_string(),
+            Page::PeakDB | Page::PeakCloud | Page::PeakHub | Page::PeakDesktop => {
+                "Data".to_string()
+            }
 
             Page::Appearance | Page::Scaling | Page::Shortcuts | Page::About | Page::Updates => {
                 "Settings".to_string()
@@ -562,6 +579,7 @@ impl Page {
             Page::PeakSuite,
             Page::Architecture,
             Page::ProjectStructure,
+            #[cfg(feature = "intelligence")]
             Page::Intelligence,
             Page::Typography,
             Page::Customizations,
@@ -599,6 +617,7 @@ impl Page {
             Page::PeakCloud,
             Page::PeakHub,
             Page::Appearance,
+            #[cfg(feature = "intelligence")]
             Page::SettingsAI,
             Page::About,
             Page::Updates,

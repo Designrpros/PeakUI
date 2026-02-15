@@ -25,7 +25,7 @@ iced = { version = "0.14", features = ["canvas", "advanced", "image", "svg", "to
 reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
 directories = "5.0"
 dirs = "5.0"
-peak-intelligence = { path = "../peak-intelligence", default-features = false }
+peak-intelligence = { path = "../peak-intelligence", default-features = false, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iced = { version = "0.14", default-features = false, features = ["canvas", "advanced", "image", "svg"] }
@@ -42,7 +42,8 @@ getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [features]
 default = []
-native = ["directories", "dirs", "sysinfo", "opener", "portable-pty", "tokio", "iced/tokio", "iced/wgpu"]
+native = ["directories", "dirs", "sysinfo", "opener", "portable-pty", "tokio", "iced/tokio", "iced/wgpu", "intelligence", "peak-intelligence/native"]
+intelligence = ["dep:peak-intelligence"]
 wasm = []
 directories = ["dep:directories"]
 tokio = ["dep:tokio"]

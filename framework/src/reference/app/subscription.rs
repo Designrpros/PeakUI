@@ -130,13 +130,23 @@ impl App {
                 receiver
             });
 
-            let exposure_sub = if self.enable_exposure {
-                Subscription::run(|| {
-                    let (sender, receiver) = crate::prelude::futures::channel::mpsc::channel(100);
-                    tokio::spawn(crate::reference::intelligence::exposure::run_server(sender));
-                    receiver
-                })
-            } else {
+            let exposure_sub = {
+                #[cfg(feature = "intelligence")]
+                {
+                    if self.enable_exposure {
+                        Subscription::run(|| {
+                            let (sender, receiver) =
+                                crate::prelude::futures::channel::mpsc::channel(100);
+                            tokio::spawn(crate::reference::intelligence::exposure::run_server(
+                                sender,
+                            ));
+                            receiver
+                        })
+                    } else {
+                        Subscription::none()
+                    }
+                }
+                #[cfg(not(feature = "intelligence"))]
                 Subscription::none()
             };
 

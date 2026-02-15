@@ -1,3 +1,4 @@
+#![cfg(feature = "intelligence")]
 use crate::core::IntelligenceProvider;
 use iced::Task;
 use peak_intelligence::llm::{LlmClient, Message, ModelProvider};

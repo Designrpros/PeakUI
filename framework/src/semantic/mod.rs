@@ -143,8 +143,10 @@ pub struct ChatCompletionMessage {
     pub content: String,
 }
 
+#[cfg(feature = "intelligence")]
 pub trait IntelligenceProvider: Send + Sync {
     fn model(&self) -> &str;
+    #[cfg(feature = "intelligence")]
     fn provider(&self) -> peak_intelligence::llm::ModelProvider;
 
     fn chat(

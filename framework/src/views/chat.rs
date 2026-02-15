@@ -1,8 +1,14 @@
-use crate::core::{Backend, Context, ScrollDirection, SemanticNode, View};
+#[cfg(feature = "intelligence")]
+use crate::core::ScrollDirection;
+use crate::core::{Backend, Context, SemanticNode, View};
+#[cfg(feature = "intelligence")]
 use crate::reference::intelligence::{Action, ActionParser, ContentPart};
 use crate::style::{Intent, Variant};
+#[cfg(feature = "intelligence")]
 use crate::views::MarkdownView;
 use iced::{Length, Padding};
+use std::marker::PhantomData;
+#[cfg(feature = "intelligence")]
 use std::sync::Arc;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -26,29 +32,47 @@ pub enum ChatViewMessage {
 }
 
 pub struct AIChatView<Message: Clone + Send + Sync + 'static> {
+    #[allow(dead_code)]
+    #[cfg(feature = "intelligence")]
     messages: Arc<Vec<ChatMessage>>,
+    #[allow(dead_code)]
+    #[cfg(feature = "intelligence")]
     input_value: String,
+    #[allow(dead_code)]
+    #[cfg(feature = "intelligence")]
     is_thinking: bool,
+    #[allow(dead_code)]
+    #[cfg(feature = "intelligence")]
     on_action: Arc<dyn Fn(ChatViewMessage) -> Message + Send + Sync>,
+    _phantom: PhantomData<Message>,
 }
 
 impl<Message: Clone + Send + Sync + 'static> AIChatView<Message> {
     pub fn new(
-        messages: Arc<Vec<ChatMessage>>,
-        input_value: String,
-        is_thinking: bool,
-        on_action: impl Fn(ChatViewMessage) -> Message + Send + Sync + 'static,
+        #[cfg(feature = "intelligence")] messages: Arc<Vec<ChatMessage>>,
+        #[cfg(feature = "intelligence")] input_value: String,
+        #[cfg(feature = "intelligence")] is_thinking: bool,
+        #[cfg(feature = "intelligence")] on_action: impl Fn(ChatViewMessage) -> Message
+            + Send
+            + Sync
+            + 'static,
     ) -> Self {
         Self {
+            #[cfg(feature = "intelligence")]
             messages,
+            #[cfg(feature = "intelligence")]
             input_value,
+            #[cfg(feature = "intelligence")]
             is_thinking,
+            #[cfg(feature = "intelligence")]
             on_action: Arc::new(on_action),
+            _phantom: PhantomData,
         }
     }
 }
 
 // Consolidate backend implementations into one generic implementation
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AIChatView<Message> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let on_action = &self.on_action;
@@ -218,12 +242,104 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AI
     }
 }
 
+#[cfg(not(feature = "intelligence"))]
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for AIChatView<Message> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let t = context.theme;
+
+        let content = B::vstack(
+            vec![
+                B::icon(
+                    "brain-circuit".to_string(),
+                    32.0,
+                    Some(t.colors.text_secondary.scale_alpha(0.5)),
+                    context,
+                ),
+                B::text(
+                    "AI Assistant Offline".to_string(),
+                    16.0,
+                    Some(t.colors.text_primary),
+                    true,
+                    false,
+                    None,
+                    None,
+                    Length::Shrink,
+                    iced::Alignment::Center,
+                    context,
+                ),
+                B::text(
+                    "Enable the 'intelligence' feature to unlock the full Cortex experience."
+                        .to_string(),
+                    12.0,
+                    Some(t.colors.text_secondary),
+                    false,
+                    true,
+                    None,
+                    None,
+                    Length::Shrink,
+                    iced::Alignment::Center,
+                    context,
+                ),
+                B::button(
+                    B::text(
+                        "View Documentation".to_string(),
+                        12.0,
+                        None,
+                        false,
+                        false,
+                        None,
+                        None,
+                        Length::Shrink,
+                        iced::Alignment::Center,
+                        context,
+                    ),
+                    None,
+                    Variant::Soft,
+                    Intent::Primary,
+                    Length::Shrink,
+                    Length::Shrink,
+                    false,
+                    context,
+                ),
+            ],
+            16.0,
+            Padding::from(32),
+            Length::Fill,
+            Length::Fill,
+            iced::Alignment::Center,
+            iced::Alignment::Center,
+            context,
+        );
+
+        B::container(
+            content,
+            Padding::ZERO,
+            Length::Fill,
+            Length::Fill,
+            Some(t.colors.surface.scale_alpha(0.3)),
+            0.0,
+            0.0,
+            None,
+            None,
+            iced::Alignment::Center,
+            iced::Alignment::Center,
+            context,
+        )
+    }
+
+    fn describe(&self, _context: &Context) -> SemanticNode {
+        SemanticNode::new("ai_chat_offline").with_label("AI Assistant (Offline)")
+    }
+}
+
 // ChatBubble View
+#[cfg(feature = "intelligence")]
 struct ChatBubble<Message> {
     message: ChatMessage,
     on_action: Arc<dyn Fn(ChatViewMessage) -> Message + Send + Sync>,
 }
 
+#[cfg(feature = "intelligence")]
 impl<Message> ChatBubble<Message> {
     pub fn new(
         message: ChatMessage,
@@ -233,6 +349,7 @@ impl<Message> ChatBubble<Message> {
     }
 }
 
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ChatBubble<Message> {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
@@ -344,16 +461,19 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Ch
     }
 }
 
+#[cfg(feature = "intelligence")]
 pub struct ToolCard {
     action: Action,
 }
 
+#[cfg(feature = "intelligence")]
 impl ToolCard {
     pub fn new(action: Action) -> Self {
         Self { action }
     }
 }
 
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ToolCard {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
@@ -467,17 +587,20 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for To
     }
 }
 
+#[cfg(feature = "intelligence")]
 pub struct ToolResultView {
     name: String,
     result: serde_json::Value,
 }
 
+#[cfg(feature = "intelligence")]
 impl ToolResultView {
     pub fn new(name: String, result: serde_json::Value) -> Self {
         Self { name, result }
     }
 }
 
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ToolResultView {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
@@ -535,16 +658,19 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for To
     }
 }
 
+#[cfg(feature = "intelligence")]
 pub struct WebResultCard {
     data: serde_json::Value,
 }
 
+#[cfg(feature = "intelligence")]
 impl WebResultCard {
     pub fn new(data: serde_json::Value) -> Self {
         Self { data }
     }
 }
 
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for WebResultCard {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let t = context.theme;
@@ -618,8 +744,10 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for We
 }
 
 // ThinkingBubble View
+#[cfg(feature = "intelligence")]
 struct ThinkingBubble {}
 
+#[cfg(feature = "intelligence")]
 impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for ThinkingBubble {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         let content = B::hstack(

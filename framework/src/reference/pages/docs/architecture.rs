@@ -32,8 +32,8 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
                             .color(t.colors.text_secondary),
                     ),
             )
-            .push(
-                HStack::new_generic()
+            .push({
+                let row = HStack::new_generic()
                     .spacing(20.0)
                     .align_y(iced::Alignment::Center)
                     .push(
@@ -42,15 +42,19 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
                             .on_press(Message::SetTab(crate::reference::AppPage::Introduction)) // Placeholder or specific link if exists
                             .size(ControlSize::Large)
                             .width(Length::Fill),
-                    )
-                    .push(
-                        Button::label("Intelligence Guide")
-                            .variant(Variant::Soft)
-                            .on_press(Message::SetTab(crate::reference::AppPage::Intelligence))
-                            .size(ControlSize::Large)
-                            .width(Length::Fill),
-                    ),
-            );
+                    );
+
+                #[cfg(feature = "intelligence")]
+                let row = row.push(
+                    Button::label("Intelligence Guide")
+                        .variant(Variant::Soft)
+                        .on_press(Message::SetTab(crate::reference::AppPage::Intelligence))
+                        .size(ControlSize::Large)
+                        .width(Length::Fill),
+                );
+
+                row
+            });
 
         // --- Helper: Content Section ---
         let doc_section =

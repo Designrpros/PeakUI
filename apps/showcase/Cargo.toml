@@ -37,13 +37,15 @@ tray-icon = "0.19"
 raw-window-handle = "0.6"
 
 [features]
-default = []
+default = ["native", "intelligence"]
+intelligence = ["peak-ui/intelligence"]
 native = [
     "peak-ui/native",
     "iced/wgpu",
 ]
 wasm = [
     "peak-ui/wasm",
+    "peak-ui/intelligence",
     "iced/canvas",
     "iced/wgpu",
 ]

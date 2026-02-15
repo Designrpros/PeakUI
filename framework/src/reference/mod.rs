@@ -2,6 +2,7 @@ pub mod app;
 pub use app::message::Message;
 pub use app::state::App;
 pub mod data;
+#[cfg(feature = "intelligence")]
 pub mod intelligence;
 pub mod models;
 pub mod pages;

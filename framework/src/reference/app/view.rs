@@ -33,7 +33,10 @@ impl App {
             let query = self.search_query.clone();
             let typewriter_text = self.typewriter_text.clone();
             let active_tab = self.active_tab.clone();
+            #[cfg(feature = "neural")]
             let db_records = self.db.get_all();
+            #[cfg(not(feature = "neural"))]
+            let db_records = Vec::new();
 
             let content: Element<'_, Message> = match &active_tab {
                 AppPage::PeakOSDetail => {

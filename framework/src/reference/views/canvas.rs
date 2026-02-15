@@ -34,6 +34,7 @@ impl CanvasView {
             ReferenceAppPage::SideEffects => pages::docs::side_effects::view(context, is_mobile),
 
             ReferenceAppPage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
+            #[cfg(feature = "intelligence")]
             ReferenceAppPage::Intelligence => {
                 pages::guide::intelligence::view(context, is_mobile, self.state.api_key.clone())
             }
@@ -42,6 +43,7 @@ impl CanvasView {
             ReferenceAppPage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
 
             // Legacy
+            #[cfg(feature = "intelligence")]
             ReferenceAppPage::ApiSchema => pages::docs::api_schema::view(context, is_mobile),
             ReferenceAppPage::PeakSuite => pages::guide::peak_suite::view(context, is_mobile),
             ReferenceAppPage::PeakDB => pages::core::peak_db::view(context, is_mobile),
@@ -187,6 +189,7 @@ impl CanvasView {
             ReferenceAppPage::About | ReferenceAppPage::Updates => {
                 pages::settings::about::view(context, is_mobile)
             }
+            #[cfg(feature = "intelligence")]
             ReferenceAppPage::SettingsAI => {
                 let state_json = serde_json::to_string_pretty(&self.state).ok();
                 pages::settings::ai::view(

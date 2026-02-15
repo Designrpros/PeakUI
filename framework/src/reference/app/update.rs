@@ -1,9 +1,13 @@
-use crate::core::Context;
 use crate::prelude::*;
+use crate::views::{ChatMessage, ChatRole};
+use crate::views::chat::ChatViewMessage;
+#[cfg(feature = "intelligence")]
 use crate::reference::intelligence::Action;
-use crate::views::chat::{ChatMessage, ChatRole, ChatViewMessage};
+#[cfg(feature = "intelligence")]
 use peak_theme::{PeakTheme, ThemeTokens, ThemeTone};
 use std::sync::Arc;
+#[cfg(feature = "intelligence")]
+use crate::core::Context;
 
 use super::message::Message;
 use super::state::*;
@@ -109,11 +113,15 @@ impl App {
                 self.show_sidebar = true;
 
                 if !self.search_query.trim().is_empty() {
+                    #[allow(unused_variables)]
                     let query = self.search_query.clone();
                     self.search_query.clear();
                     self.show_inspector = true;
                     self.inspector_tab = InspectorTab::App;
+                    #[cfg(feature = "intelligence")]
                     return self.start_ai_chat(query);
+                    #[cfg(not(feature = "intelligence"))]
+                    let _ = query;
                 }
 
                 Task::none()
@@ -473,6 +481,7 @@ impl App {
                 self.inspector_tab = tab;
                 Task::none()
             }
+            #[cfg(feature = "intelligence")]
             Message::SetApiKey(key) => {
                 self.api_key = key.clone();
                 let settings = Settings {
@@ -499,12 +508,16 @@ impl App {
                             _ => "google/gemini-3-flash-preview",
                         },
                         if key.is_empty() { None } else { Some(key) },
+                        #[cfg(feature = "neural")]
                         self.db.clone(),
+                        #[cfg(not(feature = "neural"))]
+                        Arc::new(crate::reference::data::stub_db::StubDB::new()),
                     ),
                 );
 
                 Task::none()
             }
+            #[cfg(feature = "intelligence")]
             Message::SetAIProvider(provider) => {
                 self.ai_provider = provider;
                 let settings = Settings {
@@ -535,7 +548,10 @@ impl App {
                         } else {
                             Some(self.api_key.clone())
                         },
+                        #[cfg(feature = "neural")]
                         self.db.clone(),
+                        #[cfg(not(feature = "neural"))]
+                        Arc::new(crate::reference::data::stub_db::StubDB::new()),
                     ),
                 );
 
@@ -642,6 +658,18 @@ impl App {
                 Task::none()
             }
 
+            #[cfg(not(feature = "intelligence"))]
+            Message::Chat(msg) => {
+                match msg {
+                    ChatViewMessage::InputChanged(val) => {
+                        self.chat_input = val;
+                    }
+                    _ => {}
+                }
+                Task::none()
+            }
+
+            #[cfg(feature = "intelligence")]
             Message::Chat(msg) => match msg {
                 ChatViewMessage::InputChanged(val) => {
                     self.chat_input = val;
@@ -659,6 +687,7 @@ impl App {
                     Task::none()
                 }
             },
+            #[cfg(feature = "intelligence")]
             Message::ChatStreamUpdate(result) => match result {
                 Ok(text) => {
                     let messages = Arc::make_mut(&mut self.chat_messages);
@@ -692,6 +721,7 @@ impl App {
                     Task::none()
                 }
             },
+            #[cfg(feature = "intelligence")]
             Message::AIChatComplete => {
                 self.is_thinking = false;
                 if let Some(last) = self.chat_messages.last() {
@@ -702,6 +732,7 @@ impl App {
                 }
                 Task::none()
             }
+            #[cfg(feature = "intelligence")]
             Message::AIResponse(res) => {
                 self.is_thinking = false;
                 match res {
@@ -742,6 +773,7 @@ impl App {
                 self.icon_limit += 100;
                 Task::none()
             }
+            #[cfg(feature = "intelligence")]
             Message::ProcessToolResult(tool_name, result) => {
                 self.is_thinking = false;
                 Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
@@ -756,6 +788,7 @@ impl App {
         task
     }
 
+    #[cfg(feature = "intelligence")]
     pub fn start_ai_chat(&mut self, content: String) -> Task<Message> {
         Arc::make_mut(&mut self.chat_messages).push(ChatMessage {
             role: ChatRole::User,
@@ -765,6 +798,7 @@ impl App {
         self.ai_chat_completion()
     }
 
+    #[cfg(feature = "intelligence")]
     pub fn ai_chat_completion(&mut self) -> Task<Message> {
         // TOKEN OPTIMIZATION & SAFETY SWITCH
         const MAX_CONTEXT_CHARS: usize = 16_000;
@@ -829,6 +863,7 @@ impl App {
         Task::stream(mapped_stream)
     }
 
+    #[cfg(feature = "intelligence")]
     pub fn process_assistant_actions(&mut self, text: &str) -> Task<Message> {
         let mut tasks = Vec::new();
         let actions = crate::reference::intelligence::ActionParser::parse_text(text);
@@ -906,6 +941,7 @@ impl App {
                 Action::Shell(_) => {
                     // Handled by Neural Sudo Interception above
                 }
+                #[cfg(feature = "neural")]
                 Action::Memorize(content) => {
                     log::info!("AI MEMORIZING: {}", content);
                     let db = self.db.clone();
@@ -922,6 +958,10 @@ impl App {
                         timestamp,
                     };
                     tasks.push(db.save(record).map(|_| Message::None));
+                }
+                #[cfg(not(feature = "neural"))]
+                Action::Memorize(_) => {
+                    log::warn!("Memorize action received but neural feature is disabled");
                 }
                 Action::Unknown(name) => {
                     log::warn!("Unknown AI Action: {}", name);
@@ -997,6 +1037,7 @@ impl App {
         }
     }
 
+    #[cfg(feature = "intelligence")]
     fn get_system_prompt(&self) -> String {
         let mut ctx = Context::new(
             crate::core::ShellMode::Desktop,
@@ -1024,20 +1065,24 @@ impl App {
     }
 
     pub fn export_neural_view(&self) {
+        #[cfg(feature = "neural")]
         if !self.enable_exposure {
             return;
         }
 
-        let mut ctx = Context::new(
-            crate::core::ShellMode::Desktop,
-            ThemeTokens::new(PeakTheme::Peak, ThemeTone::Light),
-            Size::new(1280.0, 800.0),
-            self.localization.clone(),
-        );
-        ctx.tick = self.tick;
-        let view = crate::reference::views::ContentView::new(self);
-        let tree = view.describe(&ctx);
-        let ui_json = serde_json::to_string(&tree).unwrap_or_default();
-        let _ = std::fs::write(".peak/current_view.json", ui_json);
+        #[cfg(feature = "neural")]
+        {
+            let mut ctx = Context::new(
+                crate::core::ShellMode::Desktop,
+                ThemeTokens::new(peak_theme::PeakTheme::Peak, peak_theme::ThemeTone::Light),
+                Size::new(1280.0, 800.0),
+                self.localization.clone(),
+            );
+            ctx.tick = self.tick;
+            let view = crate::reference::views::ContentView::new(self);
+            let tree = view.describe(&ctx);
+            let ui_json = serde_json::to_string(&tree).unwrap_or_default();
+            let _ = std::fs::write(".peak/current_view.json", ui_json);
+        }
     }
 }

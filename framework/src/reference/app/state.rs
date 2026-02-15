@@ -1,10 +1,9 @@
 use super::message::Message;
-use crate::core::DataProvider;
 use crate::engine::modifiers::ControlSize;
 use crate::prelude::*;
 use crate::reference::AppPage;
 use crate::style::{Intent, Variant};
-use crate::views::chat::{ChatMessage, ChatRole};
+use crate::views::{ChatMessage, ChatRole};
 use peak_core::registry::ShellMode;
 use peak_theme::{PeakTheme, ThemeTokens, ThemeTone};
 use std::sync::Arc;
@@ -165,7 +164,9 @@ pub struct App {
     pub localization: Localization,
     pub pending_sudo_action: Option<SudoAction>,
     pub is_thinking: bool,
+    #[cfg(feature = "intelligence")]
     pub intelligence: Arc<crate::reference::intelligence::bridge::PeakIntelligenceBridge>,
+    #[cfg(feature = "neural")]
     pub db: Arc<crate::reference::data::db::PeakDBBridge>,
     pub peak_id: String,
 
@@ -380,33 +381,39 @@ impl Default for ButtonLabState {
 impl Default for App {
     fn default() -> Self {
         let settings = Settings::load();
+        #[cfg(feature = "intelligence")]
         let provider = match settings.ai_provider {
             AIProviderChoice::Ollama => peak_intelligence::llm::ModelProvider::Ollama,
             AIProviderChoice::LlamaCpp => peak_intelligence::llm::ModelProvider::LlamaCpp,
             AIProviderChoice::OpenRouter => peak_intelligence::llm::ModelProvider::OpenRouter,
         };
 
+        #[cfg(feature = "neural")]
         let db = Arc::new(crate::reference::data::db::PeakDBBridge::new());
 
-        // Seed some initial data for RAG testing
-        let seed_records = vec![
-            ("System", "PeakOS is a decentralized, agent-native operating system designed for the next era of computing."),
-            ("Architecture", "PeakUI uses a multi-kernel bridge architecture, allowing AI agents to perceive and interact with UI elements semantically."),
-            ("Security", "Neural Sudo is a high-security interception layer that ensures no AI action of high privilege is executed without explicit user consent."),
-        ];
+        #[cfg(feature = "neural")]
+        {
+            // Seed some initial data for RAG testing
+            let seed_records = vec![
+                ("System", "PeakOS is a decentralized, agent-native operating system designed for the next era of computing."),
+                ("Architecture", "PeakUI uses a multi-kernel bridge architecture, allowing AI agents to perceive and interact with UI elements semantically."),
+                ("Security", "Neural Sudo is a high-security interception layer that ensures no AI action of high privilege is executed without explicit user consent."),
+            ];
 
-        for (i, (collection, content)) in seed_records.into_iter().enumerate() {
-            let record = crate::core::SemanticRecord {
-                id: format!("seed-{}", i),
-                collection: collection.to_string(),
-                content: content.to_string(),
-                vector: None,
-                metadata: serde_json::json!({}),
-                timestamp: 0,
-            };
-            let _ = db.save(record);
+            for (i, (collection, content)) in seed_records.into_iter().enumerate() {
+                let record = crate::core::SemanticRecord {
+                    id: format!("seed-{}", i),
+                    collection: collection.to_string(),
+                    content: content.to_string(),
+                    vector: None,
+                    metadata: serde_json::json!({}),
+                    timestamp: 0,
+                };
+                let _ = db.save(record);
+            }
         }
 
+        #[cfg(feature = "intelligence")]
         let intelligence = Arc::new(
             crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
                 provider,
@@ -419,7 +426,10 @@ impl Default for App {
                 } else {
                     Some(settings.api_key.clone())
                 },
+                #[cfg(feature = "neural")]
                 db.clone(),
+                #[cfg(not(feature = "neural"))]
+                Arc::new(crate::reference::data::stub_db::StubDB::new()),
             ),
         );
 
@@ -495,7 +505,9 @@ impl Default for App {
             localization: Localization::default(),
             pending_sudo_action: None,
             is_thinking: false,
+            #[cfg(feature = "intelligence")]
             intelligence,
+            #[cfg(feature = "neural")]
             db,
             typewriter_text: String::new(),
             typewriter_index: 0,

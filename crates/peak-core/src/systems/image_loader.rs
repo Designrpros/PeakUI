@@ -67,32 +67,28 @@ impl ImageLoader {
         }
 
         println!("⬇️ Downloading cover: {}", url);
-        #[cfg(not(target_arch = "wasm32"))]
-        let response_result = peak_intelligence::http::HttpClient::get(&url).await;
-        #[cfg(target_arch = "wasm32")]
         let response_result = reqwest::get(&url).await;
 
         if let Ok(response) = response_result {
-            #[cfg(not(target_arch = "wasm32"))]
-            let bytes_vec = response.bytes().to_vec();
-            #[cfg(target_arch = "wasm32")]
-            let bytes_vec = response.bytes().await.ok()?.to_vec();
+            if let Ok(bytes) = response.bytes().await {
+                let bytes_vec = bytes.to_vec();
 
-            #[cfg(not(target_arch = "wasm32"))]
-            {
-                // Save to Disk
-                if let Ok(mut file) = std::fs::File::create(&_path) {
-                    use std::io::Write;
-                    let _ = file.write_all(&bytes_vec);
+                #[cfg(not(target_arch = "wasm32"))]
+                {
+                    // Save to Disk
+                    if let Ok(mut file) = std::fs::File::create(&_path) {
+                        use std::io::Write;
+                        let _ = file.write_all(&bytes_vec);
+                    }
                 }
-            }
 
-            // Return Handle
-            let handle = image::Handle::from_bytes(bytes_vec); // Corrected from from_memory
-            if let Ok(mut cache) = MEMORY_CACHE.lock() {
-                cache.insert(url, handle.clone());
+                // Return Handle
+                let handle = image::Handle::from_bytes(bytes_vec);
+                if let Ok(mut cache) = MEMORY_CACHE.lock() {
+                    cache.insert(url, handle.clone());
+                }
+                return Some(handle);
             }
-            return Some(handle);
         }
 
         None

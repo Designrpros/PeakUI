@@ -216,80 +216,88 @@ impl ContentView {
             .on_none(Message::None);
 
         if self.state.show_inspector {
-            // Determine available inspectors
-            let ai_inspector = crate::views::chat::AIChatView::new(
+            let ai_inspector = crate::views::chat::AIChatView::<Message>::new(
+                #[cfg(feature = "intelligence")]
                 self.state.chat_messages.clone(),
+                #[cfg(feature = "intelligence")]
                 self.state.chat_input.clone(),
+                #[cfg(feature = "intelligence")]
                 self.state.is_thinking,
+                #[cfg(feature = "intelligence")]
                 Message::Chat,
             );
 
-            // Logic:
-            // 1. If only page inspector -> show page inspector
-            // 2. If only AI inspector -> show AI inspector (default if no page inspector)
-            // 3. If both -> show Tab Bar + Selected Content
-
-            let inspector_content: Box<dyn View<Message, IcedBackend>> = if let Some(p_inspector) =
-                page.inspector.take()
-            // Take ownership since page is mutable
-            {
-                // Both available - Show Tabs
-                let tab_bar = HStack::new()
-                    .width(Length::Fill)
-                    .padding(16.0)
-                    .spacing(8.0)
-                    .push(
-                        Button::label("Feature")
-                            .variant(
-                                if self.state.inspector_tab
-                                    == super::super::app::InspectorTab::Feature
-                                {
-                                    Variant::Soft
-                                } else {
-                                    Variant::Ghost
-                                },
+            let inspector_content: Option<Box<dyn View<Message, IcedBackend>>> =
+                if let Some(p_inspector) = page.inspector.take() {
+                    #[cfg(feature = "intelligence")]
+                    {
+                        // Both available - Show Tabs
+                        let tab_bar = HStack::new()
+                            .width(Length::Fill)
+                            .padding(16.0)
+                            .spacing(8.0)
+                            .push(
+                                Button::label("Feature")
+                                    .variant(
+                                        if self.state.inspector_tab
+                                            == super::super::app::InspectorTab::Feature
+                                        {
+                                            Variant::Soft
+                                        } else {
+                                            Variant::Ghost
+                                        },
+                                    )
+                                    .width(Length::Shrink)
+                                    .on_press(Message::SetInspectorTab(
+                                        super::super::app::InspectorTab::Feature,
+                                    )),
                             )
-                            .width(Length::Shrink)
-                            .on_press(Message::SetInspectorTab(
-                                super::super::app::InspectorTab::Feature,
-                            )),
-                    )
-                    .push(
-                        Button::label("Assistant")
-                            .variant(
-                                if self.state.inspector_tab == super::super::app::InspectorTab::App
-                                {
-                                    Variant::Soft
-                                } else {
-                                    Variant::Ghost
-                                },
-                            )
-                            .width(Length::Shrink)
-                            .on_press(Message::SetInspectorTab(
-                                super::super::app::InspectorTab::App,
-                            )),
-                    );
+                            .push(
+                                Button::label("Assistant")
+                                    .variant(
+                                        if self.state.inspector_tab
+                                            == super::super::app::InspectorTab::App
+                                        {
+                                            Variant::Soft
+                                        } else {
+                                            Variant::Ghost
+                                        },
+                                    )
+                                    .width(Length::Shrink)
+                                    .on_press(Message::SetInspectorTab(
+                                        super::super::app::InspectorTab::App,
+                                    )),
+                            );
 
-                let content: Box<dyn View<Message, IcedBackend>> = match self.state.inspector_tab {
-                    super::super::app::InspectorTab::Feature => Box::new(p_inspector),
-                    super::super::app::InspectorTab::App => Box::new(ai_inspector),
+                        let content: Box<dyn View<Message, IcedBackend>> =
+                            match self.state.inspector_tab {
+                                super::super::app::InspectorTab::Feature => Box::new(p_inspector),
+                                super::super::app::InspectorTab::App => Box::new(ai_inspector),
+                            };
+
+                        Some(Box::new(
+                            VStack::new()
+                                .width(Length::Fill)
+                                .height(Length::Fill)
+                                .push(tab_bar)
+                                .push(content),
+                        ))
+                    }
+                    #[cfg(not(feature = "intelligence"))]
+                    {
+                        // Only Feature available
+                        Some(Box::new(p_inspector))
+                    }
+                } else {
+                    // No page inspector - try AI
+                    Some(Box::new(ai_inspector))
                 };
 
-                Box::new(
-                    VStack::new()
-                        .width(Length::Fill)
-                        .height(Length::Fill)
-                        .push(tab_bar)
-                        .push(content),
-                )
-            } else {
-                // Only AI
-                Box::new(ai_inspector)
-            };
-
-            split_view = split_view
-                .inspector(inspector_content)
-                .on_dismiss_inspector(Message::ToggleInspector);
+            if let Some(content) = inspector_content {
+                split_view = split_view
+                    .inspector(content)
+                    .on_dismiss_inspector(Message::ToggleInspector);
+            }
         }
 
         // --- 4. Final Assembly ---

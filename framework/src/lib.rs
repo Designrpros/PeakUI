@@ -5,35 +5,13 @@ pub mod layout;
 pub mod shell;
 
 pub mod backend;
+#[macro_use]
+pub mod macros;
 pub mod core;
 pub mod reference;
 pub mod semantic;
 pub mod style;
 pub mod views;
-
-#[macro_export]
-macro_rules! vstack {
-    ($($child:expr),* $(,)?) => {
-        $crate::layout::VStack::new()
-            $(.push($child))*
-    };
-}
-
-#[macro_export]
-macro_rules! hstack {
-    ($($child:expr),* $(,)?) => {
-        $crate::layout::HStack::new()
-            $(.push($child))*
-    };
-}
-
-#[macro_export]
-macro_rules! zstack {
-    ($($child:expr),* $(,)?) => {
-        $crate::layout::ZStack::new()
-            $(.push($child))*
-    };
-}
 
 #[macro_export]
 macro_rules! data_table {
@@ -71,9 +49,9 @@ pub mod prelude {
     pub use crate::layout::nav_split_view::NavigationSplitView;
     pub use crate::layout::scroll_view::ScrollView;
     pub use crate::layout::{HStack, LayoutExt, ResponsiveGrid, VStack, ZStack};
-    pub use crate::semantic::{
-        ChatCompletionMessage, DataProvider, IntelligenceProvider, SemanticNode, SemanticRecord,
-    };
+    #[cfg(feature = "intelligence")]
+    pub use crate::semantic::IntelligenceProvider;
+    pub use crate::semantic::{ChatCompletionMessage, DataProvider, SemanticNode, SemanticRecord};
     pub use crate::shell::toolbar::{ToolbarGroup, ToolbarItem};
     pub use crate::style::{Context, DeviceType, Intent, ScrollDirection, Variant};
     pub use crate::views::chart::{Chart, ChartDataPoint, ChartType};

@@ -28,8 +28,11 @@ pub enum Message {
 
     // Chat
     Chat(ChatViewMessage),
+    #[cfg(feature = "intelligence")]
     AIResponse(std::result::Result<String, String>),
+    #[cfg(feature = "intelligence")]
     ChatStreamUpdate(std::result::Result<String, String>),
+    #[cfg(feature = "intelligence")]
     AIChatComplete,
 
     // Icon Lab
@@ -46,7 +49,9 @@ pub enum Message {
     UpdateSpacerHeight(f32),
 
     SetInspectorTab(InspectorTab),
+    #[cfg(feature = "intelligence")]
     SetApiKey(String),
+    #[cfg(feature = "intelligence")]
     SetAIProvider(AIProviderChoice),
     SetExposure(bool),
 
@@ -102,6 +107,7 @@ pub enum Message {
     TypewriterTick(wasmtimer::std::Instant),
     #[cfg(not(target_arch = "wasm32"))]
     TypewriterTick(std::time::Instant),
+    #[cfg(feature = "intelligence")]
     ProcessToolResult(String, serde_json::Value), // name, result
     Unknown(String),
     None,
@@ -122,7 +128,9 @@ pub enum Command {
     SetThemeKind(peak_theme::PeakTheme),
     SetRenderMode(RenderMode),
     SetInspectorTab(InspectorTab),
+    #[cfg(feature = "intelligence")]
     SetApiKey(String),
+    #[cfg(feature = "intelligence")]
     SetAIProvider(AIProviderChoice),
     SetExposure(bool),
 
@@ -209,7 +217,9 @@ impl Command {
             Command::UpdateSizingFixedHeight(h) => Message::UpdateSizingFixedHeight(h),
 
             Command::SetInspectorTab(tab) => Message::SetInspectorTab(tab),
+            #[cfg(feature = "intelligence")]
             Command::SetApiKey(key) => Message::SetApiKey(key),
+            #[cfg(feature = "intelligence")]
             Command::SetAIProvider(provider) => Message::SetAIProvider(provider),
             Command::SetExposure(enable) => Message::SetExposure(enable),
 

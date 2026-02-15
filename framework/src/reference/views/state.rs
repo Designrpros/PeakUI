@@ -4,7 +4,7 @@ use super::super::app::{
     TypographyLabState,
 };
 use crate::reference::AppPage;
-use crate::views::chat::ChatMessage;
+use crate::views::ChatMessage;
 use std::sync::Arc;
 
 /// ViewState is the single source of truth for all UI state in the PeakUI reference implementation.
@@ -84,7 +84,10 @@ impl ViewState {
             ai_provider: app.ai_provider,
             icon_limit: app.icon_limit,
             pending_sudo_action: app.pending_sudo_action.clone(),
+            #[cfg(feature = "neural")]
             db_records: app.db.get_all(),
+            #[cfg(not(feature = "neural"))]
+            db_records: Arc::new(Vec::new()),
             enable_exposure: app.enable_exposure,
         }
     }

@@ -1,8 +1,8 @@
-pub use crate::engine::accessibility::{AccessibilityNode, AccessibilityRole};
 pub use crate::backend::{AIBackend, Backend, IcedBackend, TextSpan};
-pub use crate::semantic::{
-    ChatCompletionMessage, DataProvider, IntelligenceProvider, SemanticNode, SemanticRecord,
-};
+pub use crate::engine::accessibility::{AccessibilityNode, AccessibilityRole};
+#[cfg(feature = "intelligence")]
+pub use crate::semantic::IntelligenceProvider;
+pub use crate::semantic::{ChatCompletionMessage, DataProvider, SemanticNode, SemanticRecord};
 pub use crate::style::{Context, DeviceType, Intent, ScrollDirection, Variant};
 use iced::{Element, Subscription, Task, Theme};
 pub use nalgebra::{Isometry3, Point3, Quaternion, Translation3, UnitQuaternion, Vector3};
@@ -293,7 +293,10 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         Box::new(self)
     }
 
-    fn on_tap_gesture(self, message: Message) -> crate::engine::gestures::TapGesture<Message, B, Self>
+    fn on_tap_gesture(
+        self,
+        message: Message,
+    ) -> crate::engine::gestures::TapGesture<Message, B, Self>
     where
         Self: Sized,
     {

@@ -14,7 +14,7 @@ log = "0.4"
 peak-core = { path = "../crates/peak-core", default-features = false }
 peak-theme = { path = "../crates/peak-theme", default-features = false }
 peak-icons = { path = "../crates/peak-icons" }
-peak-intelligence = { path = "../crates/peak-intelligence", default-features = false }
+peak-intelligence = { path = "../crates/peak-intelligence", default-features = false, optional = true }
 peak-db = { path = "../../PeakOS/crates/peak-db", optional = true }
 iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
@@ -58,6 +58,10 @@ objc2-app-kit = { version = "0.2", features = ["NSVisualEffectView", "NSWindow",
 objc2-foundation = "0.2"
 raw-window-handle = "0.6"
 
+[[bin]]
+name = "neural_dump"
+required-features = ["intelligence", "neural"]
+
 [features]
 default = []
 native = [
@@ -66,11 +70,13 @@ native = [
     "iced/tokio",
     "peak-core/native",
     "peak-theme/native",
+    "intelligence",
     "peak-intelligence/native",
-    "peak-intelligence/llm"
+    "peak-intelligence/llm",
 ]
 tokio = ["iced/tokio"]
 wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]
 webview = ["wry"]
 tui = [] # Gated TUI backend
 neural = ["peak-db"]
+intelligence = ["dep:peak-intelligence"]
