@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Bottom-First Interaction\nTab bars are optimized for one-handed use on mobile devices. They provide high-velocity switching between independent contexts.\n\n- **Visual Feedback**: Active tabs should clearly differentiate themselves from inactive ones.\n- **Kernel Layout**: While native on iOS/Android, it adapts as a floating dock on Desktop and a numbered list in TUI."
     )

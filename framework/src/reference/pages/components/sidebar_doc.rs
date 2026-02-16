@@ -1,8 +1,7 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -27,7 +26,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Cognitive Anchoring\nThe sidebar serves as the primary cognitive anchor for the user. It provides a stable surface for navigation that persists across different page transitions.\n\n- **Hierarchy**: Supports nested items for complex information architectures.\n- **Adaptability**: Collapses on mobile/compact views to maximize content space while remaining accessible via gestures."
     )

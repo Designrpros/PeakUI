@@ -1,7 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, ScrollDirection, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::app::{LayoutLabState, Message, RenderMode, SizingType};
+use crate::reference::app::{
+    InteractionMessage, LabMessage, LayoutLabState, Message, RenderMode, SizingType,
+};
 use crate::reference::AppPageResult;
 
 pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> AppPageResult {
@@ -66,7 +68,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
             crate::layout::containers::Card::new(
                 CodeBlock::new(ansi)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -80,7 +82,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
             crate::layout::containers::Card::new(
                 CodeBlock::new(json)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -141,7 +143,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
                 .caption1()
                 .secondary(),
             Slider::new(0.0..=64.0, lab.inner_spacing, |v| {
-                Message::UpdateLayoutInnerSpacing(v)
+                Message::Lab(LabMessage::UpdateLayoutInnerSpacing(v))
             })
             .width(Length::Fill),
         ]
@@ -156,7 +158,7 @@ pub fn view(ctx: &Context, lab: &LayoutLabState, render_mode: RenderMode) -> App
         text("Usage").title2().bold(),
         text("Layouts are composed using three primary stacks. By nesting these stacks, you can build any interface structure while maintaining clean, declarative code.")
             .secondary(),
-        CodeBlock::new(generate_code(lab)).on_copy(Message::CopyCode),
+        CodeBlock::new(generate_code(lab)).on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
     ]
     .spacing(24.0);
 
@@ -199,7 +201,7 @@ fn render_mode_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::SetRenderMode(mode))
+        .on_press(Message::Lab(LabMessage::SetRenderMode(mode)))
 }
 
 fn render_child_count_tab(
@@ -215,7 +217,7 @@ fn render_child_count_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::UpdateLayoutChildCount(count))
+        .on_press(Message::Lab(LabMessage::UpdateLayoutChildCount(count)))
 }
 
 fn render_alignment_tab(
@@ -231,7 +233,7 @@ fn render_alignment_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::UpdateLayoutAlignment(alignment))
+        .on_press(Message::Lab(LabMessage::UpdateLayoutAlignment(alignment)))
 }
 
 fn render_item_sizing_tab(
@@ -247,7 +249,7 @@ fn render_item_sizing_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::UpdateLayoutItemSizing(sizing))
+        .on_press(Message::Lab(LabMessage::UpdateLayoutItemSizing(sizing)))
 }
 
 fn create_preview<B: Backend>(ctx: &Context, lab: &LayoutLabState) -> VStack<Message, B> {

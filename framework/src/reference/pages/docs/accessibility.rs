@@ -1,7 +1,7 @@
 
 use crate::prelude::*;
 use crate::reference::AppPageResult;
-use crate::reference::app::{AccessibilityComponent, AccessibilityLabState, Message, RenderMode};
+use crate::reference::app::{AccessibilityComponent, AccessibilityLabState, Message, RenderMode, LabMessage, InteractionMessage};
 use crate::reference::pages::shared::*;
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
@@ -49,7 +49,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
         RenderMode::Terminal => {
             let ansi = create_preview::<TermBackend>(ctx, lab).view(ctx);
              Box::new(crate::layout::containers::Card::new(
-                CodeBlock::new(ansi).transparent().on_copy(Message::CopyCode),
+                CodeBlock::new(ansi).transparent().on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
@@ -60,7 +60,7 @@ pub fn view(ctx: &Context, lab: &AccessibilityLabState, render_mode: RenderMode)
             let node = create_preview::<AIBackend>(ctx, lab).view(ctx);
             let json = serde_json::to_string_pretty(&node).unwrap_or_default();
              Box::new(crate::layout::containers::Card::new(
-                CodeBlock::new(json).transparent().on_copy(Message::CopyCode),
+                CodeBlock::new(json).transparent().on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
                 .background(iced::Color::from_rgb8(30, 30, 30))
                 .padding(0)
@@ -218,7 +218,7 @@ fn render_mode_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::SetRenderMode(mode))
+        .on_press(Message::Lab(LabMessage::SetRenderMode(mode)))
 }
 
 fn render_component_tab(
@@ -234,7 +234,7 @@ fn render_component_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::UpdateAccessibilityComponent(comp))
+        .on_press(Message::Lab(LabMessage::UpdateAccessibilityComponent(comp)))
 }
 
 fn theory_item_manual<B: Backend>(title: &str, description: &str) -> VStack<Message, B> {

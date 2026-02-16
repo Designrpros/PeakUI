@@ -1,9 +1,7 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -24,7 +22,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(crate::reference::app::LabMessage::SetRenderMode(mode)))
     .theory(
        "### Discrete Comparison\nBar charts in PeakUI are rendered as semantic geometry. Each bar is a logical entity that transitions smoothly between different telemetry states.\n\n- **GPU-Backing**: Uses scaled rectangles with sub-pixel alignment.\n- **Semantic Perception**: AI kernels perceive the exact height and label values."
     )

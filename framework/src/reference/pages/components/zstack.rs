@@ -1,8 +1,5 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -27,7 +24,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Depth and Layering\nZStacks allow for complex visual compositions where elements overlap, such as backgrounds with text overlays or custom controls.\n\n- **Painting Order**: Children are rendered in the order they are pushed; first added is at the bottom.\n- **Spatial Depth**: In 3D backends, ZStack layers are automatically translated along the Z-axis to prevent flickering (z-fighting).\n- **Neural Transparency**: AI agents understand that ZStack children are visually connected but semantically distinct layers."
     )

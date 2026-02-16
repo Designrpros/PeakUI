@@ -1,7 +1,7 @@
 use crate::core::{AIBackend, Backend, ScrollDirection};
 
 use crate::prelude::*;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{InteractionMessage, LabMessage, Message, RenderMode};
 use crate::reference::AppPageResult;
 use serde_json; // Added missing import
 use std::borrow::Cow;
@@ -53,7 +53,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
             crate::layout::containers::Card::new(
                 CodeBlock::new(ansi)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -67,7 +67,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
             crate::layout::containers::Card::new(
                 CodeBlock::new(json)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -148,7 +148,7 @@ fn render_mode_tab(
         } else {
             Variant::Ghost
         })
-        .on_press(Message::SetRenderMode(mode))
+        .on_press(Message::Lab(LabMessage::SetRenderMode(mode)))
 }
 
 fn theory_item<B: Backend>(

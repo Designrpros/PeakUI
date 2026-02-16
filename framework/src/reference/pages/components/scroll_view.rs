@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Handling Overflow\nScroll views provide access to infinite content within a finite viewport. They are critical for mobile-first and dense data interfaces.\n\n- **Virtualization Support**: Planned optimization for ultra-long lists to keep memory usage low.\n- **Gesture Responsive**: Automatically handles touch and wheel events across all supported backends.\n- **Spatial Navigation**: In 3D kernels, scroll views can manifest as sliding panels or volumetric carousels."
     )

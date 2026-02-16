@@ -37,7 +37,7 @@ wasm-bindgen-futures = "0.4"
 js-sys = "0.3.69"
 console_error_panic_hook = "0.1"
 console_log = "1.0"
-web-sys = { version = "0.3.69", features = ["Window", "Document", "HtmlCanvasElement", "Element", "Location", "HtmlIFrameElement", "CssStyleDeclaration", "HtmlInputElement"] }
+web-sys = { version = "0.3.69", features = ["Window", "Document", "HtmlCanvasElement", "Element", "Location", "HtmlIFrameElement", "CssStyleDeclaration", "HtmlInputElement", "Navigator", "Clipboard"] }
 getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 getrandom = { version = "0.3", features = ["wasm_js"] }
 iced_winit = { version = "0.14", default-features = false }
@@ -50,6 +50,7 @@ iced = { version = "0.14", features = ["canvas", "advanced", "image", "svg", "la
 tokio = { version = "1", features = ["full"] }
 reqwest = { version = "0.11", default-features = false, features = ["rustls-tls"] }
 wry = { version = "0.47", optional = true }
+open = "5.3"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 window-vibrancy = "0.4"

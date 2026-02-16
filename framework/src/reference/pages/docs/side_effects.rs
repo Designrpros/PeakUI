@@ -23,14 +23,11 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
         r#"
 fn update(msg: Message, model: &mut Model) -> Task<Message> {
     match msg {
-        Message::FetchData => {
-            // Task::perform(do_fetch(), Message::DataReceived)
+        Message::Interaction(InteractionMessage::Action) => {
+            // Task::perform(do_async_work(), Message::Lab(LabMessage::Result))
             Task::none()
         }
-        Message::DataReceived(data) => {
-            model.data = data;
-            Task::none()
-        }
+        _ => Task::none(),
     }
 }
 "#,

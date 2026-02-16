@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
+use crate::reference::app::{Message, ShellMessage};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
 
 pub fn view(name: &str, context: &Context, _is_mobile: bool) -> AppPageResult {
     let name = name.to_string();
@@ -55,10 +54,10 @@ pub fn view(name: &str, context: &Context, _is_mobile: bool) -> AppPageResult {
                             .push(toggle::<Message, IcedBackend>(
                                 "Example Toggle",
                                 true,
-                                |_| Message::ToggleSearch,
+                                |_| Message::Shell(ShellMessage::ToggleSearch),
                             ))
                             .push(slider::<Message, IcedBackend>(0.0..=100.0, 50.0, |_| {
-                                Message::ToggleSearch
+                                Message::Shell(ShellMessage::ToggleSearch)
                             })),
                     ),
             )

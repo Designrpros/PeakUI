@@ -1,6 +1,5 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 use crate::prelude::*;
-use crate::reference::app::{EmojiLabState, Message, RenderMode};
+use crate::reference::app::{EmojiLabState, LabMessage, Message, RenderMode, ShellMessage};
 use crate::reference::views::ComponentDoc;
 use crate::reference::AppPageResult;
 use std::sync::Arc;
@@ -225,7 +224,7 @@ pub fn view(
                         } else {
                             Variant::Ghost
                         })
-                        .on_press(Message::UpdateEmojiLabEmoji(emoji_str))
+                        .on_press(Message::Lab(LabMessage::UpdateEmojiLabEmoji(emoji_str)))
                         .width(Length::Fill)
                         .height(Length::Fixed(60.0)),
                 );
@@ -268,7 +267,7 @@ pub fn view(
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Emotional Intelligence\nEmojis in **PeakUI** are first-class residents of the typography system.\n\n- **Color Assets**: Uses Noto Color Emoji for consistent, cross-platform appearance in the showcase.\n- **WASM Optimized**: Bundled directly to ensure they render even in sandboxed environments.\n- **Semantic Value**: AI agents treat emojis as sentiment tokens, helping them understand the 'vibe' of the interface."
     )
@@ -278,7 +277,9 @@ pub fn view(
     .extra_content(library_section);
 
     AppPageResult::new(doc)
-        .searchable("Emoji", "Search emojis...", |s| Message::Search(s))
+        .searchable("Emoji", "Search emojis...", |s| {
+            Message::Shell(ShellMessage::Search(s))
+        })
         .inspector(EmojiInspector::new(lab))
 }
 
@@ -324,7 +325,7 @@ impl View<Message, IcedBackend> for EmojiInspector {
                 TextInput::<Message, IcedBackend>::new(
                     self.lab.selected_emoji.clone(),
                     "Emoji...",
-                    |s| Message::UpdateEmojiLabEmoji(s),
+                    |s| Message::Lab(LabMessage::UpdateEmojiLabEmoji(s)),
                 ),
             ]
             .spacing(8.0),
@@ -335,7 +336,7 @@ impl View<Message, IcedBackend> for EmojiInspector {
                     .secondary(),
                 hstack![
                     Slider::<Message, IcedBackend>::new(12.0..=128.0, self.lab.size, |v| {
-                        Message::UpdateEmojiLabSize(v)
+                        Message::Lab(LabMessage::UpdateEmojiLabSize(v))
                     },)
                     .width(Length::Fill),
                     Text::<IcedBackend>::new(format!("{:.0}", self.lab.size))

@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
+use crate::reference::app::{Message, ShellMessage};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
 
 pub fn view(context: &Context, is_mobile: bool) -> AppPageResult {
     let _ = context;
@@ -24,7 +23,9 @@ pub fn view(context: &Context, is_mobile: bool) -> AppPageResult {
                                 .push(Text::new("Back to Landing").caption1().bold()),
                         )
                         .variant(Variant::Ghost)
-                        .on_press(Message::SetTab(crate::reference::AppPage::Landing)),
+                        .on_press(Message::Shell(ShellMessage::SetTab(
+                            crate::reference::AppPage::Landing,
+                        ))),
                     )
                     .push(
                         HStack::new()

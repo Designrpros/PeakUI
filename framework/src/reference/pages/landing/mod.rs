@@ -1,6 +1,6 @@
-use crate::reference::AppPage;
-use super::super::app::Message;
+use super::super::app::{InteractionMessage, Message, ShellMessage};
 use crate::prelude::*;
+use crate::reference::AppPage;
 
 use crate::layout::Wrap;
 use crate::elements::controls::TextInput;
@@ -105,7 +105,7 @@ fn hero_section(context: &Context, _asset: &str, is_mobile: bool, query: &str, p
                                         TextInput::new(
                                             query.to_string(), 
                                             placeholder.to_string(), 
-                                            Message::Search
+                                            |s| Message::Shell(ShellMessage::Search(s))
                                         )
                                         .variant(Variant::Ghost)
                                         .on_submit(Message::EnterApp)
@@ -281,7 +281,7 @@ if pressure.value > 80.0 {
         .width(Length::Fill)
         .push(section_header("Every UI is an API", "No Cameras Required", is_mobile))
         .push(Text::new("An industrial robot does not need a camera to see the screen. With PeakUI's semantic state, the UI itself becomes a structured API.").body().secondary())
-        .push(Container::new(CodeBlock::new(code).language("rust").on_copy(Message::CopyCode)).width(Length::Fill));
+        .push(Container::new(CodeBlock::new(code).language("rust").on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))).width(Length::Fill));
 
     Container::new(content).padding(if is_mobile { 24.0 } else { 80.0 }).width(Length::Fill)
 }
@@ -345,7 +345,7 @@ fn pillar_card(title: &str, sub: &str, desc: &str, icon: &str, context: &Context
         .width(Length::Fill)
         .border(1.0, t.colors.border)
         .radius(if cfg!(target_arch = "wasm32") { 0.0 } else { 4.0 })
-        .on_tap_gesture(Message::SetTab(page))
+        .on_tap_gesture(Message::Shell(ShellMessage::SetTab(page)))
 }
 
 fn vertical_card(title: &str, desc: &str, icon: &str, context: &Context) -> Container<Message, IcedBackend> {

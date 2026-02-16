@@ -1,9 +1,7 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -29,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Geometric Foundation\nShapes are the lowest-level visual primitives in PeakUI. They allow for the construction of complex components without leaving the framework's semantic model.\n\n- **Performance**: Rendered directly by the kernel's drawing pipeline (CPU/GPU/TUI).\n- **Intent Driven**: Shapes easily adopt theme colors via the `.color()` modifier, supporting both raw values and semantic tokens."
     )

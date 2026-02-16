@@ -10,6 +10,23 @@ pub struct PeakIntelligenceBridge {
     db: Arc<dyn crate::core::DataProvider>,
 }
 
+impl std::fmt::Debug for PeakIntelligenceBridge {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PeakIntelligenceBridge")
+            .field("client", &"LlmClient")
+            .finish()
+    }
+}
+
+impl Clone for PeakIntelligenceBridge {
+    fn clone(&self) -> Self {
+        Self {
+            client: self.client.clone(),
+            db: self.db.clone(),
+        }
+    }
+}
+
 impl PeakIntelligenceBridge {
     pub fn new(
         provider: ModelProvider,
@@ -50,12 +67,12 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                 let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
 
                 let system_instruction = format!(
-                    "You are the PeakOS Intelligence Bridge. You perceive the UI as a Dense JSON tree.\n\n\
+                    "You are the PeakOS Intelligence AI Assistant. You perceive the UI as a Dense JSON tree.\n\n\
                      You can trigger UI actions and external tools by including valid JSON in your response using the format [action: {{...}})].\n\n\
                      REQUIRED ACTION SCHEMA:\n{}\n\n\
                      CRITICAL TOOLS:\n\
                      - Use 'WebSearch' for any information you don't know.\n\
-                     - Use 'WriteFile' to save documents or code. (Prefer absolute paths or shortcuts like '~/Desktop/').\n\
+                     - Use 'WriteFile' to save documents or code. ALWAYS prefer '~/Desktop/' for user visibility. DO NOT use the OS root '/' as it is read-only.\n\
                      - Use 'Navigate' to move between pages.\n\n\
                      CRITICAL: You MUST terminate actions with ')]'. \n\
                      Example: [action: {{\"WebSearch\": \"latest rust version\"}})]",
@@ -109,7 +126,6 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
         let client = self.client.clone();
         let db = self.db.clone();
         let messages_clone = messages.clone();
-        let mut full_text = String::new();
 
         async_stream::stream! {
             let mut final_messages = Vec::new();
@@ -158,8 +174,7 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
             while let Some(res) = stream.next().await {
                 match res {
                     Ok(chunk) => {
-                        full_text.push_str(&chunk);
-                        yield Ok(full_text.clone());
+                        yield Ok(chunk);
                     }
                     Err(e) => {
                         yield Err(e);
@@ -228,13 +243,11 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
 
             let stream = client.chat_stream(final_messages);
             let mut stream = Box::pin(stream);
-            let mut full_text = String::new();
 
             while let Some(res) = stream.next().await {
                 match res {
                     Ok(chunk) => {
-                        full_text.push_str(&chunk);
-                        let _ = sender.send(Ok(full_text.clone())).await;
+                        let _ = sender.send(Ok(chunk)).await;
                     }
                     Err(e) => {
                         let _ = sender.send(Err(e)).await;

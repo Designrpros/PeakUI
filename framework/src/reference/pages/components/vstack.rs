@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Gravity and Flow\nVertical stacks are the backbone of list-based and form-based layouts. They provide a predictable downward flow of information.\n\n- **Spacing Management**: Decouples the distance between elements from the elements themselves.\n- **Alignment Control**: Allows sub-pixel precision in horizontal positioning (Start, Center, End).\n- **WASM Performance**: Highly optimized for browser layout engines while remaining portable to native backends."
     )

@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
+use crate::reference::app::{InteractionMessage, Message};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     AppPageResult::new(crate::core::ProxyView::new(move |context| {
@@ -53,7 +52,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                             }
                         "#,
                     )
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
                 )
                 .width(Length::Fill),
             )

@@ -1,4 +1,4 @@
-use super::super::app::Message;
+use super::super::app::{Message, ShellMessage};
 use crate::prelude::*;
 use crate::reference::AppPage;
 
@@ -547,7 +547,7 @@ impl View<Message, IcedBackend> for SidebarItem {
             Variant::Ghost
         })
         .width(Length::Fill)
-        .on_press(Message::SetTab(page_clone))
+        .on_press(Message::Shell(ShellMessage::SetTab(page_clone)))
         .view(context)
     }
 

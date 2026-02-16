@@ -1,6 +1,6 @@
 use crate::core::{Backend, SpatialBackend};
 use crate::prelude::*;
-use crate::reference::app::{ButtonLabState, Message, RenderMode};
+use crate::reference::app::{ButtonLabState, InteractionMessage, LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use crate::reference::AppPageResult;
 use std::sync::Arc;
@@ -18,7 +18,9 @@ fn create_button<B: Backend>(lab: &ButtonLabState) -> impl View<Message, B> {
         .on_press_maybe(if lab.is_disabled {
             None
         } else {
-            Some(Message::CopyCode("Clicked!".to_string()))
+            Some(Message::Interaction(InteractionMessage::CopyCode(
+                "Clicked!".to_string(),
+            )))
         })
         .neural_tag("lab-primary-action")
         .documented("Primary action for the lab experiment")
@@ -68,7 +70,7 @@ pub fn view(
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
         r#"
 ### Evolution of the Button
@@ -155,7 +157,7 @@ impl View<Message, IcedBackend> for ButtonInspector {
                         .push(TextInput::<Message>::new(
                             self.lab.label.clone(),
                             "Button label",
-                            |s| Message::UpdateButtonLabel(s),
+                            |s| Message::Lab(LabMessage::UpdateButtonLabel(s)),
                         ))
                         .spacing(8.0),
                 )
@@ -166,23 +168,23 @@ impl View<Message, IcedBackend> for ButtonInspector {
                             vec![
                                 (
                                     "Solid".to_string(),
-                                    Message::UpdateButtonVariant(Variant::Solid),
+                                    Message::Lab(LabMessage::UpdateButtonVariant(Variant::Solid)),
                                 ),
                                 (
                                     "Soft".to_string(),
-                                    Message::UpdateButtonVariant(Variant::Soft),
+                                    Message::Lab(LabMessage::UpdateButtonVariant(Variant::Soft)),
                                 ),
                                 (
                                     "Outl".to_string(),
-                                    Message::UpdateButtonVariant(Variant::Outline),
+                                    Message::Lab(LabMessage::UpdateButtonVariant(Variant::Outline)),
                                 ),
                                 (
                                     "Ghst".to_string(),
-                                    Message::UpdateButtonVariant(Variant::Ghost),
+                                    Message::Lab(LabMessage::UpdateButtonVariant(Variant::Ghost)),
                                 ),
                                 (
                                     "Cmpct".to_string(),
-                                    Message::UpdateButtonVariant(Variant::Compact),
+                                    Message::Lab(LabMessage::UpdateButtonVariant(Variant::Compact)),
                                 ),
                             ],
                             match self.lab.variant {
@@ -206,19 +208,19 @@ impl View<Message, IcedBackend> for ButtonInspector {
                             vec![
                                 (
                                     "Pri".to_string(),
-                                    Message::UpdateButtonIntent(Intent::Primary),
+                                    Message::Lab(LabMessage::UpdateButtonIntent(Intent::Primary)),
                                 ),
                                 (
                                     "Suc".to_string(),
-                                    Message::UpdateButtonIntent(Intent::Success),
+                                    Message::Lab(LabMessage::UpdateButtonIntent(Intent::Success)),
                                 ),
                                 (
                                     "Wrn".to_string(),
-                                    Message::UpdateButtonIntent(Intent::Warning),
+                                    Message::Lab(LabMessage::UpdateButtonIntent(Intent::Warning)),
                                 ),
                                 (
                                     "Dng".to_string(),
-                                    Message::UpdateButtonIntent(Intent::Danger),
+                                    Message::Lab(LabMessage::UpdateButtonIntent(Intent::Danger)),
                                 ),
                             ],
                             match self.lab.intent {
@@ -238,13 +240,13 @@ impl View<Message, IcedBackend> for ButtonInspector {
                 .push(
                     vstack![
                         Toggle::new("Full Width", self.lab.is_full_width, |b| {
-                            Message::ToggleButtonFullWidth(b)
+                            Message::Lab(LabMessage::ToggleButtonFullWidth(b))
                         }),
                         Toggle::new("Disabled", self.lab.is_disabled, |b| {
-                            Message::ToggleButtonDisabled(b)
+                            Message::Lab(LabMessage::ToggleButtonDisabled(b))
                         }),
                         Toggle::new("Simulate Focus", self.lab.is_focused, |b| {
-                            Message::ToggleButtonFocused(b)
+                            Message::Lab(LabMessage::ToggleButtonFocused(b))
                         })
                     ]
                     .spacing(16.0),

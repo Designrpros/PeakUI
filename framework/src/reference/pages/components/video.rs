@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Cinematic Motion\nVideo components in PeakUI are designed for ambient motion and high-fidelity media presentation.\n\n- **Kernel Playback**: While Canvas uses native media layers, Terminal backends may render frames as high-speed ASCII animation (experimental).\n- **Neural Interaction**: Agents can 'watch' video streams by receiving semantic frame descriptions and timeline metadata.\n- **Spatial Audio**: In 3D kernels, video sound is spatially localized to the screen's position in the virtual room."
     )

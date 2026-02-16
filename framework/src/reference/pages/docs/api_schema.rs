@@ -1,8 +1,8 @@
 use crate::reference::intelligence::mcp;
 
 use crate::prelude::*;
+use crate::reference::app::{Message, ShellMessage};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     AppPageResult::new(
@@ -56,5 +56,5 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                 .into()
             })),
     )
-    .sidebar_toggle(Message::ToggleSidebar)
+    .sidebar_toggle(Message::Shell(ShellMessage::ToggleSidebar))
 }

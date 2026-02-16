@@ -1,7 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::app::{Message, RenderMode, SizingLabState, SizingType};
+use crate::reference::app::{
+    InteractionMessage, LabMessage, Message, RenderMode, SizingLabState, SizingType,
+};
 use crate::reference::AppPageResult;
 
 pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> AppPageResult {
@@ -58,7 +60,7 @@ pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> App
             crate::layout::containers::Card::new(
                 CodeBlock::new(ansi)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -72,7 +74,7 @@ pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> App
             crate::layout::containers::Card::new(
                 CodeBlock::new(json)
                     .transparent()
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             )
             .background(iced::Color::from_rgb8(30, 30, 30))
             .padding(0)
@@ -118,7 +120,7 @@ pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> App
                     .caption1()
                     .secondary(),
                 Slider::new(0.0..=600.0, lab.fixed_width, |v| {
-                    Message::UpdateSizingFixedWidth(v)
+                    Message::Lab(LabMessage::UpdateSizingFixedWidth(v))
                 })
                 .width(Length::Fill),
             ]
@@ -140,7 +142,7 @@ pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> App
                     .caption1()
                     .secondary(),
                 Slider::new(0.0..=400.0, lab.fixed_height, |v| {
-                    Message::UpdateSizingFixedHeight(v)
+                    Message::Lab(LabMessage::UpdateSizingFixedHeight(v))
                 })
                 .width(Length::Fill),
             ]
@@ -158,7 +160,7 @@ pub fn view(ctx: &Context, lab: &SizingLabState, render_mode: RenderMode) -> App
         text("Usage").title2().bold(),
         text("Sizing in PeakUI is managed through the Length enum, which provides a flexible balance between precise control and adaptive layouts.")
             .secondary(),
-        CodeBlock::new(generate_code(lab)).on_copy(Message::CopyCode),
+        CodeBlock::new(generate_code(lab)).on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
     ]
     .spacing(24.0);
 
@@ -201,7 +203,7 @@ fn render_mode_tab(
             Variant::Ghost
         })
         .intent(Intent::Primary)
-        .on_press(Message::SetRenderMode(mode))
+        .on_press(Message::Lab(LabMessage::SetRenderMode(mode)))
 }
 
 fn render_sizing_tab(
@@ -219,9 +221,9 @@ fn render_sizing_tab(
         })
         .intent(Intent::Primary)
         .on_press(if is_width {
-            Message::UpdateSizingWidthType(sizing)
+            Message::Lab(LabMessage::UpdateSizingWidthType(sizing))
         } else {
-            Message::UpdateSizingHeightType(sizing)
+            Message::Lab(LabMessage::UpdateSizingHeightType(sizing))
         })
 }
 

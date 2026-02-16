@@ -1,9 +1,8 @@
-use super::super::app::Message;
+use super::super::app::{Message, ShellMessage};
 use super::super::pages;
+use super::state::ViewState;
 use crate::prelude::*;
 use crate::reference::AppPage as ReferenceAppPage;
-
-use super::state::ViewState;
 
 pub struct CanvasView {
     pub state: ViewState,
@@ -19,7 +18,7 @@ impl CanvasView {
     pub fn render_page(&self, context: &Context) -> AppPageResult {
         let is_mobile = context.size.width < 900.0;
 
-        let page = match &self.state.active_tab {
+        let page = match &self.state.shell.active_tab {
             // Guide
             ReferenceAppPage::Introduction => pages::guide::introduction::view(context, is_mobile),
             ReferenceAppPage::Architecture => pages::docs::architecture::view(context, is_mobile),
@@ -28,16 +27,18 @@ impl CanvasView {
             }
             ReferenceAppPage::Accessibility => pages::docs::accessibility::view(
                 context,
-                &self.state.accessibility_lab,
-                self.state.render_mode,
+                &self.state.labs.accessibility,
+                self.state.labs.render_mode,
             ),
             ReferenceAppPage::SideEffects => pages::docs::side_effects::view(context, is_mobile),
 
             ReferenceAppPage::Roadmap => pages::guide::roadmap::view(context, is_mobile),
             #[cfg(feature = "intelligence")]
-            ReferenceAppPage::Intelligence => {
-                pages::guide::intelligence::view(context, is_mobile, self.state.api_key.clone())
-            }
+            ReferenceAppPage::Intelligence => pages::guide::intelligence::view(
+                context,
+                is_mobile,
+                self.state.intelligence.api_key.clone(),
+            ),
 
             // Ecosystem
             ReferenceAppPage::PeakDesktop => pages::core::peak_desktop::view(context, is_mobile),
@@ -53,120 +54,126 @@ impl CanvasView {
             // Concepts (Overview is legacy/fallback)
             ReferenceAppPage::Overview => pages::guide::introduction::view(context, is_mobile),
             ReferenceAppPage::Customizations => {
-                pages::docs::customizations::view(context, self.state.render_mode)
+                pages::docs::customizations::view(context, self.state.labs.render_mode)
             }
-            ReferenceAppPage::BasicSizing => {
-                pages::docs::sizing::view(context, &self.state.sizing_lab, self.state.render_mode)
+            ReferenceAppPage::BasicSizing => pages::docs::sizing::view(
+                context,
+                &self.state.labs.sizing,
+                self.state.labs.render_mode,
+            ),
+            ReferenceAppPage::Colors => {
+                pages::docs::colors::view(context, self.state.labs.render_mode)
             }
-            ReferenceAppPage::Colors => pages::docs::colors::view(context, self.state.render_mode),
             ReferenceAppPage::Typography => pages::docs::typography::view(
                 context,
-                &self.state.typography_lab,
-                self.state.render_mode,
+                &self.state.labs.typography,
+                self.state.labs.render_mode,
             ),
-            ReferenceAppPage::Layout => {
-                pages::docs::layout::view(context, &self.state.layout_lab, self.state.render_mode)
-            }
+            ReferenceAppPage::Layout => pages::docs::layout::view(
+                context,
+                &self.state.labs.layout,
+                self.state.labs.render_mode,
+            ),
 
             // Atoms (Phase 3/4)
             ReferenceAppPage::Text => pages::components::text::view(
                 context,
-                &self.state.typography_lab,
-                self.state.render_mode,
+                &self.state.labs.typography,
+                self.state.labs.render_mode,
             ),
             ReferenceAppPage::Icon => pages::components::icon::view(
                 context,
-                &self.state.icon_lab,
-                self.state.render_mode,
-                self.state.search_query.clone(),
+                &self.state.labs.icon,
+                self.state.labs.render_mode,
+                self.state.shell.search_query.clone(),
                 self.state.icon_limit,
             ),
             ReferenceAppPage::Emoji => pages::components::emoji::view(
                 context,
-                &self.state.emoji_lab,
-                self.state.render_mode,
-                self.state.search_query.clone(),
+                &self.state.labs.emoji,
+                self.state.labs.render_mode,
+                self.state.shell.search_query.clone(),
             ),
             ReferenceAppPage::Button => pages::components::button::view(
                 context,
-                &self.state.button_lab,
-                self.state.render_mode,
+                &self.state.labs.button,
+                self.state.labs.render_mode,
             ),
             ReferenceAppPage::Shapes => {
-                pages::components::shapes::view(context, self.state.render_mode)
+                pages::components::shapes::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Image => {
-                pages::components::image::view(context, self.state.render_mode)
+                pages::components::image::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Video => {
-                pages::components::video::view(context, self.state.render_mode)
+                pages::components::video::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::WebView => {
-                pages::components::web_view::view(context, self.state.render_mode)
+                pages::components::web_view::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Divider => {
-                pages::components::divider::view(context, self.state.render_mode)
+                pages::components::divider::view(context, self.state.labs.render_mode)
             }
 
             // Containers (Phase 4)
             ReferenceAppPage::Spacer => pages::components::spacer::view(
                 context,
-                &self.state.spacer_lab,
-                self.state.render_mode,
+                &self.state.labs.spacer,
+                self.state.labs.render_mode,
             ),
             ReferenceAppPage::VStack => {
-                pages::components::vstack::view(context, self.state.render_mode)
+                pages::components::vstack::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::HStack => {
-                pages::components::hstack::view(context, self.state.render_mode)
+                pages::components::hstack::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::ZStack => {
-                pages::components::zstack::view(context, self.state.render_mode)
+                pages::components::zstack::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Overlay => {
-                pages::components::overlay::view(context, self.state.render_mode)
+                pages::components::overlay::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::ScrollView => {
-                pages::components::scroll_view::view(context, self.state.render_mode)
+                pages::components::scroll_view::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Card => {
-                pages::components::card::view(context, self.state.render_mode)
+                pages::components::card::view(context, self.state.labs.render_mode)
             }
 
             // Navigation (Phase 4)
             ReferenceAppPage::Sidebar => {
-                pages::components::sidebar_doc::view(context, self.state.render_mode)
+                pages::components::sidebar_doc::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Tabbar => {
-                pages::components::tabbar_doc::view(context, self.state.render_mode)
+                pages::components::tabbar_doc::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Modal => {
-                pages::components::modal_doc::view(context, self.state.render_mode)
+                pages::components::modal_doc::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::NavigationSplit => {
-                pages::components::navigation_split::view(context, self.state.render_mode)
+                pages::components::navigation_split::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::Section => {
-                pages::components::section::view(context, self.state.render_mode)
+                pages::components::section::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::DataTable => {
-                pages::components::data_table::view(context, self.state.render_mode)
+                pages::components::data_table::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::BarChart => {
-                pages::components::bar_chart::view(context, self.state.render_mode)
+                pages::components::bar_chart::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::LineChart => {
-                pages::components::line_chart::view(context, self.state.render_mode)
+                pages::components::line_chart::view(context, self.state.labs.render_mode)
             }
             ReferenceAppPage::PieChart => {
-                pages::components::pie_chart::view(context, self.state.render_mode)
+                pages::components::pie_chart::view(context, self.state.labs.render_mode)
             }
 
             // Showcase Gallery (Deprecated / Redirects)
             ReferenceAppPage::ShowcaseButtons => pages::components::button::view(
                 context,
-                &self.state.button_lab,
-                self.state.render_mode,
+                &self.state.labs.button,
+                self.state.labs.render_mode,
             ),
             ReferenceAppPage::ShowcaseInputs
             | ReferenceAppPage::ShowcaseToggles
@@ -191,13 +198,13 @@ impl CanvasView {
             }
             #[cfg(feature = "intelligence")]
             ReferenceAppPage::SettingsAI => {
-                let state_json = serde_json::to_string_pretty(&self.state).ok();
+                let state_json = None;
                 pages::settings::ai::view(
                     context,
                     is_mobile,
-                    self.state.api_key.clone(),
-                    self.state.ai_provider,
-                    self.state.enable_exposure,
+                    self.state.intelligence.api_key.clone(),
+                    self.state.intelligence.ai_provider,
+                    self.state.interaction.enable_exposure,
                     state_json,
                 )
             }
@@ -220,7 +227,9 @@ impl CanvasView {
         };
 
         if is_mobile {
-            page.sidebar_toggle(Message::ToggleSidebar)
+            page.sidebar_toggle(Message::Shell(ShellMessage::SetNavigationMode(
+                "Sidebar".to_string(),
+            )))
         } else {
             page
         }

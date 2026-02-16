@@ -9,8 +9,20 @@ use peak_theme::{PeakTheme, ThemeTokens, ThemeTone};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
+pub enum ShellNavigationMode {
+    #[default]
+    Sidebar,
+    MenuBar,
+    Empty,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 pub enum InspectorTab {
     #[default]
+    Properties,
+    Documentation,
+    Theory,
+    Telemetry,
     App,
     Feature,
 }
@@ -113,30 +125,55 @@ impl Settings {
     }
 }
 
-pub struct App {
+#[derive(Debug, Clone)]
+pub struct ShellState {
     pub active_tab: AppPage,
-    pub show_search: bool,
-    pub show_inspector: bool,
-    pub show_sidebar: bool,
-    pub show_user_profile: bool,
     pub navigation_mode: String,
+    pub show_sidebar: bool,
+    pub show_inspector: bool,
+    pub show_search: bool,
+    pub show_user_profile: bool,
     pub search_query: String,
     pub expanded_sections: Arc<std::collections::HashSet<String>>,
-    pub theme_tone: ThemeTone,
-    pub theme: PeakTheme,
+    pub window_width: f32,
+    pub window_height: f32,
+    pub localization: Localization,
+}
 
-    // Component Lab States
-    pub button_lab: Arc<ButtonLabState>,
-    pub typography_lab: Arc<TypographyLabState>,
-    pub layout_lab: Arc<LayoutLabState>,
-    pub spacer_lab: Arc<SpacerLabState>,
-    pub sizing_lab: Arc<SizingLabState>,
-    pub accessibility_lab: Arc<AccessibilityLabState>,
-    pub icon_lab: Arc<IconLabState>,
-    pub emoji_lab: Arc<EmojiLabState>,
+#[derive(Debug, Clone)]
+pub struct IntelligenceState {
+    pub chat_messages: Arc<Vec<ChatMessage>>,
+    pub chat_input: String,
+    pub is_thinking: bool,
+    pub api_key: String,
+    pub ai_provider: AIProviderChoice,
+    pub show_chat_overlay: bool,
+    // Typewriter effect
+    pub typewriter_text: String,
+    pub typewriter_index: usize,
+    pub typewriter_phrase_index: usize,
+    pub is_deleting: bool,
+    pub is_typing: bool,
+    #[cfg(feature = "intelligence")]
+    pub bridge: Arc<crate::reference::intelligence::bridge::PeakIntelligenceBridge>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LabState {
     pub render_mode: RenderMode,
+    pub button: Arc<ButtonLabState>,
+    pub typography: Arc<TypographyLabState>,
+    pub layout: Arc<LayoutLabState>,
+    pub spacer: Arc<SpacerLabState>,
+    pub sizing: Arc<SizingLabState>,
+    pub accessibility: Arc<AccessibilityLabState>,
+    pub icon: Arc<IconLabState>,
+    pub emoji: Arc<EmojiLabState>,
+}
+
+#[derive(Debug, Clone)]
+pub struct InteractionState {
     pub show_landing: bool,
-    // Layout States
     pub sidebar_width: f32,
     pub inspector_width: f32,
     pub inspector_tab: InspectorTab,
@@ -144,45 +181,44 @@ pub struct App {
     pub is_resizing_inspector: bool,
     pub context_menu_pos: Option<Point>,
     pub last_cursor_pos: Point,
-
-    // Chat State
-    pub show_chat_overlay: bool,
-    pub chat_messages: Arc<Vec<ChatMessage>>,
-    pub typewriter_text: String,
-    pub is_typing: bool,
     pub last_copied_code: Option<String>,
-    pub chat_input: String,
-
-    // AI Integration
-    pub api_key: String,
-    pub ai_provider: AIProviderChoice,
-
-    // Infinite Scroll / Lazy Load
-    pub icon_limit: usize,
-    pub window_width: f32,
-    pub window_height: f32,
-    pub localization: Localization,
     pub pending_sudo_action: Option<SudoAction>,
-    pub is_thinking: bool,
-    #[cfg(feature = "intelligence")]
-    pub intelligence: Arc<crate::reference::intelligence::bridge::PeakIntelligenceBridge>,
-    #[cfg(feature = "neural")]
-    pub db: Arc<crate::reference::data::db::PeakDBBridge>,
-    pub peak_id: String,
-
-    // Typewriter Effect
-    pub typewriter_index: usize,
-    pub typewriter_phrase_index: usize,
-    pub is_deleting: bool,
-    pub a11y: crate::engine::accessibility::AccessibilityBridge,
+    pub theme_tone: ThemeTone,
+    pub theme: PeakTheme,
+    pub scaling: f32,
     pub tick: u64,
     pub enable_exposure: bool,
-    pub scaling: f32,
+}
+
+#[derive(Debug, Clone)]
+pub struct App {
+    pub shell: ShellState,
+    pub intelligence: IntelligenceState,
+    pub labs: LabState,
+    pub interaction: InteractionState,
+
+    // Core Services
+    #[cfg(feature = "neural")]
+    pub db: Arc<crate::reference::data::db::PeakDBBridge>,
+    pub a11y: Arc<crate::engine::accessibility::AccessibilityBridge>,
+    pub peak_id: String,
+    pub icon_limit: usize,
 }
 
 impl App {
+    pub fn save_settings(&self) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let settings = Settings {
+                api_key: self.intelligence.api_key.clone(),
+                ai_provider: self.intelligence.ai_provider,
+                enable_exposure: self.interaction.enable_exposure,
+            };
+            settings.save();
+        }
+    }
     pub fn shell_mode(&self) -> ShellMode {
-        if self.window_width < 900.0 {
+        if self.shell.window_width < 900.0 {
             ShellMode::Mobile
         } else {
             ShellMode::Desktop
@@ -191,16 +227,17 @@ impl App {
 
     pub fn context(&self) -> Context {
         let mode = self.shell_mode();
-        let mut tokens = ThemeTokens::with_theme(self.theme, self.theme_tone);
-        tokens.scaling = self.scaling;
+        let mut tokens =
+            ThemeTokens::with_theme(self.interaction.theme, self.interaction.theme_tone);
+        tokens.scaling = self.interaction.scaling;
 
         Context::new(
             mode,
             tokens,
-            Size::new(self.window_width, self.window_height),
-            self.localization.clone(),
+            Size::new(self.shell.window_width, self.shell.window_height),
+            self.shell.localization.clone(),
         )
-        .with_last_copied_code(self.last_copied_code.as_deref().map(Arc::from))
+        .with_last_copied_code(self.interaction.last_copied_code.as_deref().map(Arc::from))
     }
 }
 
@@ -216,7 +253,9 @@ pub struct SudoAction {
 }
 
 fn dummy_message() -> Box<Message> {
-    Box::new(Message::CloseContextMenu)
+    Box::new(Message::Interaction(
+        crate::reference::app::InteractionMessage::CloseContextMenu,
+    ))
 }
 
 fn default_alignment() -> Alignment {
@@ -414,7 +453,7 @@ impl Default for App {
         }
 
         #[cfg(feature = "intelligence")]
-        let intelligence = Arc::new(
+        let intelligence_bridge = Arc::new(
             crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
                 provider,
                 match provider {
@@ -434,89 +473,92 @@ impl Default for App {
         );
 
         Self {
-            active_tab: AppPage::Introduction,
-            show_search: false,
-            show_inspector: false,
-            show_sidebar: true,
-            show_user_profile: false,
-            navigation_mode: "App".to_string(),
-            search_query: String::new(),
-            expanded_sections: Arc::new(std::collections::HashSet::new()),
-            theme_tone: ThemeTone::Light,
-            theme: PeakTheme::Mono,
-            button_lab: Arc::new(ButtonLabState::default()),
-            typography_lab: Arc::new(TypographyLabState::default()),
-            layout_lab: Arc::new(LayoutLabState::default()),
-            spacer_lab: Arc::new(SpacerLabState::default()),
-            sizing_lab: Arc::new(SizingLabState::default()),
-            accessibility_lab: Arc::new(AccessibilityLabState::default()),
-            icon_lab: Arc::new(IconLabState::default()),
-            emoji_lab: Arc::new(EmojiLabState::default()),
-            render_mode: RenderMode::Canvas,
-            show_landing: true,
-            sidebar_width: 260.0,
-            inspector_width: 320.0,
-            inspector_tab: InspectorTab::App,
-            is_typing: false,
-            last_copied_code: None,
-            is_resizing_sidebar: false,
-            is_resizing_inspector: false,
-            context_menu_pos: None,
-            last_cursor_pos: Point::ORIGIN,
-            show_chat_overlay: false,
-            chat_messages: Arc::new(vec![ChatMessage {
-                role: ChatRole::System,
-                content: "Welcome to PeakUI. I am your autonomous interface agent.".to_string(),
-            }]),
-            chat_input: String::new(),
-            api_key: settings.api_key,
-            ai_provider: settings.ai_provider,
-            peak_id: String::new(),
-            icon_limit: 50,
-            window_width: {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    let w = web_sys::window()
-                        .and_then(|w| w.document())
-                        .and_then(|d| d.body())
-                        .map(|b| b.client_width() as f32)
-                        .unwrap_or(1200.0);
-                    w
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                {
+            shell: ShellState {
+                active_tab: AppPage::Introduction,
+                navigation_mode: "App".to_string(),
+                show_sidebar: true,
+                show_inspector: false,
+                show_search: false,
+                show_user_profile: false,
+                search_query: String::new(),
+                expanded_sections: Arc::new(std::collections::HashSet::new()),
+                window_width: {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        web_sys::window()
+                            .and_then(|w| w.document())
+                            .and_then(|d| d.body())
+                            .map(|b| b.client_width() as f32)
+                            .unwrap_or(1200.0)
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
                     1200.0
-                }
-            },
-            window_height: {
-                #[cfg(target_arch = "wasm32")]
-                {
-                    web_sys::window()
-                        .and_then(|w| w.document())
-                        .and_then(|d| d.body())
-                        .map(|b| b.client_height() as f32)
-                        .unwrap_or(800.0)
-                }
-                #[cfg(not(target_arch = "wasm32"))]
-                {
+                },
+                window_height: {
+                    #[cfg(target_arch = "wasm32")]
+                    {
+                        web_sys::window()
+                            .and_then(|w| w.document())
+                            .and_then(|d| d.body())
+                            .map(|b| b.client_height() as f32)
+                            .unwrap_or(800.0)
+                    }
+                    #[cfg(not(target_arch = "wasm32"))]
                     800.0
-                }
+                },
+                localization: Localization::default(),
             },
-            localization: Localization::default(),
-            pending_sudo_action: None,
-            is_thinking: false,
-            #[cfg(feature = "intelligence")]
-            intelligence,
+            intelligence: IntelligenceState {
+                chat_messages: Arc::new(vec![ChatMessage {
+                    role: ChatRole::System,
+                    content: "Welcome to PeakUI. I am your autonomous interface agent.".to_string(),
+                }]),
+                chat_input: String::new(),
+                is_thinking: false,
+                api_key: settings.api_key,
+                ai_provider: settings.ai_provider,
+                show_chat_overlay: false,
+                typewriter_text: String::new(),
+                typewriter_index: 0,
+                typewriter_phrase_index: 0,
+                is_deleting: false,
+                is_typing: false,
+                #[cfg(feature = "intelligence")]
+                bridge: intelligence_bridge,
+            },
+            labs: LabState {
+                render_mode: RenderMode::Canvas,
+                button: Arc::new(ButtonLabState::default()),
+                typography: Arc::new(TypographyLabState::default()),
+                layout: Arc::new(LayoutLabState::default()),
+                spacer: Arc::new(SpacerLabState::default()),
+                sizing: Arc::new(SizingLabState::default()),
+                accessibility: Arc::new(AccessibilityLabState::default()),
+                icon: Arc::new(IconLabState::default()),
+                emoji: Arc::new(EmojiLabState::default()),
+            },
+            interaction: InteractionState {
+                show_landing: true,
+                sidebar_width: 260.0,
+                inspector_width: 320.0,
+                inspector_tab: InspectorTab::App,
+                is_resizing_sidebar: false,
+                is_resizing_inspector: false,
+                context_menu_pos: None,
+                last_cursor_pos: Point::ORIGIN,
+                last_copied_code: None,
+                pending_sudo_action: None,
+                theme_tone: ThemeTone::Light,
+                theme: PeakTheme::Mono,
+                scaling: 1.0,
+                tick: 0,
+                enable_exposure: settings.enable_exposure,
+            },
             #[cfg(feature = "neural")]
             db,
-            typewriter_text: String::new(),
-            typewriter_index: 0,
-            typewriter_phrase_index: 0,
-            is_deleting: false,
-            a11y: crate::engine::accessibility::AccessibilityBridge::new(),
-            tick: 0,
-            enable_exposure: settings.enable_exposure,
-            scaling: 1.0,
+            a11y: Arc::new(crate::engine::accessibility::AccessibilityBridge::new()),
+            peak_id: String::new(),
+            icon_limit: 50,
         }
     }
 }

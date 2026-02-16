@@ -1,8 +1,7 @@
 use crate::core::{AIBackend, Context, IcedBackend, SpatialBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -42,7 +41,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### High-Density Data\nData tables in PeakUI are more than just grids. They are semantic structures that handle complex layout logic across different display kernels.\n\n- **Kernel Agnostic**: The same `data_table!` DSL manifests as a rich interactive grid on Canvas, a character-based table in Terminal, and a structured array in Neural mode.\n- **Performance**: Built with virtualization in mind (planned) to handle thousands of rows without dropping frames."
     )

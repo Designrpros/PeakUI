@@ -3,7 +3,7 @@ use crate::prelude::*;
 use peak_core::registry::ShellMode;
 use peak_theme::ThemeTokens;
 
-use super::message::Message;
+use super::message::{InteractionMessage, Message};
 use super::state::*;
 use crate::reference::AppPage;
 
@@ -13,26 +13,26 @@ impl App {
         // log::info!(
         //     "App::view: {} Mode, width: {}, show_sidebar: {}",
         //     mode,
-        //     self.window_width,
-        //     self.show_sidebar
+        //     self.shell.window_width,
+        //     self.shell.show_sidebar
         // );
         // Context is now provided by the helper method, significantly reducing boilerplate
         // and ensuring consistent state (theme, size, mode) across the application.
-        if self.show_landing {
+        if self.interaction.show_landing {
             // Create context directly without responsive wrapper for performance
-            let size = Size::new(self.window_width, 800.0); // Height doesn't matter for landing
+            let size = Size::new(self.shell.window_width, 800.0); // Height doesn't matter for landing
             let mut context = Context::new(
                 self.shell_mode(),
                 self.context().theme,
                 size,
-                self.localization.clone(),
+                self.shell.localization.clone(),
             );
-            context.tick = self.tick;
+            context.tick = self.interaction.tick;
 
             // Capture the search query state
-            let query = self.search_query.clone();
-            let typewriter_text = self.typewriter_text.clone();
-            let active_tab = self.active_tab.clone();
+            let query = self.shell.search_query.clone();
+            let typewriter_text = self.intelligence.typewriter_text.clone();
+            let active_tab = self.shell.active_tab.clone();
             #[cfg(feature = "neural")]
             let db_records = self.db.get_all();
             #[cfg(not(feature = "neural"))]
@@ -95,18 +95,18 @@ impl App {
         // 1. Prepare Content
         let content = crate::reference::views::ContentView::new(self);
 
-        let context_menu_pos = self.context_menu_pos;
+        let context_menu_pos = self.interaction.context_menu_pos;
 
         // Neural Export (Exported in update for performance)
 
         let peak_id = self.peak_id.clone();
-        let tick = self.tick;
+        let tick = self.interaction.tick;
 
         // Clone data needed for the responsive closure to avoid 'self' lifetime issues
-        let theme = self.theme;
-        let tone = self.theme_tone;
-        let scaling = self.scaling;
-        let localization_closure = self.localization.clone();
+        let theme = self.interaction.theme;
+        let tone = self.interaction.theme_tone;
+        let scaling = self.interaction.scaling;
+        let localization_closure = self.shell.localization.clone();
 
         let view = crate::core::responsive(move |device_type| {
             let mut tokens = ThemeTokens::with_theme(theme, tone);
@@ -139,14 +139,22 @@ impl App {
                     .item(
                         "Reload",
                         "rotate-cw",
-                        Message::ContextMenuAction("Reload".to_string()),
+                        Message::Interaction(InteractionMessage::ContextMenuAction(
+                            "Reload".to_string(),
+                        )),
                     )
                     .item(
                         "Inspect",
                         "search-code",
-                        Message::ContextMenuAction("Inspect".to_string()),
+                        Message::Interaction(InteractionMessage::ContextMenuAction(
+                            "Inspect".to_string(),
+                        )),
                     )
-                    .item("Close", "circle-x", Message::CloseContextMenu);
+                    .item(
+                        "Close",
+                        "circle-x",
+                        Message::Interaction(InteractionMessage::CloseContextMenu),
+                    );
 
                 stack = stack.push(
                     crate::elements::atoms::Container::<Message, IcedBackend>::new(menu)
@@ -160,7 +168,7 @@ impl App {
             }
 
             // Overlay Sudo Prompt
-            if let Some(sudo) = &content.state.pending_sudo_action {
+            if let Some(sudo) = &content.state.interaction.pending_sudo_action {
                 let prompt = crate::elements::atoms::Container::<Message, IcedBackend>::new(
                     crate::layout::VStack::<Message, IcedBackend>::new_generic()
                         .push(
@@ -182,7 +190,7 @@ impl App {
                                     )
                                     .variant(crate::style::Variant::Ghost)
                                     .intent(crate::style::Intent::Neutral)
-                                    .on_press(Message::SudoDeny),
+                                    .on_press(Message::Interaction(InteractionMessage::SudoDeny)),
                                 )
                                 .push(
                                     crate::elements::controls::Button::<Message, IcedBackend>::new(
@@ -191,7 +199,9 @@ impl App {
                                     )
                                     .variant(crate::style::Variant::Solid)
                                     .intent(crate::style::Intent::Danger)
-                                    .on_press(Message::SudoApprove),
+                                    .on_press(
+                                        Message::Interaction(InteractionMessage::SudoApprove),
+                                    ),
                                 )
                                 .spacing(10.0)
                                 .align_x(Alignment::Center),

@@ -1,16 +1,11 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode, TypographyLabState};
+use crate::reference::app::{LabMessage, Message, RenderMode, TypographyLabState};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
-pub fn view(
-    ctx: &Context,
-    lab: &TypographyLabState,
-    render_mode: RenderMode,
-) -> AppPageResult {
+pub fn view(ctx: &Context, lab: &TypographyLabState, render_mode: RenderMode) -> AppPageResult {
     // --- 1. Preview Construction ---
     // We create a preview that can be rendered by any backend
     let preview_view = create_preview::<IcedBackend>(lab);
@@ -32,7 +27,7 @@ pub fn view(
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
         r#"
 ### Semantic Typography
@@ -160,7 +155,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                         crate::elements::controls::TextInput::<Message>::new(
                             self.lab.text.clone(),
                             "Enter text...",
-                            |s| Message::UpdateTypographyText(s),
+                            |s| Message::Lab(LabMessage::UpdateTypographyText(s)),
                         ),
                     ]
                     .spacing(8.0),
@@ -175,7 +170,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                             crate::elements::controls::Slider::<Message, IcedBackend>::new(
                                 12.0..=72.0,
                                 self.lab.size,
-                                |v| Message::UpdateTypographySize(v),
+                                |v| Message::Lab(LabMessage::UpdateTypographySize(v)),
                             )
                             .width(Length::Fill),
                             Text::<IcedBackend>::new(format!("{:.0}", self.lab.size))
@@ -190,10 +185,10 @@ impl View<Message, IcedBackend> for TypographyInspector {
                 .push(
                     vstack![
                         crate::elements::controls::Toggle::new("Bold", self.lab.is_bold, |b| {
-                            Message::ToggleTypographyBold(b)
+                            Message::Lab(LabMessage::ToggleTypographyBold(b))
                         }),
                         crate::elements::controls::Toggle::new("Italic", self.lab.is_italic, |b| {
-                            Message::ToggleTypographyItalic(b)
+                            Message::Lab(LabMessage::ToggleTypographyItalic(b))
                         }),
                     ]
                     .spacing(16.0),

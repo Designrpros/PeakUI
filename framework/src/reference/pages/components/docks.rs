@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::reference::app::Message;
+use crate::reference::app::{Message, ShellMessage};
 use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
@@ -43,6 +43,6 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
             })
             .into()
         }))
-        .searchable("", "Search docks...", |_| Message::ToggleSearch)
-        .sidebar_toggle(Message::ToggleSidebar)
+        .searchable("", "Search docks...", |_| Message::Shell(ShellMessage::ToggleSearch))
+        .sidebar_toggle(Message::Shell(ShellMessage::ToggleSidebar))
 }

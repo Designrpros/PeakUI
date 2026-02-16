@@ -1,6 +1,6 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 use crate::prelude::*;
-use crate::reference::app::{Message, RenderMode, SpacerLabState};
+use crate::reference::app::{LabMessage, Message, RenderMode, SpacerLabState};
 use crate::reference::views::ComponentDoc;
 use crate::reference::AppPageResult;
 use std::sync::Arc;
@@ -26,7 +26,7 @@ pub fn view(ctx: &Context, lab: &SpacerLabState, render_mode: RenderMode) -> App
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Spatial Dynamics\nThe **Spacer** element in PeakUI is more than just padding; it is a structural element that defines the 'negative space' of an interface.\n\n- **Fixed vs. Elastic**: When used with fixed dimensions, it acts as a precise gutter. Within stacks, it can be set to `Length::Fill` to push elements apart.\n- **Semantic Neutrality**: AI agents recognize spacers as layout boundaries, helping them understand grouping and hierarchy without being distracted by visual-only decorators.\n- **Efficient Rendering**: Unlike empty containers, the `Space` element is optimized for minimal overhead in all backends."
     )
@@ -60,8 +60,7 @@ fn create_preview<B: Backend>(lab: &SpacerLabState, ctx: &Context) -> VStack<Mes
                 )
                 .push(
                     crate::dev::dsl::container::<Message, B>(crate::dev::dsl::space::<B>(
-                        lab.width,
-                        lab.height,
+                        lab.width, lab.height,
                     ))
                     .background(spacer_tint),
                 )
@@ -102,7 +101,7 @@ impl View<Message, IcedBackend> for SpacerInspector {
                     .secondary(),
                 hstack![
                     Slider::<Message, IcedBackend>::new(0.0..=400.0, self.lab.width, |v| {
-                        Message::UpdateSpacerWidth(v)
+                        Message::Lab(LabMessage::UpdateSpacerWidth(v))
                     },)
                     .width(Length::Fill),
                     Text::<IcedBackend>::new(format!("{:.0}", self.lab.width))
@@ -119,7 +118,7 @@ impl View<Message, IcedBackend> for SpacerInspector {
                     .secondary(),
                 hstack![
                     Slider::<Message, IcedBackend>::new(0.0..=400.0, self.lab.height, |v| {
-                        Message::UpdateSpacerHeight(v)
+                        Message::Lab(LabMessage::UpdateSpacerHeight(v))
                     },)
                     .width(Length::Fill),
                     Text::<IcedBackend>::new(format!("{:.0}", self.lab.height))

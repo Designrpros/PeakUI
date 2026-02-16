@@ -1,7 +1,6 @@
-
 use crate::prelude::*;
+use crate::reference::app::{InteractionMessage, Message};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     AppPageResult::new(crate::core::ProxyView::new(move |context| {
@@ -45,17 +44,17 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                                 .push(
                                     Button::<Message>::label("Compact")
                                         .variant(if context.theme.scaling < 0.9 { Variant::Soft } else { Variant::Ghost })
-                                        .on_press(Message::SetScaling(0.8))
+                                        .on_press(Message::Interaction(InteractionMessage::SetScaling(0.8)))
                                 )
                                 .push(
                                     Button::<Message>::label("Default")
                                         .variant(if (context.theme.scaling - 1.0).abs() < 0.01 { Variant::Soft } else { Variant::Ghost })
-                                        .on_press(Message::SetScaling(1.0))
+                                        .on_press(Message::Interaction(InteractionMessage::SetScaling(1.0)))
                                 )
                                 .push(
                                     Button::<Message>::label("Comfortable")
                                         .variant(if context.theme.scaling > 1.1 { Variant::Soft } else { Variant::Ghost })
-                                        .on_press(Message::SetScaling(1.2))
+                                        .on_press(Message::Interaction(InteractionMessage::SetScaling(1.2)))
                                 ),
                         )
                 )
@@ -74,7 +73,7 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                             let font_size = context.scale(theme.typography.body.size);
                         "#
                     )
-                    .on_copy(Message::CopyCode)
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))
                 )
                 .width(Length::Fill)
             )

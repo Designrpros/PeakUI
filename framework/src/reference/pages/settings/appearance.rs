@@ -1,7 +1,7 @@
-
 use crate::prelude::*;
+use crate::reference::app::{InteractionMessage, Message};
 use crate::reference::AppPageResult;
-use crate::reference::app::Message;
+use peak_theme::ThemeTone;
 
 pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
     AppPageResult::new(crate::core::ProxyView::new(move |context| {
@@ -16,7 +16,9 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                 row = row.push(
                     Button::<Message>::label(theme.display_name())
                         .width(Length::Fill)
-                        .on_press(Message::SetThemeKind(*theme))
+                        .on_press(Message::Interaction(InteractionMessage::SetThemeKind(
+                            *theme,
+                        )))
                         .variant(Variant::Soft),
                 );
             }
@@ -63,7 +65,9 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                                         } else {
                                             Variant::Ghost
                                         })
-                                        .on_press(Message::SetTheme(ThemeTone::Light)),
+                                        .on_press(Message::Interaction(
+                                            InteractionMessage::SetTheme(ThemeTone::Light),
+                                        )),
                                 )
                                 .push(
                                     Button::<Message>::label("Dark Mode")
@@ -72,7 +76,9 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                                         } else {
                                             Variant::Ghost
                                         })
-                                        .on_press(Message::SetTheme(ThemeTone::Dark)),
+                                        .on_press(Message::Interaction(
+                                            InteractionMessage::SetTheme(ThemeTone::Dark),
+                                        )),
                                 ),
                         ),
                 )
@@ -112,18 +118,19 @@ pub fn view(_context: &Context, _is_mobile: bool) -> AppPageResult {
                                 r#"
                                     // 1. Handle the message in your Update loop
                                     match message {
-                                        Message::SetTheme(tone) => {
+                                        Message::Interaction(InteractionMessage::SetTheme(tone)) => {
                                             self.theme_tone = tone;
                                             // Navigation results automatically react 
                                             // to context.theme changes.
                                         }
+                                        _ => {}
                                     }
 
                                     // 2. Access tokens in your Root View
                                     let tokens = ThemeTokens::get(mode, self.theme_tone);
                                 "#,
                             )
-                            .on_copy(Message::CopyCode),
+                            .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
                         ),
                 )
                 .width(Length::Fill),

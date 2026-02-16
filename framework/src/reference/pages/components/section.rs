@@ -1,8 +1,7 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -28,7 +27,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Structural Hierarchy\nSections provide the high-level skeleton for information-dense pages. They anchor content with a semantic title and provide consistent vertical rhythm.\n\n- **Anchor points**: Sections are often used as navigation targets for jump-links.\n- **Visual separation**: Automatically applies padding and spacing according to the active theme's structural tokens."
     )

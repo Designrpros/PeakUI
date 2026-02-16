@@ -1,4 +1,4 @@
-use super::super::app::Message;
+use super::super::app::{Message, ShellMessage};
 use crate::prelude::*;
 
 pub struct TabBarView {
@@ -30,7 +30,9 @@ impl View<Message, IcedBackend> for TabBarView {
                     .icon("sparkles")
                     .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Start")
-                    .on_press(Message::SetNavigationMode("Start".into())),
+                    .on_press(Message::Shell(ShellMessage::SetNavigationMode(
+                        "Start".into(),
+                    ))),
             )
             // 2. Catalog: Visual Gallery & Components
             .push(
@@ -38,7 +40,9 @@ impl View<Message, IcedBackend> for TabBarView {
                     .icon("layout-grid")
                     .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Catalog")
-                    .on_press(Message::SetNavigationMode("Catalog".into())),
+                    .on_press(Message::Shell(ShellMessage::SetNavigationMode(
+                        "Catalog".into(),
+                    ))),
             )
             // 4. Data: PeakDB & Cloud
             .push(
@@ -46,7 +50,9 @@ impl View<Message, IcedBackend> for TabBarView {
                     .icon("database")
                     .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Data")
-                    .on_press(Message::SetNavigationMode("Data".into())),
+                    .on_press(Message::Shell(ShellMessage::SetNavigationMode(
+                        "Data".into(),
+                    ))),
             )
             // 5. Settings: Preferences
             .push(
@@ -54,7 +60,9 @@ impl View<Message, IcedBackend> for TabBarView {
                     .icon("settings-2")
                     .icon_size(if context.is_slim() { 24.0 } else { 28.0 })
                     .active(nav_mode == "Settings")
-                    .on_press(Message::SetNavigationMode("Settings".into())),
+                    .on_press(Message::Shell(ShellMessage::SetNavigationMode(
+                        "Settings".into(),
+                    ))),
             )
             .shadow(iced::Shadow {
                 color: iced::Color::from_rgba8(0, 0, 0, 0.1),

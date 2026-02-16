@@ -62,6 +62,10 @@ impl Localization {
     pub fn simple(&self, key: &str) -> String {
         self.t(key, None)
     }
+
+    pub fn set_language(&mut self, lang: &str, resources: Vec<String>) {
+        *self = Self::new(lang, resources);
+    }
 }
 
 impl Default for Localization {

@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::reference::app::{AIProviderChoice, Message};
+use crate::reference::app::{AIProviderChoice, IntelligenceMessage, InteractionMessage, Message};
 
 pub fn view<B: Backend>(
     _context: &Context,
@@ -76,7 +76,9 @@ pub fn view<B: Backend>(
                         } else {
                             Variant::Soft
                         })
-                        .on_press(Message::SetAIProvider(*choice))
+                        .on_press(Message::Intelligence(IntelligenceMessage::SetAIProvider(
+                            *choice,
+                        )))
                         .width(Length::Fill)
                         .height(Length::Fixed(160.0)),
                 );
@@ -100,11 +102,9 @@ pub fn view<B: Backend>(
                     .spacing(12.0)
                     .push(Text::<B>::new("API Configuration").title3().bold())
                     .push(
-                        TextInput::<Message, B>::new(
-                            api_key.clone(),
-                            "Enter API Key...",
-                            Message::SetApiKey,
-                        )
+                        TextInput::<Message, B>::new(api_key.clone(), "Enter API Key...", |s| {
+                            Message::Intelligence(IntelligenceMessage::SetApiKey(s))
+                        })
                         .password()
                         .on_submit(Message::None),
                     ),
@@ -119,7 +119,7 @@ pub fn view<B: Backend>(
                     .push(Toggle::<Message, B>::new(
                         "Enable Exposure".to_string(),
                         enable_exposure,
-                        Message::SetExposure,
+                        |b| Message::Interaction(InteractionMessage::SetExposure(b)),
                     )),
             )
             .push(
@@ -128,11 +128,11 @@ pub fn view<B: Backend>(
                     .push(if let Some(json) = state_json.clone() {
                         crate::views::CodeBlock::new(json)
                             .language("json")
-                            .on_copy(Message::CopyCode)
+                            .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))
                     } else {
                         crate::views::CodeBlock::new("// Serialization not available".to_string())
                             .language("json")
-                            .on_copy(Message::CopyCode)
+                            .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))
                     }),
             );
 

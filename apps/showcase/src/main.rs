@@ -120,7 +120,7 @@ fn main() -> Result {
             || {
                 let mut app = reference::App::default();
                 let ftl = include_str!("../assets/locales/en-US/main.ftl");
-                app.localization =
+                app.shell.localization =
                     peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
                 (
                     app,
@@ -221,12 +221,13 @@ pub fn run() {
             let initial_page = reference::model::Page::default();
 
             let mut app = reference::App::default();
-            app.navigation_mode = initial_page.navigation_mode();
-            app.active_tab = initial_page;
+            app.shell.navigation_mode = initial_page.navigation_mode();
+            app.shell.active_tab = initial_page;
 
             // Load Showcase Localizations
             let ftl = include_str!("../assets/locales/en-US/main.ftl");
-            app.localization = peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
+            app.shell.localization =
+                peak_ui::prelude::Localization::new("en-US", vec![ftl.to_string()]);
 
             (app, Task::none())
         },

@@ -49,6 +49,7 @@ pub mod prelude {
     pub use crate::layout::nav_split_view::NavigationSplitView;
     pub use crate::layout::scroll_view::ScrollView;
     pub use crate::layout::{HStack, LayoutExt, ResponsiveGrid, VStack, ZStack};
+    pub use crate::reference::{AppPage, AppPageResult};
     #[cfg(feature = "intelligence")]
     pub use crate::semantic::IntelligenceProvider;
     pub use crate::semantic::{ChatCompletionMessage, DataProvider, SemanticNode, SemanticRecord};

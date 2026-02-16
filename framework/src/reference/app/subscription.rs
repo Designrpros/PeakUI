@@ -17,10 +17,10 @@ impl App {
                 //     Message::UpdateCursorPos(position)
                 // }
                 Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Right)) => {
-                    Message::OpenContextMenu(Point::ORIGIN)
+                    Message::Interaction(crate::reference::app::InteractionMessage::OpenContextMenu(Point::ORIGIN))
                 }
                 Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                    Message::CloseContextMenu
+                    Message::Interaction(crate::reference::app::InteractionMessage::CloseContextMenu)
                 }
                 _ => Message::None,
             }
@@ -49,7 +49,7 @@ impl App {
 
                 // Ctrl+U -> Close Context Menu
                 if _is_u && _is_ctrl {
-                    return Message::CloseContextMenu;
+                    return Message::Interaction(crate::reference::app::InteractionMessage::CloseContextMenu);
                 }
             }
             Message::None
@@ -84,7 +84,7 @@ impl App {
                     // to avoid RefCell borrowing conflicts in winit/iced
                     let mut sender = sender.clone();
                     wasm_bindgen_futures::spawn_local(async move {
-                        let _ = sender.try_send(Message::SetTab(page));
+                        let _ = sender.try_send(Message::Shell(crate::reference::app::ShellMessage::SetTab(page)));
                     });
                 })
                     as Box<dyn FnMut()>);
@@ -133,7 +133,7 @@ impl App {
             let exposure_sub = {
                 #[cfg(feature = "intelligence")]
                 {
-                    if self.enable_exposure {
+                    if self.interaction.enable_exposure {
                         Subscription::run(|| {
                             let (sender, receiver) =
                                 crate::prelude::futures::channel::mpsc::channel(100);

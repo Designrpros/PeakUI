@@ -1,8 +1,7 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
 use std::sync::Arc;
 
@@ -24,7 +23,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Continuity & Growth\nLine charts in PeakUI prioritize smooth curves and high refresh rates. \n\n- **Sub-pixel Precision**: GPU-backed vertex buffers ensured crisp lines at any zoom level.\n- **Temporal Awareness**: Optimized for real-time telemetry streaming."
     )

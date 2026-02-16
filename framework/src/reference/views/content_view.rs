@@ -1,4 +1,4 @@
-use super::super::app::{App, Message};
+use super::super::app::{App, IntelligenceMessage, InteractionMessage, Message, ShellMessage};
 use super::{CanvasView, SidebarView, TabBarView};
 use crate::layout::nav_split_view::NavigationSplitView;
 use crate::prelude::*;
@@ -34,10 +34,10 @@ impl ContentView {
         let canvas_manager = CanvasView::new(self.state.clone());
 
         let sidebar = SidebarView::new(
-            self.state.active_tab.clone(),
-            self.state.navigation_mode.clone(),
+            self.state.shell.active_tab.clone(),
+            self.state.shell.navigation_mode.clone(),
         );
-        let tab_bar = TabBarView::new(self.state.navigation_mode.clone());
+        let tab_bar = TabBarView::new(self.state.shell.navigation_mode.clone());
 
         // --- 2. Main Layout (Three-Column Split) ---
         // Render page base result
@@ -80,8 +80,8 @@ impl ContentView {
         // --- 3. Integrated Header --
         let _ = (); // Discard old notch content logic variable
 
-        let query = self.state.search_query.clone();
-        let show_inspector = self.state.show_inspector;
+        let query = self.state.shell.search_query.clone();
+        let show_inspector = self.state.shell.show_inspector;
         let sidebar_toggle = page.sidebar_toggle.take();
         let toolbar_items = std::mem::take(&mut page.toolbar_items);
         let search_config = page.search_config.clone();
@@ -120,7 +120,7 @@ impl ContentView {
             if let Some(config) = search_config.clone() {
                 let search_input =
                     TextInput::<Message>::new(query.clone(), config.placeholder.clone(), |s| {
-                        Message::Search(s)
+                        Message::Shell(ShellMessage::Search(s))
                     })
                     .variant(Variant::Ghost)
                     .neural_tag("header-search")
@@ -172,7 +172,7 @@ impl ContentView {
                 ToolbarItem::new()
                     .icon("panel-right-open")
                     .active(show_inspector)
-                    .on_press(Message::ToggleInspector)
+                    .on_press(Message::Shell(ShellMessage::ToggleInspector))
                     .view(context),
             );
 
@@ -202,29 +202,29 @@ impl ContentView {
             .push(header_view);
 
         let mut split_view = NavigationSplitView::new(sidebar, content_layout)
-            .force_sidebar_on_slim(self.state.show_sidebar && is_mobile)
-            .sidebar_width(self.state.sidebar_width)
-            .inspector_width(self.state.inspector_width)
-            .on_resize_sidebar(|w| Message::ResizeSidebar(w))
-            .on_resize_inspector(|w| Message::ResizeInspector(w))
-            .on_start_resize_sidebar(Message::StartResizingSidebar)
-            .on_stop_resize_sidebar(Message::StopResizingSidebar)
-            .on_start_resize_inspector(Message::StartResizingInspector)
-            .on_stop_resize_inspector(Message::StopResizingInspector)
-            .is_resizing_sidebar(self.state.is_resizing_sidebar)
-            .is_resizing_inspector(self.state.is_resizing_inspector)
+            .force_sidebar_on_slim(self.state.shell.show_sidebar && is_mobile)
+            .sidebar_width(self.state.interaction.sidebar_width)
+            .inspector_width(self.state.interaction.inspector_width)
+            .on_resize_sidebar(|w| Message::Shell(ShellMessage::ResizeSidebar(w)))
+            .on_resize_inspector(|w| Message::Shell(ShellMessage::ResizeInspector(w)))
+            .on_start_resize_sidebar(Message::Shell(ShellMessage::StartResizingSidebar))
+            .on_stop_resize_sidebar(Message::Shell(ShellMessage::StopResizingSidebar))
+            .on_start_resize_inspector(Message::Shell(ShellMessage::StartResizingInspector))
+            .on_stop_resize_inspector(Message::Shell(ShellMessage::StopResizingInspector))
+            .is_resizing_sidebar(self.state.interaction.is_resizing_sidebar)
+            .is_resizing_inspector(self.state.interaction.is_resizing_inspector)
             .on_none(Message::None);
 
-        if self.state.show_inspector {
+        if self.state.shell.show_inspector {
             let ai_inspector = crate::views::chat::AIChatView::<Message>::new(
                 #[cfg(feature = "intelligence")]
-                self.state.chat_messages.clone(),
+                self.state.intelligence.chat_messages.clone(),
                 #[cfg(feature = "intelligence")]
-                self.state.chat_input.clone(),
+                self.state.intelligence.chat_input.clone(),
                 #[cfg(feature = "intelligence")]
-                self.state.is_thinking,
+                self.state.intelligence.is_thinking,
                 #[cfg(feature = "intelligence")]
-                Message::Chat,
+                |m| Message::Intelligence(IntelligenceMessage::Chat(m)),
             );
 
             let inspector_content: Option<Box<dyn View<Message, IcedBackend>>> =
@@ -239,7 +239,7 @@ impl ContentView {
                             .push(
                                 Button::label("Feature")
                                     .variant(
-                                        if self.state.inspector_tab
+                                        if self.state.interaction.inspector_tab
                                             == super::super::app::InspectorTab::Feature
                                         {
                                             Variant::Soft
@@ -248,14 +248,16 @@ impl ContentView {
                                         },
                                     )
                                     .width(Length::Shrink)
-                                    .on_press(Message::SetInspectorTab(
-                                        super::super::app::InspectorTab::Feature,
+                                    .on_press(Message::Interaction(
+                                        InteractionMessage::SetInspectorTab(
+                                            crate::reference::app::InspectorTab::Theory,
+                                        ),
                                     )),
                             )
                             .push(
                                 Button::label("Assistant")
                                     .variant(
-                                        if self.state.inspector_tab
+                                        if self.state.interaction.inspector_tab
                                             == super::super::app::InspectorTab::App
                                         {
                                             Variant::Soft
@@ -264,15 +266,18 @@ impl ContentView {
                                         },
                                     )
                                     .width(Length::Shrink)
-                                    .on_press(Message::SetInspectorTab(
-                                        super::super::app::InspectorTab::App,
+                                    .on_press(Message::Interaction(
+                                        InteractionMessage::SetInspectorTab(
+                                            super::super::app::InspectorTab::App,
+                                        ),
                                     )),
                             );
 
                         let content: Box<dyn View<Message, IcedBackend>> =
-                            match self.state.inspector_tab {
+                            match self.state.interaction.inspector_tab {
                                 super::super::app::InspectorTab::Feature => Box::new(p_inspector),
                                 super::super::app::InspectorTab::App => Box::new(ai_inspector),
+                                _ => Box::new(p_inspector), // Fallback
                             };
 
                         Some(Box::new(
@@ -296,7 +301,7 @@ impl ContentView {
             if let Some(content) = inspector_content {
                 split_view = split_view
                     .inspector(content)
-                    .on_dismiss_inspector(Message::ToggleInspector);
+                    .on_dismiss_inspector(Message::Shell(ShellMessage::ToggleInspector));
             }
         }
 
@@ -335,25 +340,25 @@ impl ContentView {
         let canvas_manager = CanvasView::new(self.state.clone());
 
         let sidebar = SidebarView::new(
-            self.state.active_tab.clone(),
-            self.state.navigation_mode.clone(),
+            self.state.shell.active_tab.clone(),
+            self.state.shell.navigation_mode.clone(),
         );
 
         let page = canvas_manager.render_page(context);
 
         let mut split_view = NavigationSplitView::new(sidebar, ScrollView::from_boxed(page.view))
-            .force_sidebar_on_slim(self.state.show_sidebar && is_mobile)
-            .sidebar_width(self.state.sidebar_width)
-            .inspector_width(self.state.inspector_width);
+            .force_sidebar_on_slim(self.state.shell.show_sidebar && is_mobile)
+            .sidebar_width(self.state.interaction.sidebar_width)
+            .inspector_width(self.state.interaction.inspector_width);
 
-        if self.state.show_inspector {
+        if self.state.shell.show_inspector {
             if let Some(inspector) = page.inspector {
                 split_view = split_view.inspector(inspector);
             }
         }
 
         crate::core::SemanticNode::new("content_view")
-            .with_label(format!("AppPage: {:?}", self.state.active_tab))
+            .with_label(format!("AppPage: {:?}", self.state.shell.active_tab))
             .push_child(split_view.describe(context))
     }
 }

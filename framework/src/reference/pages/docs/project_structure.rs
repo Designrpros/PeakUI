@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use crate::reference::app::Message;
+use crate::reference::app::{InteractionMessage, Message, ShellMessage};
 use crate::reference::AppPageResult;
 
 pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
@@ -39,14 +39,14 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
                     .push(
                         Button::label("Open GitHub")
                             .variant(Variant::Outline)
-                            .on_press(Message::SetTab(crate::reference::AppPage::Introduction)) // Placeholder
+                            .on_press(Message::Shell(ShellMessage::SetTab(crate::reference::AppPage::Introduction))) // Placeholder
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     )
                     .push(
                         Button::label("Architecture Guide")
                             .variant(Variant::Soft)
-                            .on_press(Message::SetTab(crate::reference::AppPage::Architecture))
+                            .on_press(Message::Shell(ShellMessage::SetTab(crate::reference::AppPage::Architecture)))
                             .size(ControlSize::Large)
                             .width(Length::Fill),
                     ),
@@ -79,7 +79,7 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
             Box::new(
                 crate::views::CodeBlock::new(code.to_string())
                     .language("rust")
-                    .on_copy(Message::CopyCode),
+                    .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
             ) as Box<dyn View<Message, IcedBackend>>
         };
 

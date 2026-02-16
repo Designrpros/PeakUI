@@ -22,6 +22,15 @@ pub struct AccessibilityBridge {
     handlers: Vec<Box<dyn Fn(AccessibilityEvent) + Send + Sync>>,
 }
 
+impl std::fmt::Debug for AccessibilityBridge {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AccessibilityBridge")
+            .field("is_enabled", &self.is_enabled)
+            .field("handlers_count", &self.handlers.len())
+            .finish()
+    }
+}
+
 impl AccessibilityBridge {
     pub fn new() -> Self {
         Self {

@@ -1,9 +1,9 @@
 use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
 
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{IconLabState, Message, RenderMode};
+use crate::reference::app::{IconLabState, LabMessage, Message, RenderMode, ShellMessage};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(
@@ -78,7 +78,7 @@ pub fn view(
                     } else {
                         Variant::Ghost
                     })
-                    .on_press(Message::UpdateIconLabIcon(name_str))
+                    .on_press(Message::Lab(LabMessage::UpdateIconLabIcon(name_str)))
                     .width(Length::Fill)
                     .height(Length::Fixed(140.0)),
             );
@@ -106,7 +106,7 @@ pub fn view(
                         "Load More ({} remaining)",
                         total_count - icon_limit
                     ))
-                    .on_press(Message::LoadMoreIcons)
+                    .on_press(Message::Lab(LabMessage::LoadMoreIcons))
                     .variant(Variant::Solid),
                 )
                 .width(Length::Fill)
@@ -133,7 +133,7 @@ pub fn view(
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Vector Intelligence\nIcons in **PeakUI** are not mere images. They are semantic symbols that the framework understands at a deep level.\n\n- **Crisp Rendering**: Guaranteed sharpness at any scale thanks to SVG/Path-based rendering.\n- **Backend Translation**: In a terminal, icons are mapped to their nearest Unicode or ASCII equivalent.\n- **Semantic Tags**: AI agents use icon names as contextual cues for UI understanding."
     )
@@ -143,7 +143,9 @@ pub fn view(
     .extra_content(library_section);
 
     AppPageResult::new(doc)
-        .searchable("Icons", "Find icon...", |s| Message::Search(s))
+        .searchable("Icons", "Find icon...", |s| {
+            Message::Shell(ShellMessage::Search(s))
+        })
         .inspector(IconInspector::new(lab))
 }
 
@@ -215,7 +217,7 @@ impl View<Message, IcedBackend> for IconInspector {
                 TextInput::<Message, IcedBackend>::new(
                     self.lab.selected_icon.clone(),
                     "Icon name...",
-                    |s| Message::UpdateIconLabIcon(s),
+                    |s| Message::Lab(LabMessage::UpdateIconLabIcon(s)),
                 ),
             ]
             .spacing(8.0),
@@ -226,7 +228,7 @@ impl View<Message, IcedBackend> for IconInspector {
                     .secondary(),
                 hstack![
                     Slider::<Message, IcedBackend>::new(12.0..=128.0, self.lab.size, |v| {
-                        Message::UpdateIconLabSize(v)
+                        Message::Lab(LabMessage::UpdateIconLabSize(v))
                     },)
                     .width(Length::Fill),
                     Text::<IcedBackend>::new(format!("{:.0}", self.lab.size))

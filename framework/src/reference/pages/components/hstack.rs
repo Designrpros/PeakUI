@@ -1,9 +1,7 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
 use crate::reference::app::{Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +25,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(crate::reference::app::LabMessage::SetRenderMode(mode)))
     .theory(
        "### Horizontal Flow\nHorizontal stacks are used for side-by-side elements like toolbars, navigation links, and labeled inputs.\n\n- **Natural Reading Direction**: Maps directly to the human eye's natural scanning pattern in LTR/RTL languages.\n- **Vertical Alignment**: Allows synchronization of elements with different internal heights (Start, Center, End).\n- **Responsive Behavior**: Often paired with `ResponsiveGrid` or `Wrap` components to handle viewport constraints."
     )

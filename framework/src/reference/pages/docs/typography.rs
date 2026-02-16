@@ -1,5 +1,7 @@
 use crate::prelude::*;
-use crate::reference::app::{Message, RenderMode, TypographyLabState};
+use crate::reference::app::{
+    InteractionMessage, LabMessage, Message, RenderMode, TypographyLabState,
+};
 use crate::reference::views::SimulatorView;
 use crate::reference::AppPageResult;
 use crate::views::CodeBlock;
@@ -45,22 +47,22 @@ pub fn view(
                     .push(
                         Button::<Message, IcedBackend>::label("Canvas")
                             .variant(if render_mode == RenderMode::Canvas { Variant::Solid } else { Variant::Ghost })
-                            .on_press(Message::SetRenderMode(RenderMode::Canvas)),
+                            .on_press(Message::Lab(LabMessage::SetRenderMode(RenderMode::Canvas))),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Terminal")
                             .variant(if render_mode == RenderMode::Terminal { Variant::Solid } else { Variant::Ghost })
-                            .on_press(Message::SetRenderMode(RenderMode::Terminal)),
+                            .on_press(Message::Lab(LabMessage::SetRenderMode(RenderMode::Terminal))),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Neural")
                             .variant(if render_mode == RenderMode::Neural { Variant::Solid } else { Variant::Ghost })
-                            .on_press(Message::SetRenderMode(RenderMode::Neural)),
+                            .on_press(Message::Lab(LabMessage::SetRenderMode(RenderMode::Neural))),
                     )
                     .push(
                         Button::<Message, IcedBackend>::label("Spatial")
                             .variant(if render_mode == RenderMode::Spatial { Variant::Solid } else { Variant::Ghost })
-                            .on_press(Message::SetRenderMode(RenderMode::Spatial)),
+                            .on_press(Message::Lab(LabMessage::SetRenderMode(RenderMode::Spatial))),
                     )
                     .view(ctx)
             };
@@ -81,7 +83,7 @@ pub fn view(
                 RenderMode::Terminal => {
                     let ansi = create_preview::<TermBackend>(lab).view(ctx);
                     crate::layout::containers::Card::new(
-                        CodeBlock::new(ansi).transparent().on_copy(Message::CopyCode)
+                        CodeBlock::new(ansi).transparent().on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
                     .padding(0)
@@ -93,7 +95,7 @@ pub fn view(
                     let node = create_preview::<AIBackend>(lab).view(ctx);
                     let json = serde_json::to_string_pretty(&node).unwrap_or_default();
                     crate::layout::containers::Card::new(
-                        CodeBlock::new(json).transparent().on_copy(Message::CopyCode)
+                        CodeBlock::new(json).transparent().on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c)))
                     )
                     .background(iced::Color::from_rgb8(30, 30, 30))
                     .padding(0)
@@ -130,7 +132,7 @@ pub fn view(
                 .spacing(24.0)
                 .width(Length::Fill)
                 .push(Text::new("Usage").title2().bold())
-                .push(CodeBlock::rust(code).on_copy(Message::CopyCode))
+                .push(CodeBlock::rust(code).on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))))
         };
 
         // --- 4. Theory Section ---
@@ -277,7 +279,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                         .push(TextInput::<Message>::new(
                             self.lab.text.clone(),
                             "Enter text...",
-                            |s| Message::UpdateTypographyText(s),
+                            |s| Message::Lab(LabMessage::UpdateTypographyText(s)),
                         )),
                 )
                 .push(
@@ -296,7 +298,7 @@ impl View<Message, IcedBackend> for TypographyInspector {
                                     Slider::<Message, IcedBackend>::new(
                                         12.0..=72.0,
                                         self.lab.size,
-                                        |v| Message::UpdateTypographySize(v),
+                                        |v| Message::Lab(LabMessage::UpdateTypographySize(v)),
                                     )
                                     .width(Length::Fill),
                                 )
@@ -312,10 +314,10 @@ impl View<Message, IcedBackend> for TypographyInspector {
                     VStack::new_generic()
                         .spacing(16.0)
                         .push(Toggle::new("Bold", self.lab.is_bold, |b| {
-                            Message::ToggleTypographyBold(b)
+                            Message::Lab(LabMessage::ToggleTypographyBold(b))
                         }))
                         .push(Toggle::new("Italic", self.lab.is_italic, |b| {
-                            Message::ToggleTypographyItalic(b)
+                            Message::Lab(LabMessage::ToggleTypographyItalic(b))
                         })),
                 ),
         )

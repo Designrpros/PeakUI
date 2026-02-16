@@ -1,9 +1,7 @@
-use crate::core::{AIBackend, Backend, IcedBackend, SpatialBackend, TermBackend};
-
 use crate::prelude::*;
-use crate::reference::AppPageResult;
-use crate::reference::app::{Message, RenderMode};
+use crate::reference::app::{LabMessage, Message, RenderMode};
 use crate::reference::views::ComponentDoc;
+use crate::reference::AppPageResult;
 use std::sync::Arc;
 
 pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
@@ -27,7 +25,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .neural(neural_preview)
     .spatial(spatial_preview)
     .render_mode(render_mode)
-    .on_render_mode_change(|mode| Message::SetRenderMode(mode))
+    .on_render_mode_change(|mode| Message::Lab(LabMessage::SetRenderMode(mode)))
     .theory(
        "### Interop & Web Standards\nWebView provides a bridge between the native PeakUI environment and web-standard content. It is essential for complex embeddings and legacy system integration.\n\n- **Backend Independence**: While primarily a Canvas feature, other kernels treat WebViews as linked resources or semantic containers.\n- **Sandbox Security**: Integrated with PeakOS security layers to ensure web content is isolated from core system memory (Planned)."
     )
