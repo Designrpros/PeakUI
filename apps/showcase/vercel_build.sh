@@ -20,22 +20,30 @@ then
     export PATH="$PWD/bin:$PATH"
 fi
 
-# 4. Clone PeakOS Dependency (Tightly coupled sibling repo)
-echo "Cloning PeakOS dependency for framework bridges..."
+# 4. Clone Dependencies (Tightly coupled sibling repos)
+echo "Cloning dependencies for framework bridges..."
 # We go up two levels from apps/showcase to reach the sibling directory level
 pushd ../.. > /dev/null
-# Check if we are in a Vercel-like environment and PeakOS is missing
+# Check if we are in a Vercel-like environment and dependencies are missing
 if [[ "$PWD" == *"/vercel/path0"* ]] || [[ "$PWD" == *"/vercel/repo"* ]]; then
     pushd /vercel > /dev/null
     if [ ! -d "PeakOS" ]; then
         git clone https://github.com/Designrpros/PeakOS.git
     fi
+    if [ ! -d "PeakDB" ]; then
+        git clone https://github.com/Designrpros/PeakDB.git
+    fi
     popd > /dev/null
 else
     # General fallback for other CI environments
-    if [ ! -d "../PeakOS" ]; then
+    if [ ! -d "../PeakOS" ] || [ ! -d "../PeakDB" ]; then
         pushd .. > /dev/null
-        git clone https://github.com/Designrpros/PeakOS.git
+        if [ ! -d "PeakOS" ]; then
+            git clone https://github.com/Designrpros/PeakOS.git
+        fi
+        if [ ! -d "PeakDB" ]; then
+            git clone https://github.com/Designrpros/PeakDB.git
+        fi
         popd > /dev/null
     fi
 fi

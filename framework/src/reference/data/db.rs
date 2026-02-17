@@ -123,6 +123,25 @@ impl PeakDBBridge {
                 }
             }
         }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                if let Ok(Some(storage)) = window.local_storage() {
+                    if let Ok(Some(content)) = storage.get_item("peak_memory") {
+                        if let Ok(records) = serde_json::from_str::<Vec<SemanticRecord>>(&content) {
+                            if let Ok(mut mutex) = self.storage.lock() {
+                                *mutex = Arc::new(records);
+                                eprintln!(
+                                    "[PeakDB] Loaded {} records from LocalStorage.",
+                                    (**mutex).len()
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn save_to_disk(&self) {
@@ -132,6 +151,19 @@ impl PeakDBBridge {
             if let Ok(storage) = self.storage.lock() {
                 if let Ok(content) = serde_json::to_string_pretty(&**storage) {
                     let _ = std::fs::write(".peak/memory.json", content);
+                }
+            }
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                if let Ok(Some(storage)) = window.local_storage() {
+                    if let Ok(mutex) = self.storage.lock() {
+                        if let Ok(content) = serde_json::to_string(&**mutex) {
+                            let _ = storage.set_item("peak_memory", &content);
+                        }
+                    }
                 }
             }
         }
@@ -177,6 +209,21 @@ impl DataProvider for PeakDBBridge {
                         })
                         .await;
                 }
+
+                #[cfg(target_arch = "wasm32")]
+                {
+                    // For Web, we don't have Global SQLite, so we persist the cache directly
+                    if let Ok(storage) = storage_handle.lock() {
+                        if let Some(window) = web_sys::window() {
+                            if let Ok(Some(local_storage)) = window.local_storage() {
+                                if let Ok(content) = serde_json::to_string(&**storage) {
+                                    let _ = local_storage.set_item("peak_memory", &content);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 Ok(())
             },
             |res| res,
@@ -318,6 +365,20 @@ impl DataProvider for PeakDBBridge {
                     })
                     .await;
             }
+
+            #[cfg(target_arch = "wasm32")]
+            {
+                if let Ok(storage) = storage_handle.lock() {
+                    if let Some(window) = web_sys::window() {
+                        if let Ok(Some(local_storage)) = window.local_storage() {
+                            if let Ok(content) = serde_json::to_string(&**storage) {
+                                let _ = local_storage.set_item("peak_memory", &content);
+                            }
+                        }
+                    }
+                }
+            }
+
             Ok(())
         })
     }
