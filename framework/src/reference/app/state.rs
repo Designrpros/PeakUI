@@ -125,7 +125,7 @@ impl Settings {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ShellState {
     pub active_tab: AppPage,
     pub navigation_mode: String,
@@ -134,13 +134,14 @@ pub struct ShellState {
     pub show_search: bool,
     pub show_user_profile: bool,
     pub search_query: String,
+    #[serde(skip, default)]
     pub expanded_sections: Arc<std::collections::HashSet<String>>,
     pub window_width: f32,
     pub window_height: f32,
     pub localization: Localization,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct IntelligenceState {
     pub chat_messages: Arc<Vec<ChatMessage>>,
     pub chat_input: String,
@@ -155,10 +156,11 @@ pub struct IntelligenceState {
     pub is_deleting: bool,
     pub is_typing: bool,
     #[cfg(feature = "intelligence")]
+    #[serde(skip)]
     pub bridge: Arc<crate::reference::intelligence::bridge::PeakIntelligenceBridge>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LabState {
     pub render_mode: RenderMode,
     pub button: Arc<ButtonLabState>,
@@ -171,7 +173,7 @@ pub struct LabState {
     pub emoji: Arc<EmojiLabState>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct InteractionState {
     pub show_landing: bool,
     pub sidebar_width: f32,
@@ -179,7 +181,9 @@ pub struct InteractionState {
     pub inspector_tab: InspectorTab,
     pub is_resizing_sidebar: bool,
     pub is_resizing_inspector: bool,
+    #[serde(skip)]
     pub context_menu_pos: Option<Point>,
+    #[serde(skip, default = "Point::default")]
     pub last_cursor_pos: Point,
     pub last_copied_code: Option<String>,
     pub pending_sudo_action: Option<SudoAction>,
@@ -190,7 +194,7 @@ pub struct InteractionState {
     pub enable_exposure: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct App {
     pub shell: ShellState,
     pub intelligence: IntelligenceState,
@@ -199,7 +203,9 @@ pub struct App {
 
     // Core Services
     #[cfg(feature = "neural")]
+    #[serde(skip)]
     pub db: Arc<crate::reference::data::db::PeakDBBridge>,
+    #[serde(skip)]
     pub a11y: Arc<crate::engine::accessibility::AccessibilityBridge>,
     pub peak_id: String,
     pub icon_limit: usize,
@@ -216,6 +222,11 @@ impl App {
             };
             settings.save();
         }
+    }
+
+    pub fn save_memory(&self) {
+        #[cfg(feature = "neural")]
+        self.db.save_to_disk();
     }
     pub fn shell_mode(&self) -> ShellMode {
         if self.shell.window_width < 900.0 {
@@ -429,28 +440,6 @@ impl Default for App {
 
         #[cfg(feature = "neural")]
         let db = Arc::new(crate::reference::data::db::PeakDBBridge::new());
-
-        #[cfg(feature = "neural")]
-        {
-            // Seed some initial data for RAG testing
-            let seed_records = vec![
-                ("System", "PeakOS is a decentralized, agent-native operating system designed for the next era of computing."),
-                ("Architecture", "PeakUI uses a multi-kernel bridge architecture, allowing AI agents to perceive and interact with UI elements semantically."),
-                ("Security", "Neural Sudo is a high-security interception layer that ensures no AI action of high privilege is executed without explicit user consent."),
-            ];
-
-            for (i, (collection, content)) in seed_records.into_iter().enumerate() {
-                let record = crate::core::SemanticRecord {
-                    id: format!("seed-{}", i),
-                    collection: collection.to_string(),
-                    content: content.to_string(),
-                    vector: None,
-                    metadata: serde_json::json!({}),
-                    timestamp: 0,
-                };
-                let _ = db.save(record);
-            }
-        }
 
         #[cfg(feature = "intelligence")]
         let intelligence_bridge = Arc::new(

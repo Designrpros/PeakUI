@@ -1,15 +1,19 @@
 use crate::prelude::*;
-use crate::views::{ChatMessage, ChatRole};
-use crate::views::chat::ChatViewMessage;
 #[cfg(feature = "intelligence")]
 use crate::reference::intelligence::Action;
+#[cfg(feature = "intelligence")]
+use crate::views::chat::ChatViewMessage;
+use crate::views::{ChatMessage, ChatRole};
 // #[cfg(feature = "intelligence")]
 // use peak_theme::ThemeTone;
 use std::sync::Arc;
 // #[cfg(feature = "intelligence")]
 // use crate::core::Context;
 
-use super::message::{Message, ShellMessage, IntelligenceMessage, LabMessage, InteractionMessage};
+#[cfg(feature = "intelligence")]
+use super::message::IntelligenceMessage;
+use super::message::InteractionMessage;
+use super::message::{LabMessage, Message, ShellMessage};
 use super::state::*;
 use crate::reference::AppPage;
 
@@ -21,8 +25,9 @@ impl App {
                     log::info!("SetTab: {:?}", tab);
                     self.shell.active_tab = tab.clone();
                     self.shell.show_search = false;
-                    
-                    self.shell.navigation_mode = match tab.navigation_mode().to_lowercase().as_str() {
+
+                    self.shell.navigation_mode = match tab.navigation_mode().to_lowercase().as_str()
+                    {
                         "start" | "guide" => "Start".to_string(),
                         "catalog" | "components" => "Catalog".to_string(),
                         "data" | "ecosystem" => "Data".to_string(),
@@ -32,7 +37,10 @@ impl App {
 
                     // Auto-enable inspector for lab pages
                     match tab {
-                        AppPage::Button | AppPage::Typography | AppPage::BasicSizing | AppPage::Layout => {
+                        AppPage::Button
+                        | AppPage::Typography
+                        | AppPage::BasicSizing
+                        | AppPage::Layout => {
                             self.shell.show_inspector = true;
                         }
                         _ => {}
@@ -45,7 +53,12 @@ impl App {
 
                     // Landing visibility
                     match tab {
-                        AppPage::Landing | AppPage::PeakOSDetail | AppPage::PeakUIDetail | AppPage::PeakDBDetail | AppPage::PeakRelayDetail | AppPage::PeakHubDetail => {
+                        AppPage::Landing
+                        | AppPage::PeakOSDetail
+                        | AppPage::PeakUIDetail
+                        | AppPage::PeakDBDetail
+                        | AppPage::PeakRelayDetail
+                        | AppPage::PeakHubDetail => {
                             self.interaction.show_landing = true;
                             if self.shell.window_width < 900.0 && tab == AppPage::Landing {
                                 self.shell.show_sidebar = true;
@@ -117,7 +130,8 @@ impl App {
                 }
                 ShellMessage::OpenUrl(url) => {
                     #[cfg(target_arch = "wasm32")]
-                    let _ = web_sys::window().and_then(|w| w.open_with_url_and_target(&url, "_blank").ok());
+                    let _ = web_sys::window()
+                        .and_then(|w| w.open_with_url_and_target(&url, "_blank").ok());
                     #[cfg(not(target_arch = "wasm32"))]
                     let _ = open::that(url);
                     Task::none()
@@ -177,13 +191,13 @@ impl App {
                                 .map(|win| win.navigator().clipboard().write_text(&code));
                         }
                         Task::perform(
-                            async { 
+                            async {
                                 #[cfg(target_arch = "wasm32")]
                                 wasmtimer::tokio::sleep(std::time::Duration::from_secs(2)).await;
                                 #[cfg(not(target_arch = "wasm32"))]
                                 tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
                             },
-                            |_| Message::Interaction(InteractionMessage::ClearCopiedFeedback)
+                            |_| Message::Interaction(InteractionMessage::ClearCopiedFeedback),
                         )
                     }
                 },
@@ -265,9 +279,16 @@ impl App {
                 #[cfg(feature = "intelligence")]
                 IntelligenceMessage::ProcessToolResult(name, result) => {
                     log::info!("Tool result: {} -> {:?}", name, result);
-                    
+
                     let result_str = if result.is_object() && result.get("error").is_some() {
-                        format!("Tool '{}' failed: {}", name, result.get("error").and_then(|e| e.as_str()).unwrap_or("Unknown error"))
+                        format!(
+                            "Tool '{}' failed: {}",
+                            name,
+                            result
+                                .get("error")
+                                .and_then(|e| e.as_str())
+                                .unwrap_or("Unknown error")
+                        )
                     } else {
                         format!("[result:{}] {}", name, result)
                     };
@@ -433,13 +454,13 @@ impl App {
                             .map(|win| win.navigator().clipboard().write_text(&code));
                     }
                     Task::perform(
-                        async { 
+                        async {
                             #[cfg(target_arch = "wasm32")]
                             wasmtimer::tokio::sleep(std::time::Duration::from_secs(2)).await;
                             #[cfg(not(target_arch = "wasm32"))]
                             tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
                         },
-                        |_| Message::Interaction(InteractionMessage::ClearCopiedFeedback)
+                        |_| Message::Interaction(InteractionMessage::ClearCopiedFeedback),
                     )
                 }
                 InteractionMessage::ClearCopiedFeedback => {
@@ -502,23 +523,37 @@ impl App {
                 if !self.interaction.show_landing {
                     return Task::none();
                 }
-                let phrases = ["Say hello", "Change tone to dark", "Navigate to button lab", "Set button variant to compact"];
-                let current_phrase = phrases[self.intelligence.typewriter_phrase_index % phrases.len()];
+                let phrases = [
+                    "Say hello",
+                    "Change tone to dark",
+                    "Navigate to button lab",
+                    "Set button variant to compact",
+                ];
+                let current_phrase =
+                    phrases[self.intelligence.typewriter_phrase_index % phrases.len()];
 
                 if self.intelligence.is_deleting {
                     if self.intelligence.typewriter_index > 0 {
-                        self.intelligence.typewriter_index = self.intelligence.typewriter_index.saturating_sub(1);
-                        self.intelligence.typewriter_text = current_phrase.chars().take(self.intelligence.typewriter_index).collect();
+                        self.intelligence.typewriter_index =
+                            self.intelligence.typewriter_index.saturating_sub(1);
+                        self.intelligence.typewriter_text = current_phrase
+                            .chars()
+                            .take(self.intelligence.typewriter_index)
+                            .collect();
                     } else {
                         self.intelligence.is_deleting = false;
-                        self.intelligence.typewriter_phrase_index = (self.intelligence.typewriter_phrase_index + 1) % phrases.len();
+                        self.intelligence.typewriter_phrase_index =
+                            (self.intelligence.typewriter_phrase_index + 1) % phrases.len();
                     }
                 } else {
                     let target_len = current_phrase.chars().count();
                     if self.intelligence.typewriter_index < target_len + 15 {
                         self.intelligence.typewriter_index += 1;
                         if self.intelligence.typewriter_index <= target_len {
-                            self.intelligence.typewriter_text = current_phrase.chars().take(self.intelligence.typewriter_index).collect();
+                            self.intelligence.typewriter_text = current_phrase
+                                .chars()
+                                .take(self.intelligence.typewriter_index)
+                                .collect();
                         }
                     } else {
                         self.intelligence.is_deleting = true;
@@ -542,6 +577,8 @@ impl App {
                     self.interaction.inspector_tab = InspectorTab::App;
                     #[cfg(feature = "intelligence")]
                     return self.start_ai_chat(query);
+                    #[cfg(not(feature = "intelligence"))]
+                    let _ = query;
                 }
                 Task::none()
             }
@@ -594,26 +631,34 @@ impl App {
     pub fn ai_chat_completion(&mut self) -> Task<Message> {
         self.intelligence.is_thinking = true;
         let system_prompt = self.get_system_prompt();
-        let mut history: Vec<crate::core::ChatCompletionMessage> = self.intelligence.chat_messages.iter().map(|m| {
-            crate::core::ChatCompletionMessage {
+        let mut history: Vec<crate::core::ChatCompletionMessage> = self
+            .intelligence
+            .chat_messages
+            .iter()
+            .map(|m| crate::core::ChatCompletionMessage {
                 role: match m.role {
                     ChatRole::System => "system".to_string(),
                     ChatRole::User => "user".to_string(),
                     ChatRole::Assistant => "assistant".to_string(),
                 },
                 content: m.content.clone(),
-            }
-        }).collect();
-        history.insert(0, crate::core::ChatCompletionMessage {
-            role: "system".to_string(),
-            content: system_prompt,
-        });
+            })
+            .collect();
+        history.insert(
+            0,
+            crate::core::ChatCompletionMessage {
+                role: "system".to_string(),
+                content: system_prompt,
+            },
+        );
 
         let stream = self.intelligence.bridge.chat_stream(history);
         use crate::prelude::futures::StreamExt;
-        let mapped_stream = stream.map(|res| Message::Intelligence(IntelligenceMessage::ChatStreamUpdate(res))).chain(
-            crate::prelude::futures::stream::once(async { Message::Intelligence(IntelligenceMessage::AIChatComplete) }),
-        );
+        let mapped_stream = stream
+            .map(|res| Message::Intelligence(IntelligenceMessage::ChatStreamUpdate(res)))
+            .chain(crate::prelude::futures::stream::once(async {
+                Message::Intelligence(IntelligenceMessage::AIChatComplete)
+            }));
         Task::stream(mapped_stream)
     }
 
@@ -624,47 +669,123 @@ impl App {
         for action in actions {
             match action {
                 Action::Navigate(page) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Shell(ShellMessage::SetTab(page.clone()))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Shell(ShellMessage::SetTab(page.clone()))
+                    }));
                 }
                 Action::SetButtonVariant(v) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Lab(LabMessage::UpdateButtonVariant(v))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Lab(LabMessage::UpdateButtonVariant(v))
+                    }));
                 }
                 Action::SetButtonIntent(i) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Lab(LabMessage::UpdateButtonIntent(i))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Lab(LabMessage::UpdateButtonIntent(i))
+                    }));
                 }
                 Action::SetThemeKind(k) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Interaction(InteractionMessage::SetThemeKind(k))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Interaction(InteractionMessage::SetThemeKind(k))
+                    }));
                 }
                 Action::SetThemeTone(t) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Interaction(InteractionMessage::SetTheme(t))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Interaction(InteractionMessage::SetTheme(t))
+                    }));
                 }
                 Action::SetLabMode(m) => {
-                    tasks.push(Task::perform(async {}, move |_| Message::Lab(LabMessage::SetRenderMode(m))));
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Lab(LabMessage::SetRenderMode(m))
+                    }));
                 }
                 Action::WebSearch(query) => {
-                    tasks.push(self.intelligence.bridge.execute_tool("web_search".to_string(), serde_json::json!({ "query": query }))
-                        .map(|res| Message::Intelligence(IntelligenceMessage::ProcessToolResult("web_search".to_string(), res.unwrap_or_else(|e| serde_json::json!({"error": e}))))));
+                    tasks.push(
+                        self.intelligence
+                            .bridge
+                            .execute_tool(
+                                "web_search".to_string(),
+                                serde_json::json!({ "query": query }),
+                            )
+                            .map(|res| {
+                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
+                                    "web_search".to_string(),
+                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
+                                ))
+                            }),
+                    );
                 }
                 Action::ReadFile(path) => {
-                    tasks.push(self.intelligence.bridge.execute_tool("read_file".to_string(), serde_json::json!({ "path": path }))
-                        .map(move |res| Message::Intelligence(IntelligenceMessage::ProcessToolResult("read_file".to_string(), res.unwrap_or_else(|e| serde_json::json!({"error": e}))))));
+                    tasks.push(
+                        self.intelligence
+                            .bridge
+                            .execute_tool(
+                                "read_file".to_string(),
+                                serde_json::json!({ "path": path }),
+                            )
+                            .map(move |res| {
+                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
+                                    "read_file".to_string(),
+                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
+                                ))
+                            }),
+                    );
                 }
                 Action::WriteFile { path, content } => {
-                    tasks.push(self.intelligence.bridge.execute_tool("write_file".to_string(), serde_json::json!({ "path": path, "content": content }))
-                        .map(move |res| Message::Intelligence(IntelligenceMessage::ProcessToolResult("write_file".to_string(), res.unwrap_or_else(|e| serde_json::json!({"error": e}))))));
+                    tasks.push(
+                        self.intelligence
+                            .bridge
+                            .execute_tool(
+                                "write_file".to_string(),
+                                serde_json::json!({ "path": path, "content": content }),
+                            )
+                            .map(move |res| {
+                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
+                                    "write_file".to_string(),
+                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
+                                ))
+                            }),
+                    );
                 }
                 Action::Shell(command) => {
-                    tasks.push(self.intelligence.bridge.execute_tool("shell".to_string(), serde_json::json!({ "command": command }))
-                        .map(move |res| Message::Intelligence(IntelligenceMessage::ProcessToolResult("shell".to_string(), res.unwrap_or_else(|e| serde_json::json!({"error": e}))))));
+                    tasks.push(
+                        self.intelligence
+                            .bridge
+                            .execute_tool(
+                                "shell".to_string(),
+                                serde_json::json!({ "command": command }),
+                            )
+                            .map(move |res| {
+                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
+                                    "shell".to_string(),
+                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
+                                ))
+                            }),
+                    );
                 }
                 Action::Memorize(content) => {
-                    tasks.push(self.intelligence.bridge.execute_tool("memorize".to_string(), serde_json::json!({ "content": content }))
-                        .map(move |res| Message::Intelligence(IntelligenceMessage::ProcessToolResult("memorize".to_string(), res.unwrap_or_else(|e| serde_json::json!({"error": e}))))));
+                    tasks.push(
+                        self.intelligence
+                            .bridge
+                            .execute_tool(
+                                "memorize".to_string(),
+                                serde_json::json!({ "content": content }),
+                            )
+                            .map(move |res| {
+                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
+                                    "memorize".to_string(),
+                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
+                                ))
+                            }),
+                    );
                 }
                 _ => {}
             }
         }
-        if tasks.is_empty() { Task::none() } else { Task::batch(tasks) }
+        if tasks.is_empty() {
+            Task::none()
+        } else {
+            Task::batch(tasks)
+        }
     }
 
     #[cfg(feature = "intelligence")]
@@ -676,7 +797,6 @@ impl App {
         format!("You are PeakUI AI Assistant. Help the user explore the framework.\n\nUI CONTEXT:\n{}\n", ui_json)
     }
 
-
     #[cfg(feature = "intelligence")]
     fn reload_intelligence_bridge(&mut self) {
         let provider = match self.intelligence.ai_provider {
@@ -684,16 +804,24 @@ impl App {
             AIProviderChoice::LlamaCpp => peak_intelligence::llm::ModelProvider::LlamaCpp,
             AIProviderChoice::OpenRouter => peak_intelligence::llm::ModelProvider::OpenRouter,
         };
-        self.intelligence.bridge = Arc::new(crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
-            provider,
-            match provider {
-                peak_intelligence::llm::ModelProvider::Ollama => "llama3",
-                _ => "google/gemini-3-flash-preview",
-            },
-            if self.intelligence.api_key.is_empty() { None } else { Some(self.intelligence.api_key.clone()) },
-            #[cfg(feature = "neural")] self.db.clone(),
-            #[cfg(not(feature = "neural"))] Arc::new(crate::reference::data::stub_db::StubDB::new()),
-        ));
+        self.intelligence.bridge = Arc::new(
+            crate::reference::intelligence::bridge::PeakIntelligenceBridge::new(
+                provider,
+                match provider {
+                    peak_intelligence::llm::ModelProvider::Ollama => "llama3",
+                    _ => "google/gemini-3-flash-preview",
+                },
+                if self.intelligence.api_key.is_empty() {
+                    None
+                } else {
+                    Some(self.intelligence.api_key.clone())
+                },
+                #[cfg(feature = "neural")]
+                self.db.clone(),
+                #[cfg(not(feature = "neural"))]
+                Arc::new(crate::reference::data::stub_db::StubDB::new()),
+            ),
+        );
     }
 
     #[cfg(target_os = "macos")]
@@ -706,7 +834,7 @@ impl IntelligenceState {
     pub fn append_message(&mut self, msg: ChatMessage) {
         Arc::make_mut(&mut self.chat_messages).push(msg);
     }
-    
+
     pub fn update_last_message_delta(&mut self, _delta: &str) {
         // Logic for streaming updates already inlined in update
     }

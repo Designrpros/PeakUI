@@ -47,4 +47,21 @@ impl DataProvider for StubDB {
         use iced::futures::FutureExt;
         async { Ok(Vec::new()) }.boxed()
     }
+
+    fn async_save(
+        &self,
+        _record: SemanticRecord,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<(), String>> {
+        use iced::futures::FutureExt;
+        async { Ok(()) }.boxed()
+    }
+
+    fn async_find_semantic(
+        &self,
+        _vector: Vec<f32>,
+        _limit: usize,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>> {
+        use iced::futures::FutureExt;
+        async { Ok(Vec::new()) }.boxed()
+    }
 }

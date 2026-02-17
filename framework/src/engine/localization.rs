@@ -4,10 +4,16 @@ use unic_langid::LanguageIdentifier;
 
 /// A handle to the localization engine.
 /// This is meant to be stored in the App's Context.
-#[derive(Clone)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct Localization {
     pub language: LanguageIdentifier,
+    #[serde(skip, default = "default_bundle")]
     bundle: Arc<FluentBundle<FluentResource>>,
+}
+
+fn default_bundle() -> Arc<FluentBundle<FluentResource>> {
+    let lang_id: LanguageIdentifier = "en-US".parse().unwrap();
+    Arc::new(FluentBundle::new(vec![lang_id]))
 }
 
 impl std::fmt::Debug for Localization {

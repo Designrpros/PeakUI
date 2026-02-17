@@ -7,7 +7,7 @@ use std::sync::Arc;
 /// 1. **State Optimization**: All lab and app states are consolidated here.
 /// 2. **Performance**: Large collections (chat messages, DB records) are wrapped in `Arc` for pointer-speed cloning.
 /// 3. **AI Introspection**: By deriving `Serialize`, the entire state can be dumped to JSON for AI agents to understand the app's internal "thought process."
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ViewState {
     pub shell: ShellState,
     pub intelligence: IntelligenceState,
@@ -16,6 +16,7 @@ pub struct ViewState {
 
     // Services / Global Data
     pub icon_limit: usize,
+    #[serde(skip, default)]
     pub db_records: Arc<Vec<crate::core::SemanticRecord>>,
 }
 

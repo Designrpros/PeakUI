@@ -31,6 +31,12 @@ impl std::fmt::Debug for AccessibilityBridge {
     }
 }
 
+impl Default for AccessibilityBridge {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl AccessibilityBridge {
     pub fn new() -> Self {
         Self {

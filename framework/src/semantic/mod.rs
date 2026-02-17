@@ -135,6 +135,17 @@ pub trait DataProvider: Send + Sync {
         &self,
         query: String,
     ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>>;
+
+    fn async_save(
+        &self,
+        record: SemanticRecord,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<(), String>>;
+
+    fn async_find_semantic(
+        &self,
+        vector: Vec<f32>,
+        limit: usize,
+    ) -> iced::futures::future::BoxFuture<'static, std::result::Result<Vec<SemanticRecord>, String>>;
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

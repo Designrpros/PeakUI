@@ -11,14 +11,18 @@ fn test_view_state_serialization() {
     println!("Serialized ViewState: {}", json);
 
     // Basic assertions
-    assert!(json.contains("active_tab"));
-    assert!(json.contains("button_lab"));
-    assert!(json.contains("typography_lab"));
+    assert!(json.contains("shell"));
+    assert!(json.contains("intelligence"));
+    assert!(json.contains("labs"));
+    assert!(json.contains("interaction"));
 
     // Test deserialization back
     let deserialized: ViewState =
         serde_json::from_str(&json).expect("Failed to deserialize ViewState");
 
-    assert_eq!(state.active_tab, deserialized.active_tab);
-    assert_eq!(state.is_thinking, deserialized.is_thinking);
+    assert_eq!(state.shell.active_tab, deserialized.shell.active_tab);
+    assert_eq!(
+        state.intelligence.is_thinking,
+        deserialized.intelligence.is_thinking
+    );
 }

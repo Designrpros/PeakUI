@@ -15,7 +15,7 @@ peak-core = { path = "../crates/peak-core", default-features = false }
 peak-theme = { path = "../crates/peak-theme", default-features = false }
 peak-icons = { path = "../crates/peak-icons" }
 peak-intelligence = { path = "../crates/peak-intelligence", default-features = false, optional = true }
-peak-db = { path = "../../PeakOS/crates/peak-db", optional = true }
+peak-db = { package = "peak_db", path = "../../PeakDB", optional = true }
 iced_widget = { version = "0.14", default-features = false, features = ["lazy"] }
 serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
@@ -24,11 +24,13 @@ nalgebra = { version = "0.33", features = ["serde-serialize"] }
 reqwest = { version = "0.11", default-features = false, features = ["json", "stream"] }
 fluent = "0.17.0"
 fluent-bundle = "0.16.0"
-unic-langid = "0.9.6"
+unic-langid = { version = "0.9.6", features = ["serde"] }
 fluent-langneg = "0.14.2"
 intl-memoizer = "0.5.3"
 async-stream = "0.3"
 futures = "0.3"
+uuid = { version = "1.10", features = ["v4", "serde", "js"] }
+chrono = { version = "0.4", features = ["serde"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 iced = { version = "0.14", default-features = false, features = ["canvas", "advanced", "image", "svg", "lazy", "debug", "fira-sans"] }
@@ -74,6 +76,7 @@ native = [
     "intelligence",
     "peak-intelligence/native",
     "peak-intelligence/llm",
+    "neural",
 ]
 tokio = ["iced/tokio"]
 wasm = ["iced/canvas", "peak-core/wasm", "peak-theme/wasm"]

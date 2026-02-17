@@ -1,4 +1,6 @@
-use super::super::app::{App, IntelligenceMessage, InteractionMessage, Message, ShellMessage};
+#[cfg(feature = "intelligence")]
+use super::super::app::IntelligenceMessage;
+use super::super::app::{App, Message, ShellMessage};
 use super::{CanvasView, SidebarView, TabBarView};
 use crate::layout::nav_split_view::NavigationSplitView;
 use crate::prelude::*;
@@ -249,7 +251,7 @@ impl ContentView {
                                     )
                                     .width(Length::Shrink)
                                     .on_press(Message::Interaction(
-                                        InteractionMessage::SetInspectorTab(
+                                        super::super::app::InteractionMessage::SetInspectorTab(
                                             crate::reference::app::InspectorTab::Theory,
                                         ),
                                     )),
@@ -267,7 +269,7 @@ impl ContentView {
                                     )
                                     .width(Length::Shrink)
                                     .on_press(Message::Interaction(
-                                        InteractionMessage::SetInspectorTab(
+                                        super::super::app::InteractionMessage::SetInspectorTab(
                                             super::super::app::InspectorTab::App,
                                         ),
                                     )),

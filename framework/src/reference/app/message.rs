@@ -104,6 +104,7 @@ pub enum InteractionMessage {
 #[derive(Debug, Clone)]
 pub enum Message {
     Shell(ShellMessage),
+    #[cfg(feature = "intelligence")]
     Intelligence(IntelligenceMessage),
     Lab(LabMessage),
     Interaction(InteractionMessage),

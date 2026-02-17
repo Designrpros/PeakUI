@@ -46,6 +46,63 @@ impl LlmClient {
         }
     }
 
+    pub async fn embeddings(&self, text: &str) -> Result<Vec<f32>, String> {
+        match self.provider {
+            ModelProvider::Ollama => self.embeddings_ollama(text).await,
+            ModelProvider::LlamaCpp => self.embeddings_llamacpp(text).await,
+            ModelProvider::OpenRouter => Err("Embeddings not yet supported for OpenRouter".to_string()),
+        }
+    }
+
+    async fn embeddings_ollama(&self, text: &str) -> Result<Vec<f32>, String> {
+        let url = "http://localhost:11434/api/embeddings";
+        let body = serde_json::json!({
+            "model": self.model,
+            "prompt": text
+        });
+
+        let res = crate::http::HttpClient::post_json(url, &body)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if res.status != 200 {
+            return Err(format!("Ollama embeddings error: {}", res.status));
+        }
+
+        let json: Value = res.json().map_err(|e| e.to_string())?;
+        
+        json["embedding"]
+            .as_array()
+            .ok_or("Invalid response format from Ollama embeddings")?
+            .iter()
+            .map(|v| v.as_f64().map(|f| f as f32).ok_or("Invalid float in embedding".to_string()))
+            .collect()
+    }
+
+    async fn embeddings_llamacpp(&self, text: &str) -> Result<Vec<f32>, String> {
+        let url = "http://localhost:8080/embedding";
+        let body = serde_json::json!({
+            "content": text
+        });
+
+        let res = crate::http::HttpClient::post_json(url, &body)
+            .await
+            .map_err(|e| e.to_string())?;
+
+        if res.status != 200 {
+            return Err(format!("Llama.cpp embeddings error: {}", res.status));
+        }
+
+        let json: Value = res.json().map_err(|e| e.to_string())?;
+        
+        json["embedding"]
+            .as_array()
+            .ok_or("Invalid response format from Llama.cpp embeddings")?
+            .iter()
+            .map(|v| v.as_f64().map(|f| f as f32).ok_or("Invalid float in embedding".to_string()))
+            .collect()
+    }
+
     #[cfg(not(target_arch = "wasm32"))]
     pub fn chat_stream(
         &self,

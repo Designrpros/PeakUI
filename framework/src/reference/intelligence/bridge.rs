@@ -1,9 +1,11 @@
 #![cfg(feature = "intelligence")]
 use crate::core::IntelligenceProvider;
+use chrono;
 use iced::Task;
 use peak_intelligence::llm::{LlmClient, Message, ModelProvider};
 use serde_json::Value;
 use std::sync::Arc;
+use uuid;
 
 pub struct PeakIntelligenceBridge {
     client: LlmClient,
@@ -24,6 +26,17 @@ impl Clone for PeakIntelligenceBridge {
             client: self.client.clone(),
             db: self.db.clone(),
         }
+    }
+}
+
+impl Default for PeakIntelligenceBridge {
+    fn default() -> Self {
+        Self::new(
+            ModelProvider::Ollama,
+            "llama3",
+            None,
+            Arc::new(crate::reference::data::stub_db::StubDB::new()),
+        )
     }
 }
 
@@ -86,19 +99,38 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
 
                 // 1. RAG: Search for context if we have a user message
                 if let Some(user_msg) = messages_clone.iter().rev().find(|m| m.role == "user") {
-                    if let Ok(records) = db.async_find(user_msg.content.clone()).await {
-                        if !records.is_empty() {
-                            let context = records
-                                .iter()
-                                .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
-                                .collect::<Vec<_>>()
-                                .join("\n");
+                    let client = client.clone();
+                    let db = db.clone();
+                    let query = user_msg.content.clone();
 
-                            final_messages.push(Message {
-                                role: "system".to_string(),
-                                content: format!("Relevant context from PeakDB:\n{}", context),
-                            });
+                    let mut final_records = Vec::new();
+                    // Try semantic search first
+                    if let Ok(vector) = client.embeddings(&query).await {
+                        if let Ok(semantic_records) = db.async_find_semantic(vector, 10).await {
+                            final_records = semantic_records;
                         }
+                    }
+
+                    // Fallback/Supplement with keyword search
+                    if let Ok(keyword_records) = db.async_find(query).await {
+                        for r in keyword_records {
+                            if !final_records.iter().any(|existing| existing.id == r.id) {
+                                final_records.push(r);
+                            }
+                        }
+                    }
+
+                    if !final_records.is_empty() {
+                        let context = final_records
+                            .iter()
+                            .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
+                            .collect::<Vec<_>>()
+                            .join("\n");
+
+                        final_messages.push(Message {
+                            role: "system".to_string(),
+                            content: format!("### LONG-TERM MEMORY (Neural Layer)\nThe following information was retrieved from your persistent memory bank. Priority context:\n\n{}", context),
+                        });
                     }
                 }
 
@@ -262,6 +294,8 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
 
     fn execute_tool(&self, name: String, args: Value) -> Task<std::result::Result<Value, String>> {
         let name_clone = name.clone();
+        let client = self.client.clone();
+        let db = self.db.clone();
 
         Task::perform(
             async move {
@@ -328,6 +362,37 @@ impl IntelligenceProvider for PeakIntelligenceBridge {
                     #[cfg(feature = "native")]
                     "list_processes" => {
                         peak_intelligence::tools::list_processes().map_err(|e| e.to_string())
+                    }
+                    "memorize" => {
+                        let content = args.get("content").and_then(|v| v.as_str()).unwrap_or("");
+                        if content.is_empty() {
+                            return Ok(
+                                serde_json::json!({ "status": "error", "message": "No content provided" }),
+                            );
+                        }
+
+                        let db = db.clone();
+                        let client = client.clone();
+                        let content_owned = content.to_string();
+
+                        // Generate embedding for the new memory
+                        let vector = client.embeddings(&content_owned).await.ok();
+
+                        let record = crate::semantic::SemanticRecord {
+                            id: uuid::Uuid::new_v4().to_string(),
+                            collection: "Memory".to_string(),
+                            content: content_owned,
+                            vector,
+                            metadata: serde_json::json!({}),
+                            timestamp: chrono::Utc::now().timestamp() as u64,
+                        };
+
+                        db.async_save(record).await?;
+
+                        Ok(serde_json::json!({
+                            "status": "success",
+                            "message": "Information saved to memory with semantic embedding."
+                        }))
                     }
                     _ => Ok(serde_json::json!({
                         "status": "success",
