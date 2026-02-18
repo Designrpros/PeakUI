@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 /// A customizable button component that supports labels, icons, and various intents/variants.
 pub struct Button<Message, B: crate::core::Backend = crate::core::IcedBackend> {
-    content: Box<dyn View<Message, B>>,
+    content: Box<dyn View<Message, B> + Send + Sync>,
     icon: Option<Cow<'static, str>>,
     on_press: Option<Message>,
     intent: Intent,
@@ -29,7 +29,7 @@ pub enum ButtonStyle {
 }
 
 impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> Button<Message, B> {
-    pub fn new(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             content: Box::new(content),
             icon: None,
@@ -422,6 +422,8 @@ impl<Message: Clone + Send + Sync + 'static, B: crate::core::Backend> View<Messa
             })
     }
 }
+pub type TextField<Message, B = crate::core::IcedBackend> = TextInput<Message, B>;
+
 pub struct TextInput<Message: Clone + Send + Sync + 'static, B: Backend = crate::core::IcedBackend>
 {
     value: String,
@@ -535,5 +537,138 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
                 value: Some(value),
                 ..Default::default()
             })
+    }
+}
+
+pub struct TextEditor<Message: Clone + Send + Sync + 'static, B: Backend = crate::core::IcedBackend>
+{
+    content: String,
+    on_change: Arc<dyn Fn(String) -> Message + Send + Sync>,
+    font: Option<iced::Font>,
+    width: Length,
+    height: Length,
+    id: Option<iced::widget::Id>,
+    _phantom: std::marker::PhantomData<B>,
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> TextEditor<Message, B> {
+    pub fn new(
+        content: impl Into<String>,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+    ) -> Self {
+        Self {
+            content: content.into(),
+            on_change: Arc::new(on_change),
+            font: None,
+            width: Length::Fill,
+            height: Length::Fixed(200.0),
+            id: None,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn id(mut self, id: iced::widget::Id) -> Self {
+        self.id = Some(id);
+        self
+    }
+
+    pub fn width(mut self, width: Length) -> Self {
+        self.width = width;
+        self
+    }
+
+    pub fn height(mut self, height: Length) -> Self {
+        self.height = height;
+        self
+    }
+
+    pub fn font(mut self, font: iced::Font) -> Self {
+        self.font = Some(font);
+        self
+    }
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for TextEditor<Message, B>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let on_change = self.on_change.clone();
+        let editor = B::text_editor(
+            self.content.clone(),
+            move |s| (on_change)(s),
+            self.font.clone(),
+            self.id.clone(),
+            context,
+        );
+
+        B::container(
+            editor,
+            Padding::from(1),
+            self.width,
+            self.height,
+            Some(context.theme.colors.surface),
+            4.0,
+            1.0,
+            Some(context.theme.colors.border.scale_alpha(0.5)),
+            None,
+            Alignment::Start,
+            Alignment::Start,
+            context,
+        )
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode::new("text_editor")
+            .with_content(self.content.clone())
+            .with_accessibility(crate::core::AccessibilityNode {
+                role: crate::core::AccessibilityRole::TextArea,
+                label: "Text Editor".into(),
+                value: Some(self.content.clone().into()),
+                ..Default::default()
+            })
+    }
+}
+
+pub struct Menu<Message: Clone + Send + Sync + 'static, B: Backend = crate::core::IcedBackend> {
+    items: Vec<crate::views::context_menu::ContextMenuItem<Message>>,
+    _phantom: std::marker::PhantomData<B>,
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> Menu<Message, B> {
+    pub fn new() -> Self {
+        Self {
+            items: Vec::new(),
+            _phantom: std::marker::PhantomData,
+        }
+    }
+
+    pub fn item(
+        mut self,
+        label: impl Into<String>,
+        icon: impl Into<String>,
+        action: Message,
+    ) -> Self {
+        self.items
+            .push(crate::views::context_menu::ContextMenuItem {
+                label: label.into(),
+                icon: icon.into(),
+                action,
+            });
+        self
+    }
+}
+
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B> for Menu<Message, B> {
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let mut cm = crate::views::context_menu::ContextMenu::<Message, B>::new();
+        for item in &self.items {
+            cm = cm.item(item.label.clone(), item.icon.clone(), item.action.clone());
+        }
+        B::menu(cm.view(context), self.items.clone(), context)
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode::new("menu")
+            .with_label(format!("Menu ({} items)", self.items.len()))
     }
 }

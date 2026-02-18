@@ -1,5 +1,5 @@
-use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, ScrollDirection, SemanticNode, View};
+use crate::elements::atoms::{Icon, Text};
 use crate::layout::{HStack, VStack};
 use crate::style::{Intent, Variant};
 use iced::{Alignment, Color, Length, Padding};
@@ -25,16 +25,16 @@ pub struct SearchConfig {
 
 /// The result of a page view, including its view and metadata.
 pub struct PageResult<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    pub view: Box<dyn View<Message, B>>,
+    pub view: Box<dyn View<Message, B> + Send + Sync>,
     pub title: String,
-    pub inspector: Option<Box<dyn View<Message, B>>>,
+    pub inspector: Option<Box<dyn View<Message, B> + Send + Sync>>,
     pub search_config: Option<SearchConfig>,
-    pub toolbar_items: Vec<Box<dyn View<Message, B>>>,
+    pub toolbar_items: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     pub sidebar_toggle: Option<Message>,
 }
 
 impl<Message: 'static + Send + Sync, B: Backend> PageResult<Message, B> {
-    pub fn new(view: impl View<Message, B> + 'static) -> Self {
+    pub fn new(view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             view: Box::new(view),
             title: String::new(),
@@ -49,7 +49,7 @@ impl<Message: 'static + Send + Sync, B: Backend> PageResult<Message, B> {
         mut self,
         _title: &str,
         placeholder: &str,
-        _on_change: impl Fn(String) -> Message + 'static,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
     ) -> Self {
         self.search_config = Some(SearchConfig {
             query: String::new(),
@@ -63,7 +63,7 @@ impl<Message: 'static + Send + Sync, B: Backend> PageResult<Message, B> {
         self
     }
 
-    pub fn inspector(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn inspector(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.inspector = Some(Box::new(view));
         self
     }
@@ -78,12 +78,14 @@ impl<Message: 'static + Send + Sync, B: Backend> From<VStack<Message, B>>
 }
 
 /// Extension trait for adding navigation-specific behavior to views.
-pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> + Sized {
+pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>:
+    View<Message, B> + Send + Sync + Sized
+{
     fn searchable(
         self,
         title: &str,
         placeholder: &str,
-        on_change: impl Fn(String) -> Message + 'static,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
     ) -> PageResult<Message, B>
     where
         Self: 'static,
@@ -98,7 +100,10 @@ pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> 
         PageResult::new(self).sidebar_toggle(message)
     }
 
-    fn inspector(self, view: impl View<Message, B> + 'static) -> PageResult<Message, B>
+    fn inspector(
+        self,
+        view: impl View<Message, B> + Send + Sync + 'static,
+    ) -> PageResult<Message, B>
     where
         Self: 'static,
     {
@@ -107,14 +112,17 @@ pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> 
 
     fn nav_list(self) -> NavigationListView<Message, B>
     where
-        Self: View<Message, B> + 'static,
+        Self: View<Message, B> + Send + Sync + 'static,
     {
         NavigationListView::new().push(self)
     }
 
     // --- Tailwind-style Utility Modifiers ---
 
-    fn padding(self, padding: impl Into<iced::Padding>) -> crate::elements::atoms::Container<Message, B>
+    fn padding(
+        self,
+        padding: impl Into<iced::Padding>,
+    ) -> crate::elements::atoms::Container<Message, B>
     where
         Self: 'static,
     {
@@ -164,8 +172,8 @@ pub trait ViewExt<Message: 'static + Send + Sync, B: Backend>: View<Message, B> 
     }
 }
 
-impl<V: View<Message, B> + 'static, Message: 'static + Send + Sync, B: Backend> ViewExt<Message, B>
-    for V
+impl<V: View<Message, B> + Send + Sync + 'static, Message: 'static + Send + Sync, B: Backend>
+    ViewExt<Message, B> for V
 {
 }
 
@@ -175,7 +183,7 @@ impl<Message: 'static + Send + Sync, B: Backend> VStack<Message, B> {
         self,
         title: &str,
         placeholder: &str,
-        on_change: impl Fn(String) -> Message + 'static,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
     ) -> PageResult<Message, B> {
         PageResult::new(self).searchable(title, placeholder, on_change)
     }
@@ -302,7 +310,7 @@ impl<V: View<Message, B> + 'static, Message: Clone + Send + Sync + 'static, B: B
 /// A structural sidebar component for primary navigation.
 pub struct Sidebar<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
     title: String,
-    items: Vec<Box<dyn View<Message, B>>>,
+    items: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     search: Option<(String, Arc<dyn Fn(String) -> Message + Send + Sync>)>,
 }
 
@@ -336,7 +344,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> Sidebar<Message, B> {
         self
     }
 
-    pub fn push(mut self, item: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, item: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.items.push(Box::new(item));
         self
     }
@@ -423,7 +431,7 @@ impl<Message: 'static + Send + Sync, B: Backend> NavigationListView<Message, B> 
         }
     }
 
-    pub fn push(mut self, link: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, link: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.stack = self.stack.push(link);
         self
     }

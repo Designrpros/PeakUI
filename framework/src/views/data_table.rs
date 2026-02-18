@@ -18,7 +18,7 @@ pub struct DataTableColumn<M: 'static + Send + Sync> {
 }
 
 pub struct DataTableRow<M: 'static + Send + Sync> {
-    pub cells: Vec<Box<dyn View<M, IcedBackend>>>,
+    pub cells: Vec<Box<dyn View<M, IcedBackend> + Send + Sync>>,
     pub on_press: Option<M>,
 }
 
@@ -99,7 +99,7 @@ impl<M: 'static + Clone + Send + Sync> DataTable<M> {
         self
     }
 
-    pub fn row(mut self, cells: Vec<Box<dyn View<M, IcedBackend>>>) -> Self {
+    pub fn row(mut self, cells: Vec<Box<dyn View<M, IcedBackend> + Send + Sync>>) -> Self {
         self.rows.push(DataTableRow {
             cells,
             on_press: None,
@@ -109,7 +109,7 @@ impl<M: 'static + Clone + Send + Sync> DataTable<M> {
 
     pub fn row_with_action(
         mut self,
-        cells: Vec<Box<dyn View<M, IcedBackend>>>,
+        cells: Vec<Box<dyn View<M, IcedBackend> + Send + Sync>>,
         on_press: M,
     ) -> Self {
         self.rows.push(DataTableRow {
@@ -179,7 +179,7 @@ impl<M: 'static + Clone + Send + Sync> DataTable<M> {
     fn row_cell(
         &self,
         context: &Context,
-        cell: &Box<dyn View<M, IcedBackend>>,
+        cell: &Box<dyn View<M, IcedBackend> + Send + Sync>,
         width: Length,
         is_first: bool,
     ) -> Element<'static, M, Theme, Renderer> {

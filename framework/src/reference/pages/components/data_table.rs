@@ -80,9 +80,11 @@ fn create_canvas_preview(_ctx: &Context) -> VStack<Message, IcedBackend> {
                     table = table.row_with_action(
                         vec![
                             Box::new(text::<IcedBackend>(id).secondary())
-                                as Box<dyn View<Message, IcedBackend>>,
-                            Box::new(text::<IcedBackend>(name).bold()),
-                            Box::new(Badge::new(status).intent(intent)),
+                                as Box<dyn View<Message, IcedBackend> + Send + Sync>,
+                            Box::new(text::<IcedBackend>(name).bold())
+                                as Box<dyn View<Message, IcedBackend> + Send + Sync>,
+                            Box::new(Badge::new(status).intent(intent))
+                                as Box<dyn View<Message, IcedBackend> + Send + Sync>,
                         ],
                         Message::Unknown(format!("Selected {}", name)),
                     );

@@ -40,7 +40,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .height(Length::Shrink)
     .hide_indicators();
 
-    let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
+    let preview_content: Box<dyn View<Message, IcedBackend> + Send + Sync> = match render_mode {
         RenderMode::Canvas => {
             crate::layout::containers::Card::new(create_preview::<IcedBackend>(palette))
                 .padding(24)

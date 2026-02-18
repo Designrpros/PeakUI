@@ -3,7 +3,7 @@ use iced::Length;
 
 /// A scrollable container that wraps content and provides styled scrollbars.
 pub struct ScrollView<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    content: Box<dyn View<Message, B>>,
+    content: Box<dyn View<Message, B> + Send + Sync>,
     width: Length,
     height: Length,
     id: Option<&'static str>,
@@ -13,7 +13,7 @@ pub struct ScrollView<Message: 'static + Send + Sync, B: Backend = IcedBackend> 
 
 impl<Message: 'static + Send + Sync, B: Backend> ScrollView<Message, B> {
     /// Creates a new generic `ScrollView` with the given content.
-    pub fn new(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             content: Box::new(content),
             width: Length::Fill,
@@ -25,12 +25,12 @@ impl<Message: 'static + Send + Sync, B: Backend> ScrollView<Message, B> {
     }
 
     /// Alias for `new`.
-    pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new_generic(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self::new(content)
     }
 
     /// Creates a new `ScrollView` from a boxed view.
-    pub fn from_boxed(content: Box<dyn View<Message, B>>) -> Self {
+    pub fn from_boxed(content: Box<dyn View<Message, B> + Send + Sync>) -> Self {
         Self {
             content,
             width: Length::Fill,

@@ -87,15 +87,15 @@ impl TextSpan {
     }
 }
 
-pub trait Backend: Sized + Clone + 'static {
-    type AnyView<Message: 'static>: 'static;
+pub trait Backend: Sized + Clone + Send + Sync + 'static {
+    type AnyView<Message: 'static + Send + Sync>: 'static;
 
-    fn semantic_node<Message: 'static>(
+    fn semantic_node<Message: 'static + Send + Sync>(
         node: crate::semantic::SemanticNode,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn vstack<Message: 'static>(
+    fn vstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         spacing: f32,
         padding: Padding,
@@ -106,7 +106,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn hstack<Message: 'static>(
+    fn hstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         spacing: f32,
         padding: Padding,
@@ -117,7 +117,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn wrap<Message: 'static>(
+    fn wrap<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         spacing: f32,
         run_spacing: f32,
@@ -129,7 +129,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn rich_text<Message: Clone + 'static>(
+    fn rich_text<Message: Clone + 'static + Send + Sync>(
         spans: Vec<TextSpan>,
         size: f32,
         width: Length,
@@ -137,7 +137,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn text<Message: Clone + 'static>(
+    fn text<Message: Clone + 'static + Send + Sync>(
         content: String,
         size: f32,
         color: Option<Color>,
@@ -150,28 +150,28 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn icon<Message: Clone + 'static>(
+    fn icon<Message: Clone + 'static + Send + Sync>(
         name: String,
         size: f32,
         color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn divider<Message: 'static>(context: &Context) -> Self::AnyView<Message>;
+    fn divider<Message: 'static + Send + Sync>(context: &Context) -> Self::AnyView<Message>;
 
-    fn space<Message: 'static>(
+    fn space<Message: 'static + Send + Sync>(
         width: Length,
         height: Length,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn circle<Message: 'static>(
+    fn circle<Message: 'static + Send + Sync>(
         radius: f32, // Circles still use a single radius value
         color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn arc<Message: 'static>(
+    fn arc<Message: 'static + Send + Sync>(
         radius: f32,
         start_angle: f32,
         end_angle: f32,
@@ -179,21 +179,21 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn path<Message: 'static>(
+    fn path<Message: 'static + Send + Sync>(
         points: Vec<iced::Point>,
         color: Option<Color>,
         width: f32,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn capsule<Message: 'static>(
+    fn capsule<Message: 'static + Send + Sync>(
         width: Length,
         height: Length,
         color: Option<Color>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn rectangle<Message: 'static, R: Into<Radius>>(
+    fn rectangle<Message: 'static + Send + Sync, R: Into<Radius>>(
         width: Length,
         height: Length,
         color: Option<Color>,
@@ -203,7 +203,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn button<Message: Clone + 'static>(
+    fn button<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         on_press: Option<Message>,
         variant: Variant,
@@ -221,10 +221,10 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn text_input<Message: Clone + 'static>(
+    fn text_input<Message: Clone + 'static + Send + Sync>(
         value: String,
         placeholder: String,
-        on_change: impl Fn(String) -> Message + 'static,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
         on_submit: Option<Message>,
         font: Option<iced::Font>,
         is_secure: bool,
@@ -233,21 +233,21 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn slider<Message: Clone + 'static>(
+    fn slider<Message: Clone + 'static + Send + Sync>(
         range: std::ops::RangeInclusive<f32>,
         value: f32,
-        on_change: impl Fn(f32) -> Message + 'static,
+        on_change: impl Fn(f32) -> Message + Send + Sync + 'static,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn toggle<Message: Clone + 'static>(
+    fn toggle<Message: Clone + 'static + Send + Sync>(
         label: String,
         is_active: bool,
-        on_toggle: impl Fn(bool) -> Message + 'static,
+        on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn zstack<Message: 'static>(
+    fn zstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         width: Length,
         height: Length,
@@ -255,14 +255,14 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn grid<Message: 'static>(
+    fn grid<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         columns: usize,
         spacing: f32,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn image<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         width: Length,
         height: Length,
@@ -270,7 +270,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn video<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         width: Length,
         height: Length,
@@ -278,7 +278,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn web_view<Message: 'static, R: Into<Radius>>(
+    fn web_view<Message: 'static + Send + Sync, R: Into<Radius>>(
         url: String,
         width: Length,
         height: Length,
@@ -286,7 +286,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn container<Message: 'static, R: Into<Radius>>(
+    fn container<Message: 'static + Send + Sync, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         padding: Padding,
         width: Length,
@@ -301,7 +301,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn scroll_view<Message: 'static>(
+    fn scroll_view<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         width: Length,
         height: Length,
@@ -311,7 +311,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn mouse_area<Message: Clone + 'static>(
+    fn mouse_area<Message: Clone + Send + Sync + 'static>(
         content: Self::AnyView<Message>,
         on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         on_press: Option<Message>,
@@ -319,13 +319,13 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn with_tooltip<Message: 'static>(
+    fn with_tooltip<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         tooltip: Arc<str>,
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn glass_card<Message: 'static>(
+    fn glass_card<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         padding: Padding,
         width: Length,
@@ -333,7 +333,7 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn section<Message: 'static>(
+    fn section<Message: 'static + Send + Sync>(
         title: String,
         content: Self::AnyView<Message>,
         width: Length,
@@ -341,7 +341,21 @@ pub trait Backend: Sized + Clone + 'static {
         context: &Context,
     ) -> Self::AnyView<Message>;
 
-    fn spatial_modifier<Message: 'static>(
+    fn text_editor<Message: Clone + Send + Sync + 'static>(
+        content: String,
+        on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+        font: Option<iced::Font>,
+        id: Option<iced::widget::Id>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn menu<Message: Clone + Send + Sync + 'static>(
+        content: Self::AnyView<Message>,
+        items: Vec<crate::views::context_menu::ContextMenuItem<Message>>,
+        context: &Context,
+    ) -> Self::AnyView<Message>;
+
+    fn spatial_modifier<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         position: Vector3<f32>,
         scale: Vector3<f32>,

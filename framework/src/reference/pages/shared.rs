@@ -5,7 +5,7 @@ use crate::reference::app::Message;
 pub fn heading<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, B>> {
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -20,7 +20,7 @@ pub fn heading<B: Backend, S: Into<String>>(
 pub fn sub_heading<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, B>> {
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -35,7 +35,7 @@ pub fn sub_heading<B: Backend, S: Into<String>>(
 pub fn paragraph<B: Backend, S: Into<String>>(
     content: S,
     context: &Context,
-) -> Box<dyn View<Message, B>> {
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let theme = context.theme;
     Box::new(
         Text::new(content.into())
@@ -46,7 +46,10 @@ pub fn paragraph<B: Backend, S: Into<String>>(
     )
 }
 
-pub fn bullet_list<B: Backend>(items: Vec<&str>, context: &Context) -> Box<dyn View<Message, B>> {
+pub fn bullet_list<B: Backend>(
+    items: Vec<&str>,
+    context: &Context,
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let mut list = VStack::new_generic().spacing(16.0).width(Length::Fill);
     let theme = context.theme;
     let is_slim = context.device == DeviceType::Mobile || context.size.width < 500.0;
@@ -90,7 +93,7 @@ pub fn architecture_item<B: Backend>(
     name: &str,
     desc: &str,
     context: &Context,
-) -> Box<dyn View<Message, B>> {
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let theme = context.theme;
     let is_slim = context.device == DeviceType::Mobile || context.size.width < 500.0;
 
@@ -131,11 +134,14 @@ pub fn architecture_item<B: Backend>(
     }
 }
 
-pub fn native_divider<B: Backend>() -> Box<dyn View<Message, B>> {
+pub fn native_divider<B: Backend>() -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     Box::new(Divider::<B>::new())
 }
 
-pub fn verdict_badge<B: Backend>(score: &str, context: &Context) -> Box<dyn View<Message, B>> {
+pub fn verdict_badge<B: Backend>(
+    score: &str,
+    context: &Context,
+) -> Box<dyn View<Message, B> + Send + Sync + 'static> {
     let score = score.to_string();
     let theme = context.theme;
 

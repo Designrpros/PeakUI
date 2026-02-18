@@ -192,9 +192,9 @@ impl Default for Transform3D {
 pub struct SpatialBackend;
 
 impl Backend for SpatialBackend {
-    type AnyView<Message: 'static> = SpatialNode<Message>;
+    type AnyView<Message: 'static + Send + Sync> = SpatialNode<Message>;
 
-    fn semantic_node<Message: 'static>(
+    fn semantic_node<Message: 'static + Send + Sync>(
         node: crate::semantic::SemanticNode,
         _context: &Context,
     ) -> Self::AnyView<Message> {
@@ -213,7 +213,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn vstack<Message: 'static>(
+    fn vstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         spacing: f32,
         _padding: Padding,
@@ -250,7 +250,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn hstack<Message: 'static>(
+    fn hstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         spacing: f32,
         _padding: Padding,
@@ -287,7 +287,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn wrap<Message: 'static>(
+    fn wrap<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _run_spacing: f32,
@@ -313,7 +313,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn rich_text<Message: Clone + 'static>(
+    fn rich_text<Message: Clone + 'static + Send + Sync>(
         _spans: Vec<TextSpan>,
         _size: f32,
         _width: Length,
@@ -335,7 +335,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn text<Message: Clone + 'static>(
+    fn text<Message: Clone + 'static + Send + Sync>(
         content: String,
         _size: f32,
         _color: Option<Color>,
@@ -362,7 +362,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn icon<Message: Clone + 'static>(
+    fn icon<Message: Clone + 'static + Send + Sync>(
         _name: String,
         size: f32,
         _color: Option<Color>,
@@ -383,7 +383,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
+    fn divider<Message: 'static + Send + Sync>(_context: &Context) -> Self::AnyView<Message> {
         SpatialNode {
             role: "divider".into(),
             width: 100.0,
@@ -399,7 +399,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn space<Message: 'static>(
+    fn space<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _context: &Context,
@@ -419,7 +419,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn circle<Message: 'static>(
+    fn circle<Message: 'static + Send + Sync>(
         radius: f32,
         _color: Option<Color>,
         _context: &Context,
@@ -439,7 +439,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn arc<Message: 'static>(
+    fn arc<Message: 'static + Send + Sync>(
         radius: f32,
         _start_angle: f32,
         _end_angle: f32,
@@ -461,7 +461,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn path<Message: 'static>(
+    fn path<Message: 'static + Send + Sync>(
         _points: Vec<iced::Point>,
         _color: Option<Color>,
         _width: f32,
@@ -482,7 +482,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn capsule<Message: 'static>(
+    fn capsule<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -503,7 +503,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn rectangle<Message: 'static, R: Into<Radius>>(
+    fn rectangle<Message: 'static + Send + Sync, R: Into<Radius>>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -527,7 +527,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn button<Message: Clone + 'static>(
+    fn button<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         on_press: Option<Message>,
         _variant: Variant,
@@ -564,10 +564,10 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn text_input<Message: Clone + 'static>(
+    fn text_input<Message: Clone + 'static + Send + Sync>(
         _value: String,
         _placeholder: String,
-        _on_change: impl Fn(String) -> Message + 'static,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
         _is_secure: bool,
@@ -590,10 +590,10 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn slider<Message: Clone + 'static>(
+    fn slider<Message: Clone + 'static + Send + Sync>(
         _range: std::ops::RangeInclusive<f32>,
         _value: f32,
-        _on_change: impl Fn(f32) -> Message + 'static,
+        _on_change: impl Fn(f32) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -611,10 +611,10 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn toggle<Message: Clone + 'static>(
+    fn toggle<Message: Clone + 'static + Send + Sync>(
         _label: String,
         _is_active: bool,
-        _on_toggle: impl Fn(bool) -> Message + 'static,
+        _on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SpatialNode {
@@ -632,7 +632,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn zstack<Message: 'static>(
+    fn zstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _width: Length,
         _height: Length,
@@ -654,7 +654,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn grid<Message: 'static>(
+    fn grid<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _columns: usize,
         _spacing: f32,
@@ -675,7 +675,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn image<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         _path: S,
         _width: Length,
         _height: Length,
@@ -697,7 +697,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn video<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         _path: S,
         _width: Length,
         _height: Length,
@@ -719,7 +719,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn web_view<Message: 'static, R: Into<Radius>>(
+    fn web_view<Message: 'static + Send + Sync, R: Into<Radius>>(
         _url: String,
         _width: Length,
         _height: Length,
@@ -741,7 +741,7 @@ impl Backend for SpatialBackend {
         }
     }
 
-    fn container<Message: 'static, R: Into<Radius>>(
+    fn container<Message: 'static + Send + Sync, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -758,7 +758,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn scroll_view<Message: 'static>(
+    fn scroll_view<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _width: Length,
         _height: Length,
@@ -770,7 +770,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn mouse_area<Message: Clone + 'static>(
+    fn mouse_area<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,
@@ -780,7 +780,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn with_tooltip<Message: 'static>(
+    fn with_tooltip<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _tooltip: Arc<str>,
         _context: &Context,
@@ -788,7 +788,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn glass_card<Message: 'static>(
+    fn glass_card<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -798,7 +798,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn section<Message: 'static>(
+    fn section<Message: 'static + Send + Sync>(
         _title: String,
         content: Self::AnyView<Message>,
         _width: Length,
@@ -808,7 +808,7 @@ impl Backend for SpatialBackend {
         content
     }
 
-    fn spatial_modifier<Message: 'static>(
+    fn spatial_modifier<Message: 'static + Send + Sync>(
         mut content: Self::AnyView<Message>,
         position: Vector3<f32>,
         scale: Vector3<f32>,
@@ -823,5 +823,37 @@ impl Backend for SpatialBackend {
         );
         content.transform.rotation += rotation;
         content
+    }
+
+    fn text_editor<Message: Clone + Send + Sync + 'static>(
+        _content: String,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+        _font: Option<iced::Font>,
+        _id: Option<iced::widget::Id>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SpatialNode {
+            role: "text_editor".into(),
+            width: 300.0,
+            height: 200.0,
+            depth: 1.0,
+            transform: Transform3D::default(),
+            bounds: BoundingBox3D::from_size(300.0, 200.0, 1.0),
+            layout: Layout::Vertical,
+            is_focused: false,
+            billboarding: false,
+            on_press: None,
+            children: Vec::new(),
+        }
+    }
+
+    fn menu<Message: Clone + Send + Sync + 'static>(
+        content: Self::AnyView<Message>,
+        _items: Vec<crate::views::context_menu::ContextMenuItem<Message>>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        let mut node = content;
+        node.role = "menu".into();
+        node
     }
 }

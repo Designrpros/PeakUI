@@ -175,8 +175,10 @@ impl CanvasView {
                 &self.state.labs.button,
                 self.state.labs.render_mode,
             ),
-            ReferenceAppPage::ShowcaseInputs
-            | ReferenceAppPage::ShowcaseToggles
+            ReferenceAppPage::ShowcaseInputs => {
+                pages::components::inputs::view(context, self.state.labs.render_mode)
+            }
+            ReferenceAppPage::ShowcaseToggles
             | ReferenceAppPage::ShowcaseSliders
             | ReferenceAppPage::ShowcasePickers => {
                 pages::guide::introduction::view(context, is_mobile)

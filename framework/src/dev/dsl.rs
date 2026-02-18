@@ -1,12 +1,12 @@
+use crate::core::Backend;
+use crate::core::View;
 use crate::elements::atoms::{
     Capsule, Circle, Container, Divider, Icon, Image, Rectangle, Space, Text, Video, WebView,
 };
-use crate::layout::containers::{GlassCard, Section};
 use crate::elements::controls::{Button, Slider, TextInput, Toggle};
-use crate::core::Backend;
-use crate::core::View;
-use crate::layout::{HStack, ResponsiveGrid, VStack, Wrap, ZStack};
+use crate::layout::containers::{GlassCard, Section};
 use crate::layout::scroll_view::ScrollView;
+use crate::layout::{HStack, ResponsiveGrid, VStack, Wrap, ZStack};
 use iced::Length;
 use std::borrow::Cow;
 
@@ -51,7 +51,7 @@ pub fn capsule<B: Backend>(width: impl Into<Length>, height: impl Into<Length>) 
 }
 
 pub fn container<Message: 'static + Send + Sync, B: Backend>(
-    content: impl View<Message, B> + 'static,
+    content: impl View<Message, B> + Send + Sync + 'static,
 ) -> Container<Message, B> {
     Container::new(content)
 }
@@ -77,20 +77,20 @@ pub fn wrap<Message: 'static + Send + Sync, B: Backend>() -> Wrap<Message, B> {
 }
 
 pub fn glass_card<Message: 'static + Send + Sync, B: Backend>(
-    content: impl View<Message, B> + 'static,
+    content: impl View<Message, B> + Send + Sync + 'static,
 ) -> GlassCard<Message, B> {
     GlassCard::new(content)
 }
 
 pub fn section<Message: 'static + Send + Sync, B: Backend>(
     title: impl Into<Cow<'static, str>>,
-    content: impl View<Message, B> + 'static,
+    content: impl View<Message, B> + Send + Sync + 'static,
 ) -> Section<Message, B> {
     Section::new_generic(title, content)
 }
 
 pub fn button<Message: Clone + Send + Sync + 'static, B: Backend>(
-    content: impl View<Message, B> + 'static,
+    content: impl View<Message, B> + Send + Sync + 'static,
 ) -> Button<Message, B> {
     Button::new(content)
 }
@@ -126,7 +126,7 @@ pub fn slider<Message: Clone + Send + Sync + 'static, B: Backend>(
 }
 
 pub fn scroll_view<Message: 'static + Send + Sync, B: Backend>(
-    content: impl View<Message, B> + 'static,
+    content: impl View<Message, B> + Send + Sync + 'static,
 ) -> ScrollView<Message, B> {
     ScrollView::new_generic(content)
 }

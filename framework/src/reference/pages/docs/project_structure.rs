@@ -54,7 +54,8 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
 
         // --- Helper: Content Section ---
         let doc_section =
-            |title: &'static str, content: Vec<Box<dyn View<Message, IcedBackend>>>| {
+            |title: &'static str,
+             content: Vec<Box<dyn View<Message, IcedBackend> + Send + Sync>>| {
                 let mut column = VStack::new_generic()
                     .spacing(24.0)
                     .align_x(iced::Alignment::Start)
@@ -80,7 +81,7 @@ pub fn view(_context: &Context, is_mobile: bool) -> AppPageResult {
                 crate::views::CodeBlock::new(code.to_string())
                     .language("rust")
                     .on_copy(|c| Message::Interaction(InteractionMessage::CopyCode(c))),
-            ) as Box<dyn View<Message, IcedBackend>>
+            ) as Box<dyn View<Message, IcedBackend> + Send + Sync>
         };
 
         // --- Sections ---

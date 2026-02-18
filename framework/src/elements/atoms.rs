@@ -641,7 +641,7 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for WebView<B>
 
 #[derive(Clone)]
 pub struct Container<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    content: Arc<dyn View<Message, B>>,
+    content: Arc<dyn View<Message, B> + Send + Sync>,
     padding: Padding,
     width: Length,
     height: Length,
@@ -656,7 +656,7 @@ pub struct Container<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
 }
 
 impl<Message: 'static + Send + Sync, B: Backend> Container<Message, B> {
-    pub fn new(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             content: Arc::new(content),
             padding: Padding::default(),

@@ -8,12 +8,12 @@ use iced::{Alignment, Length, Padding};
 use std::marker::PhantomData;
 use std::sync::Arc;
 
-pub struct ComponentDoc<Message: 'static, B: Backend> {
+pub struct ComponentDoc<Message: 'static + Send + Sync, B: Backend> {
     title: String,
     description: String,
     theory: Option<String>,
     code_snippet: String,
-    preview: Arc<dyn View<Message, B>>,
+    preview: Arc<dyn View<Message, B> + Send + Sync>,
     terminal_preview: Option<String>,
     neural_preview: Option<crate::core::SemanticNode>,
     spatial_preview: Option<crate::core::SpatialNode<()>>,
@@ -22,16 +22,16 @@ pub struct ComponentDoc<Message: 'static, B: Backend> {
         Option<Arc<dyn Fn(crate::reference::app::RenderMode) -> Message + Send + Sync>>,
     on_copy: Option<Arc<dyn Fn(String) -> Message + Send + Sync>>,
     props_table: Option<String>,
-    extra_content: Option<Arc<dyn View<Message, B>>>,
+    extra_content: Option<Arc<dyn View<Message, B> + Send + Sync>>,
     _phantom: PhantomData<B>,
 }
 
-impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> ComponentDoc<Message, B> {
     pub fn new(
         title: impl Into<String>,
         description: impl Into<String>,
         code_snippet: impl Into<String>,
-        preview: Arc<dyn View<Message, B>>,
+        preview: Arc<dyn View<Message, B> + Send + Sync>,
     ) -> Self {
         Self {
             title: title.into(),
@@ -94,7 +94,7 @@ impl<Message: 'static, B: Backend> ComponentDoc<Message, B> {
         self
     }
 
-    pub fn extra_content(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn extra_content(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.extra_content = Some(Arc::new(view));
         self
     }

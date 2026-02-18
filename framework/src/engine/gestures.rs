@@ -31,7 +31,8 @@ impl<V, F> GestureDetector<V, F> {
     }
 }
 
-impl<Message: 'static, B: crate::core::Backend, V, F> View<Message, B> for GestureDetector<V, F>
+impl<Message: 'static + Send + Sync, B: crate::core::Backend, V, F> View<Message, B>
+    for GestureDetector<V, F>
 where
     V: View<Message, B>,
     F: Fn(Gesture) + 'static,
@@ -45,13 +46,16 @@ where
             .push_child(self.content.describe(context))
     }
 }
-pub struct TapGesture<Message: 'static, B: crate::core::Backend, V: View<Message, B>> {
+pub struct TapGesture<Message: 'static + Send + Sync, B: crate::core::Backend, V: View<Message, B>>
+{
     content: V,
     on_tap: Message,
     _phantom: std::marker::PhantomData<(Message, B)>,
 }
 
-impl<Message: 'static, B: crate::core::Backend, V: View<Message, B>> TapGesture<Message, B, V> {
+impl<Message: 'static + Send + Sync, B: crate::core::Backend, V: View<Message, B>>
+    TapGesture<Message, B, V>
+{
     pub fn new(content: V, on_tap: Message) -> Self {
         Self {
             content,

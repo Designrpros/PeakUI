@@ -1,26 +1,26 @@
-use crate::elements::atoms::Text;
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
+use crate::elements::atoms::Text;
 use crate::layout::scroll_view::ScrollView;
 use iced::{Element, Renderer, Theme};
 
-pub struct Console<Message: 'static, B: Backend = IcedBackend> {
+pub struct Console<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     content: String,
-    input: Option<Box<dyn View<Message, B>>>,
+    input: Option<Box<dyn View<Message, B> + Send + Sync>>,
 }
 
-impl<Message: 'static> Console<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> Console<Message, IcedBackend> {
     pub fn new(content: impl Into<String>) -> Self {
         Self::new_generic(content)
     }
 }
 
-impl<Message: 'static> Console<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> Console<Message, TermBackend> {
     pub fn new_tui(content: impl Into<String>) -> Self {
         Self::new_generic(content)
     }
 }
 
-impl<Message: 'static, B: Backend> Console<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Console<Message, B> {
     pub fn new_generic(content: impl Into<String>) -> Self {
         Self {
             content: content.into(),
@@ -28,13 +28,15 @@ impl<Message: 'static, B: Backend> Console<Message, B> {
         }
     }
 
-    pub fn input(mut self, input: impl View<Message, B> + 'static) -> Self {
+    pub fn input(mut self, input: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.input = Some(Box::new(input));
         self
     }
 }
 
-impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Console<Message, IcedBackend> {
+impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend>
+    for Console<Message, IcedBackend>
+{
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         let theme = context.theme;
 
@@ -56,7 +58,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Cons
     }
 }
 
-impl<Message: 'static> View<Message, TermBackend> for Console<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> View<Message, TermBackend> for Console<Message, TermBackend> {
     fn view(&self, context: &Context) -> String {
         let mut out = format!("CONSOLE OUTPUT:\n{}\n", self.content);
         if let Some(input) = &self.input {

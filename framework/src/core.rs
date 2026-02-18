@@ -51,7 +51,7 @@ pub enum Headset {
     Generic,
 }
 
-pub struct NeuralView<Message: 'static, B: Backend, V: View<Message, B>> {
+pub struct NeuralView<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> {
     inner: V,
     tag: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
@@ -77,7 +77,7 @@ impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Messa
     }
 }
 
-pub struct DocumentedView<Message: 'static, B: Backend, V: View<Message, B>> {
+pub struct DocumentedView<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> {
     inner: V,
     documentation: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
@@ -107,7 +107,7 @@ impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Messa
     }
 }
 
-pub struct SpatialBillboard<Message: 'static, B: Backend, V: View<Message, B>> {
+pub struct SpatialBillboard<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> {
     pub inner: V,
     pub active: bool,
     pub _phantom: std::marker::PhantomData<(Message, B)>,
@@ -149,7 +149,7 @@ impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Messa
     }
 }
 
-pub struct PhysicalDepthView<Message: 'static, B: Backend, V: View<Message, B>> {
+pub struct PhysicalDepthView<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> {
     pub inner: V,
     pub depth: f32,
     pub _phantom: std::marker::PhantomData<(Message, B)>,
@@ -182,7 +182,7 @@ impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Messa
     }
 }
 
-pub struct NeuralSudo<Message: 'static, B: Backend, V: View<Message, B>> {
+pub struct NeuralSudo<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> {
     inner: V,
     reason: Arc<str>,
     _phantom: std::marker::PhantomData<(Message, B)>,
@@ -213,7 +213,7 @@ impl<Message: 'static + Send + Sync, B: Backend, V: View<Message, B>> View<Messa
 pub use peak_theme::ThemeTokens;
 
 /// The primary trait for all UI components in the PeakUI framework.
-pub trait View<Message: 'static, B: Backend = IcedBackend> {
+pub trait View<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     fn view(&self, context: &Context) -> B::AnyView<Message>;
 
     fn describe(&self, _context: &Context) -> SemanticNode {
@@ -246,9 +246,9 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         }
     }
 
-    fn into_box(self) -> Box<dyn View<Message, B>>
+    fn into_box(self) -> Box<dyn View<Message, B> + Send + Sync>
     where
-        Self: Sized + 'static,
+        Self: Sized + Send + Sync + 'static,
     {
         Box::new(self)
     }
@@ -286,9 +286,9 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
         }
     }
 
-    fn boxed(self) -> Box<dyn View<Message, B>>
+    fn boxed(self) -> Box<dyn View<Message, B> + Send + Sync>
     where
-        Self: Sized + 'static,
+        Self: Sized + Send + Sync + 'static,
     {
         Box::new(self)
     }
@@ -304,7 +304,9 @@ pub trait View<Message: 'static, B: Backend = IcedBackend> {
     }
 }
 
-impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>> {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B>
+    for Box<dyn View<Message, B> + Send + Sync>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         self.as_ref().view(context)
     }
@@ -321,7 +323,7 @@ impl<Message: 'static, B: Backend> View<Message, B> for Box<dyn View<Message, B>
 pub use crate::backend::spatial::{SpatialBackend, SpatialNode};
 pub use crate::backend::term::TermBackend;
 
-impl<Message: 'static, B: Backend> View<Message, B> for SemanticNode {
+impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for SemanticNode {
     fn view(&self, context: &Context) -> B::AnyView<Message> {
         B::semantic_node(self.clone(), context)
     }
@@ -332,21 +334,21 @@ impl<Message: 'static, B: Backend> View<Message, B> for SemanticNode {
 }
 
 pub fn responsive<Message>(
-    f: impl Fn(DeviceType) -> Box<dyn View<Message>> + 'static,
+    f: impl Fn(DeviceType) -> Box<dyn View<Message> + Send + Sync> + Send + Sync + 'static,
 ) -> ProxyView<Message>
 where
-    Message: Clone + 'static,
+    Message: Clone + Send + Sync + 'static,
 {
     ProxyView::new(move |ctx| f(ctx.device).view(ctx))
 }
 
-pub struct ProxyView<Message: Clone + 'static, B: Backend = IcedBackend> {
-    view_fn: Arc<dyn Fn(&Context) -> B::AnyView<Message>>,
+pub struct ProxyView<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
+    view_fn: Arc<dyn Fn(&Context) -> B::AnyView<Message> + Send + Sync>,
     _phantom: std::marker::PhantomData<B>,
 }
 
-impl<Message: Clone + 'static, B: Backend> ProxyView<Message, B> {
-    pub fn new(view_fn: impl Fn(&Context) -> B::AnyView<Message> + 'static) -> Self {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> ProxyView<Message, B> {
+    pub fn new(view_fn: impl Fn(&Context) -> B::AnyView<Message> + Send + Sync + 'static) -> Self {
         Self {
             view_fn: Arc::new(view_fn),
             _phantom: std::marker::PhantomData,
@@ -354,8 +356,10 @@ impl<Message: Clone + 'static, B: Backend> ProxyView<Message, B> {
     }
 }
 
-impl<Message: Clone + 'static, B: Backend> View<Message, B> for ProxyView<Message, B> {
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for ProxyView<Message, B>
+{
     fn view(&self, context: &Context) -> B::AnyView<Message> {
-        (self.view_fn)(context)
+        (*self.view_fn)(context)
     }
 }

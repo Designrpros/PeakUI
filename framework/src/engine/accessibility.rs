@@ -103,6 +103,7 @@ pub enum AccessibilityRole {
     SpinButton,
     Switch,
     TextField,
+    TextArea,
     Label,
     List,
     ListItem,

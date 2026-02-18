@@ -1,5 +1,5 @@
-use crate::elements::atoms::{Icon, Text};
 use crate::core::{Backend, Context, IcedBackend, TermBackend, View};
+use crate::elements::atoms::{Icon, Text};
 use crate::prelude::*;
 use iced::{Element, Renderer, Task, Theme};
 
@@ -36,7 +36,7 @@ pub struct CatalogItem<B: Backend = IcedBackend> {
     pub title: &'static str,
     pub description: &'static str,
     pub category: Category,
-    pub render: fn(&Context) -> Box<dyn View<CatalogMessage, B>>,
+    pub render: fn(&Context) -> Box<dyn View<CatalogMessage, B> + Send + Sync>,
 }
 
 #[derive(Debug, Clone)]
@@ -136,16 +136,16 @@ impl View<CatalogMessage, IcedBackend> for Catalog<IcedBackend> {
                 Category::Content,
             ));
 
-        let detail_view: Box<dyn View<CatalogMessage, IcedBackend>> = if let Some(sid) = selected_id
-        {
-            if let Some(item) = items.iter().find(|i| i.id == sid) {
-                (item.render)(context)
+        let detail_view: Box<dyn View<CatalogMessage, IcedBackend> + Send + Sync> =
+            if let Some(sid) = selected_id {
+                if let Some(item) = items.iter().find(|i| i.id == sid) {
+                    (item.render)(context)
+                } else {
+                    Box::new(Text::<IcedBackend>::new("Item not found").large_title())
+                }
             } else {
-                Box::new(Text::<IcedBackend>::new("Item not found").large_title())
-            }
-        } else {
-            Box::new(Text::<IcedBackend>::new("Select an item").large_title())
-        };
+                Box::new(Text::<IcedBackend>::new("Select an item").large_title())
+            };
 
         NavigationSplitView::new(sidebar_content, detail_view)
             .on_back(CatalogMessage::GoBack)
@@ -251,7 +251,7 @@ fn render_category<B: Backend>(
         .push(list)
 }
 
-fn render_typography<B: Backend>(_ctx: &Context) -> Box<dyn View<CatalogMessage, B>> {
+fn render_typography<B: Backend>(_ctx: &Context) -> Box<dyn View<CatalogMessage, B> + Send + Sync> {
     Box::new(
         VStack::<CatalogMessage, B>::new_generic()
             .spacing(12.0)
@@ -261,7 +261,7 @@ fn render_typography<B: Backend>(_ctx: &Context) -> Box<dyn View<CatalogMessage,
     )
 }
 
-fn render_colors<B: Backend>(ctx: &Context) -> Box<dyn View<CatalogMessage, B>> {
+fn render_colors<B: Backend>(ctx: &Context) -> Box<dyn View<CatalogMessage, B> + Send + Sync> {
     let colors = ctx.theme.colors;
     Box::new(
         VStack::<CatalogMessage, B>::new_generic()
@@ -271,7 +271,7 @@ fn render_colors<B: Backend>(ctx: &Context) -> Box<dyn View<CatalogMessage, B>> 
     )
 }
 
-fn render_icons<B: Backend>(_ctx: &Context) -> Box<dyn View<CatalogMessage, B>> {
+fn render_icons<B: Backend>(_ctx: &Context) -> Box<dyn View<CatalogMessage, B> + Send + Sync> {
     Box::new(
         HStack::<CatalogMessage, B>::new_generic()
             .spacing(16.0)

@@ -229,7 +229,7 @@ impl ContentView {
                 |m| Message::Intelligence(IntelligenceMessage::Chat(m)),
             );
 
-            let inspector_content: Option<Box<dyn View<Message, IcedBackend>>> =
+            let inspector_content: Option<Box<dyn View<Message, IcedBackend> + Send + Sync>> =
                 if let Some(p_inspector) = page.inspector.take() {
                     #[cfg(feature = "intelligence")]
                     {
@@ -275,7 +275,7 @@ impl ContentView {
                                     )),
                             );
 
-                        let content: Box<dyn View<Message, IcedBackend>> =
+                        let content: Box<dyn View<Message, IcedBackend> + Send + Sync> =
                             match self.state.interaction.inspector_tab {
                                 super::super::app::InspectorTab::Feature => Box::new(p_inspector),
                                 super::super::app::InspectorTab::App => Box::new(ai_inspector),

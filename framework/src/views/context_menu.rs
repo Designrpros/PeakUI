@@ -1,7 +1,7 @@
 use crate::core::{Backend, Context, IcedBackend, View};
 use crate::layout::VStack;
 use crate::prelude::*;
-use iced::{Element, Length, Renderer, Theme};
+use iced::Length;
 
 pub struct ContextMenu<Message: Clone + Send + Sync + 'static, B: Backend = IcedBackend> {
     items: Vec<ContextMenuItem<Message>>,
@@ -38,13 +38,11 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> ContextMenu<Message, B>
     }
 }
 
-impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for ContextMenu<Message, IcedBackend> {
-    fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
-        let _theme = context.theme;
-
-        let mut list = VStack::<Message, IcedBackend>::new_generic()
-            .spacing(4.0)
-            .padding(4.0);
+impl<Message: Clone + Send + Sync + 'static, B: Backend> View<Message, B>
+    for ContextMenu<Message, B>
+{
+    fn view(&self, context: &Context) -> B::AnyView<Message> {
+        let mut list = VStack::<Message, B>::new().spacing(4.0).padding(4.0);
 
         for item in &self.items {
             let label = item.label.clone();
@@ -52,7 +50,7 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Cont
             let action = item.action.clone();
 
             list = list.push(
-                crate::elements::controls::Button::<Message, IcedBackend>::label(label)
+                crate::elements::controls::Button::<Message, B>::label(label)
                     .icon(icon)
                     .variant(Variant::Ghost)
                     .on_press(action)
@@ -60,8 +58,13 @@ impl<Message: Clone + Send + Sync + 'static> View<Message, IcedBackend> for Cont
             );
         }
 
-        crate::layout::containers::Card::<Message, IcedBackend>::new_generic(list)
+        crate::layout::containers::Card::<Message, B>::new_generic(list)
             .width(Length::Fixed(180.0))
             .view(context)
+    }
+
+    fn describe(&self, _context: &Context) -> crate::core::SemanticNode {
+        crate::core::SemanticNode::new("context_menu")
+            .with_label(format!("Context Menu ({} items)", self.items.len()))
     }
 }

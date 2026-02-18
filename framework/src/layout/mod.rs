@@ -7,7 +7,7 @@ pub mod scroll_view;
 
 /// A vertical stack layout that arranges children from top to bottom.
 pub struct VStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    children: Vec<Box<dyn View<Message, B>>>,
+    children: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     spacing: f32,
     padding: iced::Padding,
     width: Length,
@@ -67,7 +67,7 @@ impl<Message: 'static + Send + Sync, B: Backend> VStack<Message, B> {
         self
     }
 
-    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.children.push(Box::new(view));
         self
     }
@@ -75,7 +75,7 @@ impl<Message: 'static + Send + Sync, B: Backend> VStack<Message, B> {
     pub fn extend<I, V>(mut self, iter: I) -> Self
     where
         I: IntoIterator<Item = V>,
-        V: View<Message, B> + 'static,
+        V: View<Message, B> + Send + Sync + 'static,
     {
         for child in iter {
             self.children.push(Box::new(child));
@@ -107,7 +107,7 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for VStack<Mes
 
 /// A horizontal stack layout that arranges children from left to right.
 pub struct HStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    children: Vec<Box<dyn View<Message, B>>>,
+    children: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     spacing: f32,
     padding: iced::Padding,
     width: Length,
@@ -167,7 +167,7 @@ impl<Message: 'static + Send + Sync, B: Backend> HStack<Message, B> {
         self
     }
 
-    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.children.push(Box::new(view));
         self
     }
@@ -175,7 +175,7 @@ impl<Message: 'static + Send + Sync, B: Backend> HStack<Message, B> {
     pub fn extend<I, V>(mut self, iter: I) -> Self
     where
         I: IntoIterator<Item = V>,
-        V: View<Message, B> + 'static,
+        V: View<Message, B> + Send + Sync + 'static,
     {
         for child in iter {
             self.children.push(Box::new(child));
@@ -207,7 +207,7 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for HStack<Mes
 
 /// A stack layout that layers children on top of each other (Z-axis).
 pub struct ZStack<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    children: Vec<Box<dyn View<Message, B>>>,
+    children: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     width: Length,
     height: Length,
     alignment: iced::Alignment,
@@ -246,7 +246,7 @@ impl<Message: 'static + Send + Sync, B: Backend> ZStack<Message, B> {
         self
     }
 
-    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.children.push(Box::new(view));
         self
     }
@@ -275,13 +275,13 @@ pub trait LayoutExt<Message: Clone + Send + Sync + 'static, B: Backend>:
     View<Message, B> + Sized
 {
     /// Layers the given view on top of this view using a ZStack.
-    fn overlay<V: View<Message, B> + 'static>(
+    fn overlay<V: View<Message, B> + Send + Sync + 'static>(
         self,
         overlay: V,
         alignment: iced::Alignment,
     ) -> ZStack<Message, B>
     where
-        Self: 'static,
+        Self: Send + Sync + 'static,
     {
         ZStack::new_generic()
             .push(self)
@@ -293,15 +293,18 @@ pub trait LayoutExt<Message: Clone + Send + Sync + 'static, B: Backend>:
     /// Sets an ideal width for the view, scaled by the current theme scaling.
     fn ideal_width(self, width: f32) -> crate::core::ProxyView<Message, B>
     where
-        Self: Sized + 'static;
+        Self: Sized + Send + Sync + 'static;
 
     fn locked(self, is_locked: bool) -> crate::core::ProxyView<Message, B>
     where
-        Self: Sized + 'static;
+        Self: Sized + Send + Sync + 'static;
 }
 
-impl<V: View<Message, B> + Sized + 'static, Message: Clone + Send + Sync + 'static, B: Backend>
-    LayoutExt<Message, B> for V
+impl<
+        V: View<Message, B> + Sized + Send + Sync + 'static,
+        Message: Clone + Send + Sync + 'static,
+        B: Backend,
+    > LayoutExt<Message, B> for V
 {
     fn ideal_width(self, width: f32) -> crate::core::ProxyView<Message, B>
     where
@@ -336,7 +339,7 @@ impl<V: View<Message, B> + Sized + 'static, Message: Clone + Send + Sync + 'stat
 }
 
 pub struct ResponsiveGrid<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    pub children: Vec<Box<dyn View<Message, B>>>,
+    pub children: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     pub spacing: f32,
     pub items_per_row: usize,
     pub mobile_items_per_row: usize,
@@ -375,7 +378,7 @@ impl<Message: 'static + Send + Sync, B: Backend> ResponsiveGrid<Message, B> {
         self
     }
 
-    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.children.push(Box::new(view));
         self
     }
@@ -408,7 +411,7 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Responsive
 
 /// A wrap layout that arranges children horizontally and wraps them to the next line when they run out of space.
 pub struct Wrap<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    children: Vec<Box<dyn View<Message, B>>>,
+    children: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     spacing: f32,
     run_spacing: f32,
     padding: iced::Padding,
@@ -475,7 +478,7 @@ impl<Message: 'static + Send + Sync, B: Backend> Wrap<Message, B> {
         self
     }
 
-    pub fn push(mut self, view: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, view: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.children.push(Box::new(view));
         self
     }
@@ -483,7 +486,7 @@ impl<Message: 'static + Send + Sync, B: Backend> Wrap<Message, B> {
     pub fn extend<I, V>(mut self, iter: I) -> Self
     where
         I: IntoIterator<Item = V>,
-        V: View<Message, B> + 'static,
+        V: View<Message, B> + Send + Sync + 'static,
     {
         for child in iter {
             self.children.push(Box::new(child));

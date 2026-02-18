@@ -7,24 +7,24 @@ pub enum FormStyle {
     Plain,
 }
 
-pub struct Form<Message: 'static, B: Backend = IcedBackend> {
-    sections: Vec<Box<dyn View<Message, B>>>,
+pub struct Form<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
+    sections: Vec<Box<dyn View<Message, B> + Send + Sync>>,
     style: FormStyle,
 }
 
-impl<Message: 'static> Form<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> Form<Message, IcedBackend> {
     pub fn new() -> Self {
         Self::new_generic()
     }
 }
 
-impl<Message: 'static> Form<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> Form<Message, TermBackend> {
     pub fn new_tui() -> Self {
         Self::new_generic()
     }
 }
 
-impl<Message: 'static, B: Backend> Form<Message, B> {
+impl<Message: 'static + Send + Sync, B: Backend> Form<Message, B> {
     pub fn new_generic() -> Self {
         Self {
             sections: Vec::new(),
@@ -37,13 +37,13 @@ impl<Message: 'static, B: Backend> Form<Message, B> {
         self
     }
 
-    pub fn push(mut self, section: impl View<Message, B> + 'static) -> Self {
+    pub fn push(mut self, section: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.sections.push(Box::new(section));
         self
     }
 }
 
-impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend> {
+impl<Message: 'static + Send + Sync> View<Message, IcedBackend> for Form<Message, IcedBackend> {
     fn view(&self, context: &Context) -> Element<'static, Message, Theme, Renderer> {
         // ... (existing implementation)
         let mut column = iced::widget::Column::new()
@@ -122,7 +122,7 @@ impl<Message: 'static> View<Message, IcedBackend> for Form<Message, IcedBackend>
     }
 }
 
-impl<Message: 'static> View<Message, TermBackend> for Form<Message, TermBackend> {
+impl<Message: 'static + Send + Sync> View<Message, TermBackend> for Form<Message, TermBackend> {
     fn view(&self, context: &Context) -> String {
         self.sections
             .iter()

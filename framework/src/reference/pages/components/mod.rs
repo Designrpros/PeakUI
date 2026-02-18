@@ -9,6 +9,7 @@ pub mod emoji;
 pub mod hstack;
 pub mod icon;
 pub mod image;
+pub mod inputs;
 pub mod line_chart;
 pub mod modal_doc;
 pub mod navigation_split;

@@ -87,7 +87,7 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
     .spacing(8.0)
     .align_y(iced::Alignment::Center);
 
-    let preview_content: Box<dyn View<Message, IcedBackend>> = match render_mode {
+    let preview_content: Box<dyn View<Message, IcedBackend> + Send + Sync> = match render_mode {
         RenderMode::Canvas => {
             crate::layout::containers::Card::new(create_preview::<IcedBackend>(ctx))
                 .padding(32)

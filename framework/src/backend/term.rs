@@ -8,16 +8,16 @@ use std::sync::Arc;
 pub struct TermBackend;
 
 impl Backend for TermBackend {
-    type AnyView<Message: 'static> = String;
+    type AnyView<Message: 'static + Send + Sync> = String;
 
-    fn semantic_node<Message: 'static>(
+    fn semantic_node<Message: 'static + Send + Sync>(
         node: crate::semantic::SemanticNode,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("(SEMANTIC: {:?})", node.role)
     }
 
-    fn rich_text<Message: Clone + 'static>(
+    fn rich_text<Message: Clone + 'static + Send + Sync>(
         _spans: Vec<TextSpan>,
         _size: f32,
         _width: Length,
@@ -27,7 +27,7 @@ impl Backend for TermBackend {
         String::new()
     }
 
-    fn with_tooltip<Message: 'static>(
+    fn with_tooltip<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         tooltip: Arc<str>,
         _context: &Context,
@@ -35,7 +35,7 @@ impl Backend for TermBackend {
         format!("{} (Tooltip: {})", content, tooltip)
     }
 
-    fn glass_card<Message: 'static>(
+    fn glass_card<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -45,7 +45,7 @@ impl Backend for TermBackend {
         format!("(GLASS)\n{}", content)
     }
 
-    fn section<Message: 'static>(
+    fn section<Message: 'static + Send + Sync>(
         title: String,
         content: Self::AnyView<Message>,
         _width: Length,
@@ -55,7 +55,7 @@ impl Backend for TermBackend {
         format!("\x1b[1;2m# {}\x1b[0m\n{}", title.to_uppercase(), content)
     }
 
-    fn vstack<Message: 'static>(
+    fn vstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _padding: Padding,
@@ -68,7 +68,7 @@ impl Backend for TermBackend {
         children.join("\n")
     }
 
-    fn hstack<Message: 'static>(
+    fn hstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _padding: Padding,
@@ -81,7 +81,7 @@ impl Backend for TermBackend {
         children.join(" ")
     }
 
-    fn wrap<Message: 'static>(
+    fn wrap<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _run_spacing: f32,
@@ -95,7 +95,7 @@ impl Backend for TermBackend {
         children.join(" ")
     }
 
-    fn text<Message: Clone + 'static>(
+    fn text<Message: Clone + 'static + Send + Sync>(
         content: String,
         _size: f32,
         _color: Option<Color>,
@@ -130,7 +130,7 @@ impl Backend for TermBackend {
         out
     }
 
-    fn icon<Message: Clone + 'static>(
+    fn icon<Message: Clone + 'static + Send + Sync>(
         name: String,
         _size: f32,
         _color: Option<Color>,
@@ -145,11 +145,11 @@ impl Backend for TermBackend {
         format!("\x1b[36m{}\x1b[0m", symbol)
     }
 
-    fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
+    fn divider<Message: 'static + Send + Sync>(_context: &Context) -> Self::AnyView<Message> {
         "────────────────────".to_string()
     }
 
-    fn space<Message: 'static>(
+    fn space<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _context: &Context,
@@ -157,7 +157,7 @@ impl Backend for TermBackend {
         " ".to_string()
     }
 
-    fn circle<Message: 'static>(
+    fn circle<Message: 'static + Send + Sync>(
         _radius: f32,
         _color: Option<Color>,
         _context: &Context,
@@ -165,7 +165,7 @@ impl Backend for TermBackend {
         "O".to_string()
     }
 
-    fn arc<Message: 'static>(
+    fn arc<Message: 'static + Send + Sync>(
         _radius: f32,
         _start_angle: f32,
         _end_angle: f32,
@@ -175,7 +175,7 @@ impl Backend for TermBackend {
         "C".to_string()
     }
 
-    fn path<Message: 'static>(
+    fn path<Message: 'static + Send + Sync>(
         points: Vec<iced::Point>,
         _color: Option<Color>,
         _width: f32,
@@ -184,7 +184,7 @@ impl Backend for TermBackend {
         format!("~ ({} pts)", points.len())
     }
 
-    fn capsule<Message: 'static>(
+    fn capsule<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -193,7 +193,7 @@ impl Backend for TermBackend {
         "=".to_string()
     }
 
-    fn rectangle<Message: 'static, R: Into<Radius>>(
+    fn rectangle<Message: 'static + Send + Sync, R: Into<Radius>>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -205,7 +205,7 @@ impl Backend for TermBackend {
         "█".to_string()
     }
 
-    fn button<Message: Clone + 'static>(
+    fn button<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _on_press: Option<Message>,
         _variant: Variant,
@@ -235,10 +235,10 @@ impl Backend for TermBackend {
         }
     }
 
-    fn text_input<Message: Clone + 'static>(
+    fn text_input<Message: Clone + 'static + Send + Sync>(
         value: String,
         placeholder: String,
-        _on_change: impl Fn(String) -> Message + 'static,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
         is_secure: bool,
@@ -254,25 +254,25 @@ impl Backend for TermBackend {
         )
     }
 
-    fn slider<Message: Clone + 'static>(
+    fn slider<Message: Clone + 'static + Send + Sync>(
         _range: std::ops::RangeInclusive<f32>,
         value: f32,
-        _on_change: impl Fn(f32) -> Message + 'static,
+        _on_change: impl Fn(f32) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("[---X---] {:.2}", value)
     }
 
-    fn toggle<Message: Clone + 'static>(
+    fn toggle<Message: Clone + 'static + Send + Sync>(
         label: String,
         is_active: bool,
-        _on_toggle: impl Fn(bool) -> Message + 'static,
+        _on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         format!("{} [{}]", label, if is_active { "ON" } else { "OFF" })
     }
 
-    fn zstack<Message: 'static>(
+    fn zstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _width: Length,
         _height: Length,
@@ -282,7 +282,7 @@ impl Backend for TermBackend {
         children.join("\n")
     }
 
-    fn grid<Message: 'static>(
+    fn grid<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _columns: usize,
         _spacing: f32,
@@ -291,7 +291,7 @@ impl Backend for TermBackend {
         children.join(" | ")
     }
 
-    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn image<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         _width: Length,
         _height: Length,
@@ -301,7 +301,7 @@ impl Backend for TermBackend {
         format!("[IMG: {}]", path.into())
     }
 
-    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn video<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         _width: Length,
         _height: Length,
@@ -311,7 +311,7 @@ impl Backend for TermBackend {
         format!("[VIDEO: {}]", path.into())
     }
 
-    fn web_view<Message: 'static, R: Into<Radius>>(
+    fn web_view<Message: 'static + Send + Sync, R: Into<Radius>>(
         url: String,
         _width: Length,
         _height: Length,
@@ -321,7 +321,7 @@ impl Backend for TermBackend {
         format!("[WEB: {}]", url)
     }
 
-    fn container<Message: 'static, R: Into<Radius>>(
+    fn container<Message: 'static + Send + Sync, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -338,7 +338,7 @@ impl Backend for TermBackend {
         content
     }
 
-    fn scroll_view<Message: 'static>(
+    fn scroll_view<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _width: Length,
         _height: Length,
@@ -350,7 +350,7 @@ impl Backend for TermBackend {
         content
     }
 
-    fn spatial_modifier<Message: 'static>(
+    fn spatial_modifier<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _position: Vector3<f32>,
         _scale: Vector3<f32>,
@@ -360,7 +360,7 @@ impl Backend for TermBackend {
         content
     }
 
-    fn mouse_area<Message: Clone + 'static>(
+    fn mouse_area<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,
@@ -368,5 +368,23 @@ impl Backend for TermBackend {
         _context: &Context,
     ) -> Self::AnyView<Message> {
         content
+    }
+
+    fn text_editor<Message: Clone + Send + Sync + 'static>(
+        content: String,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+        _font: Option<iced::Font>,
+        _id: Option<iced::widget::Id>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("[Editor:{}]", content)
+    }
+
+    fn menu<Message: Clone + Send + Sync + 'static>(
+        content: Self::AnyView<Message>,
+        _items: Vec<crate::views::context_menu::ContextMenuItem<Message>>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        format!("[Menu:{}]", content)
     }
 }

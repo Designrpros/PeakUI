@@ -3,7 +3,7 @@ use iced::{Length, Padding};
 use std::borrow::Cow;
 
 pub struct Card<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    content: Box<dyn View<Message, B>>,
+    content: Box<dyn View<Message, B> + Send + Sync>,
     padding: Padding,
     width: Length,
     height: Length,
@@ -14,19 +14,19 @@ pub struct Card<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
 }
 
 impl<Message: 'static + Send + Sync> Card<Message, IcedBackend> {
-    pub fn new(content: impl View<Message, IcedBackend> + 'static) -> Self {
+    pub fn new(content: impl View<Message, IcedBackend> + Send + Sync + 'static) -> Self {
         Self::new_generic(content)
     }
 }
 
 impl<Message: 'static + Send + Sync> Card<Message, TermBackend> {
-    pub fn new_tui(content: impl View<Message, TermBackend> + 'static) -> Self {
+    pub fn new_tui(content: impl View<Message, TermBackend> + Send + Sync + 'static) -> Self {
         Self::new_generic(content)
     }
 }
 
 impl<Message: 'static + Send + Sync, B: Backend> Card<Message, B> {
-    pub fn new_generic(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new_generic(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             content: Box::new(content),
             padding: Padding::from(16),
@@ -97,7 +97,7 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Card<Messa
 
 pub struct Section<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
     title: String,
-    content: Box<dyn View<Message, B>>,
+    content: Box<dyn View<Message, B> + Send + Sync>,
     width: Length,
     height: Length,
 }
@@ -105,7 +105,7 @@ pub struct Section<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
 impl<Message: 'static + Send + Sync> Section<Message, IcedBackend> {
     pub fn new(
         title: impl Into<Cow<'static, str>>,
-        content: impl View<Message, IcedBackend> + 'static,
+        content: impl View<Message, IcedBackend> + Send + Sync + 'static,
     ) -> Self {
         Self::new_generic(title, content)
     }
@@ -114,7 +114,7 @@ impl<Message: 'static + Send + Sync> Section<Message, IcedBackend> {
 impl<Message: 'static + Send + Sync> Section<Message, TermBackend> {
     pub fn new_tui(
         title: impl Into<Cow<'static, str>>,
-        content: impl View<Message, TermBackend> + 'static,
+        content: impl View<Message, TermBackend> + Send + Sync + 'static,
     ) -> Self {
         Self::new_generic(title, content)
     }
@@ -123,7 +123,7 @@ impl<Message: 'static + Send + Sync> Section<Message, TermBackend> {
 impl<Message: 'static + Send + Sync, B: Backend> Section<Message, B> {
     pub fn new_generic(
         title: impl Into<Cow<'static, str>>,
-        content: impl View<Message, B> + 'static,
+        content: impl View<Message, B> + Send + Sync + 'static,
     ) -> Self {
         Self {
             title: title.into().into_owned(),
@@ -163,14 +163,14 @@ impl<Message: 'static + Send + Sync, B: Backend> View<Message, B> for Section<Me
 }
 
 pub struct GlassCard<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    content: Box<dyn View<Message, B>>,
+    content: Box<dyn View<Message, B> + Send + Sync>,
     padding: Padding,
     width: Length,
     height: Length,
 }
 
 impl<Message: 'static + Send + Sync, B: Backend> GlassCard<Message, B> {
-    pub fn new(content: impl View<Message, B> + 'static) -> Self {
+    pub fn new(content: impl View<Message, B> + Send + Sync + 'static) -> Self {
         Self {
             content: Box::new(content),
             padding: Padding::from(20),

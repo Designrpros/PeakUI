@@ -9,16 +9,16 @@ use std::sync::Arc;
 pub struct AIBackend;
 
 impl Backend for AIBackend {
-    type AnyView<Message: 'static> = SemanticNode;
+    type AnyView<Message: 'static + Send + Sync> = SemanticNode;
 
-    fn semantic_node<Message: 'static>(
+    fn semantic_node<Message: 'static + Send + Sync>(
         node: crate::semantic::SemanticNode,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         node
     }
 
-    fn rich_text<Message: Clone + 'static>(
+    fn rich_text<Message: Clone + 'static + Send + Sync>(
         _spans: Vec<TextSpan>,
         _size: f32,
         _width: Length,
@@ -28,7 +28,7 @@ impl Backend for AIBackend {
         SemanticNode::default()
     }
 
-    fn with_tooltip<Message: 'static>(
+    fn with_tooltip<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _tooltip: Arc<str>,
         _context: &Context,
@@ -36,7 +36,7 @@ impl Backend for AIBackend {
         content
     }
 
-    fn glass_card<Message: 'static>(
+    fn glass_card<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -46,7 +46,7 @@ impl Backend for AIBackend {
         content
     }
 
-    fn section<Message: 'static>(
+    fn section<Message: 'static + Send + Sync>(
         _title: String,
         content: Self::AnyView<Message>,
         _width: Length,
@@ -56,7 +56,7 @@ impl Backend for AIBackend {
         content
     }
 
-    fn vstack<Message: 'static>(
+    fn vstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _padding: Padding,
@@ -74,7 +74,7 @@ impl Backend for AIBackend {
         SemanticNode::new("vstack").extend_children(children)
     }
 
-    fn hstack<Message: 'static>(
+    fn hstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _padding: Padding,
@@ -92,7 +92,7 @@ impl Backend for AIBackend {
         SemanticNode::new("hstack").extend_children(children)
     }
 
-    fn wrap<Message: 'static>(
+    fn wrap<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _spacing: f32,
         _run_spacing: f32,
@@ -111,7 +111,7 @@ impl Backend for AIBackend {
         SemanticNode::new("wrap").extend_children(children)
     }
 
-    fn text<Message: Clone + 'static>(
+    fn text<Message: Clone + 'static + Send + Sync>(
         content: String,
         _size: f32,
         _color: Option<Color>,
@@ -126,7 +126,7 @@ impl Backend for AIBackend {
         SemanticNode::new("text").with_content(content)
     }
 
-    fn icon<Message: Clone + 'static>(
+    fn icon<Message: Clone + 'static + Send + Sync>(
         name: String,
         _size: f32,
         _color: Option<Color>,
@@ -135,11 +135,11 @@ impl Backend for AIBackend {
         SemanticNode::new("icon").with_label(name)
     }
 
-    fn divider<Message: 'static>(_context: &Context) -> Self::AnyView<Message> {
+    fn divider<Message: 'static + Send + Sync>(_context: &Context) -> Self::AnyView<Message> {
         SemanticNode::new("divider")
     }
 
-    fn space<Message: 'static>(
+    fn space<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _context: &Context,
@@ -147,7 +147,7 @@ impl Backend for AIBackend {
         SemanticNode::new("space")
     }
 
-    fn circle<Message: 'static>(
+    fn circle<Message: 'static + Send + Sync>(
         radius: f32,
         color: Option<Color>,
         _context: &Context,
@@ -157,7 +157,7 @@ impl Backend for AIBackend {
             .with_content(format!("{:?}", color))
     }
 
-    fn arc<Message: 'static>(
+    fn arc<Message: 'static + Send + Sync>(
         radius: f32,
         start_angle: f32,
         end_angle: f32,
@@ -169,7 +169,7 @@ impl Backend for AIBackend {
             .with_content(format!("{:?}", color))
     }
 
-    fn path<Message: 'static>(
+    fn path<Message: 'static + Send + Sync>(
         points: Vec<iced::Point>,
         color: Option<Color>,
         width: f32,
@@ -180,7 +180,7 @@ impl Backend for AIBackend {
             .with_content(format!("{:?}", color))
     }
 
-    fn capsule<Message: 'static>(
+    fn capsule<Message: 'static + Send + Sync>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -189,7 +189,7 @@ impl Backend for AIBackend {
         SemanticNode::new("capsule")
     }
 
-    fn rectangle<Message: 'static, R: Into<Radius>>(
+    fn rectangle<Message: 'static + Send + Sync, R: Into<Radius>>(
         _width: Length,
         _height: Length,
         _color: Option<Color>,
@@ -201,7 +201,7 @@ impl Backend for AIBackend {
         SemanticNode::new("rectangle")
     }
 
-    fn button<Message: Clone + 'static>(
+    fn button<Message: Clone + 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _on_press: Option<Message>,
         variant: Variant,
@@ -232,10 +232,10 @@ impl Backend for AIBackend {
             )
     }
 
-    fn text_input<Message: Clone + 'static>(
+    fn text_input<Message: Clone + 'static + Send + Sync>(
         value: String,
         _placeholder: String,
-        _on_change: impl Fn(String) -> Message + 'static,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
         _on_submit: Option<Message>,
         _font: Option<iced::Font>,
         _is_secure: bool,
@@ -248,19 +248,19 @@ impl Backend for AIBackend {
             .with_content(value)
     }
 
-    fn slider<Message: Clone + 'static>(
+    fn slider<Message: Clone + 'static + Send + Sync>(
         _range: std::ops::RangeInclusive<f32>,
         value: f32,
-        _on_change: impl Fn(f32) -> Message + 'static,
+        _on_change: impl Fn(f32) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode::new("slider").with_content(value.to_string())
     }
 
-    fn toggle<Message: Clone + 'static>(
+    fn toggle<Message: Clone + 'static + Send + Sync>(
         label: String,
         is_active: bool,
-        _on_toggle: impl Fn(bool) -> Message + 'static,
+        _on_toggle: impl Fn(bool) -> Message + Send + Sync + 'static,
         _context: &Context,
     ) -> Self::AnyView<Message> {
         SemanticNode::new("toggle")
@@ -268,7 +268,7 @@ impl Backend for AIBackend {
             .with_content(is_active.to_string())
     }
 
-    fn zstack<Message: 'static>(
+    fn zstack<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         _width: Length,
         _height: Length,
@@ -278,7 +278,7 @@ impl Backend for AIBackend {
         SemanticNode::new("zstack").extend_children(children)
     }
 
-    fn grid<Message: 'static>(
+    fn grid<Message: 'static + Send + Sync>(
         children: Vec<Self::AnyView<Message>>,
         columns: usize,
         _spacing: f32,
@@ -289,7 +289,7 @@ impl Backend for AIBackend {
             .extend_children(children)
     }
 
-    fn image<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn image<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         _width: Length,
         _height: Length,
@@ -299,7 +299,7 @@ impl Backend for AIBackend {
         SemanticNode::new("image").with_content(path.into())
     }
 
-    fn video<Message: 'static, S: Into<String>, R: Into<Radius>>(
+    fn video<Message: 'static + Send + Sync, S: Into<String>, R: Into<Radius>>(
         path: S,
         _width: Length,
         _height: Length,
@@ -309,7 +309,7 @@ impl Backend for AIBackend {
         SemanticNode::new("video").with_content(path.into())
     }
 
-    fn web_view<Message: 'static, R: Into<Radius>>(
+    fn web_view<Message: 'static + Send + Sync, R: Into<Radius>>(
         url: String,
         _width: Length,
         _height: Length,
@@ -319,7 +319,7 @@ impl Backend for AIBackend {
         SemanticNode::new("web_view").with_content(url)
     }
 
-    fn container<Message: 'static, R: Into<Radius>>(
+    fn container<Message: 'static + Send + Sync, R: Into<Radius>>(
         content: Self::AnyView<Message>,
         _padding: Padding,
         _width: Length,
@@ -336,7 +336,7 @@ impl Backend for AIBackend {
         content
     }
 
-    fn scroll_view<Message: 'static>(
+    fn scroll_view<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _width: Length,
         _height: Length,
@@ -348,7 +348,7 @@ impl Backend for AIBackend {
         content
     }
 
-    fn spatial_modifier<Message: 'static>(
+    fn spatial_modifier<Message: 'static + Send + Sync>(
         content: Self::AnyView<Message>,
         _position: Vector3<f32>,
         _scale: Vector3<f32>,
@@ -358,7 +358,25 @@ impl Backend for AIBackend {
         content
     }
 
-    fn mouse_area<Message: Clone + 'static>(
+    fn text_editor<Message: Clone + Send + Sync + 'static>(
+        content: String,
+        _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
+        _font: Option<iced::Font>,
+        _id: Option<iced::widget::Id>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SemanticNode::new("text_editor").with_content(content)
+    }
+
+    fn menu<Message: Clone + Send + Sync + 'static>(
+        content: Self::AnyView<Message>,
+        _items: Vec<crate::views::context_menu::ContextMenuItem<Message>>,
+        _context: &Context,
+    ) -> Self::AnyView<Message> {
+        SemanticNode::new("menu").push_child(content)
+    }
+
+    fn mouse_area<Message: Clone + Send + Sync + 'static>(
         content: Self::AnyView<Message>,
         _on_move: Option<Arc<dyn Fn(iced::Point) -> Message + Send + Sync>>,
         _on_press: Option<Message>,

@@ -19,6 +19,15 @@ use crate::reference::AppPage;
 
 impl App {
     pub fn update(&mut self, message: Message) -> Task<Message> {
+        let task = self.update_internal(message);
+
+        // Export the live view state for the Neural Exposure API
+        self.export_view();
+
+        task
+    }
+
+    fn update_internal(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Shell(shell_msg) => match shell_msg {
                 ShellMessage::SetTab(tab) => {
@@ -201,6 +210,7 @@ impl App {
                         )
                     }
                 },
+
                 #[cfg(feature = "intelligence")]
                 IntelligenceMessage::AIResponse(res) => {
                     self.intelligence.is_thinking = false;
@@ -615,6 +625,24 @@ impl App {
                 Task::none()
             }
             Message::None => Task::none(),
+        }
+    }
+
+    fn export_view(&self) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // Only export if exposure is enabled or we are in dev/debug mode
+            // For now, we always export in native to support the local neural API
+            let ctx = self.context();
+            let view = crate::reference::views::ContentView::new(self);
+            let tree = view.describe(&ctx);
+            if let Ok(json) = serde_json::to_string(&tree) {
+                // Ensure directory exists
+                let _ = std::fs::create_dir_all(".peak");
+                if let Err(e) = std::fs::write(".peak/current_view.json", json) {
+                    log::error!("Failed to export Neural View: {}", e);
+                }
+            }
         }
     }
 
