@@ -4,9 +4,9 @@ use iced::{Element, Length, Renderer, Theme};
 use std::sync::Arc;
 
 pub struct NavigationSplitView<Message: 'static + Send + Sync, B: Backend = IcedBackend> {
-    sidebar: Box<dyn View<Message, B>>,
-    content: Box<dyn View<Message, B>>,
-    inspector: Option<Box<dyn View<Message, B>>>,
+    sidebar: Box<dyn View<Message, B> + Send + Sync + 'static>,
+    content: Box<dyn View<Message, B> + Send + Sync + 'static>,
+    inspector: Option<Box<dyn View<Message, B> + Send + Sync + 'static>>,
     force_sidebar_on_slim: bool,
     on_back: Option<Message>,
     sidebar_width: f32,
@@ -27,8 +27,8 @@ pub struct NavigationSplitView<Message: 'static + Send + Sync, B: Backend = Iced
 
 impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, IcedBackend> {
     pub fn new(
-        sidebar: impl View<Message, IcedBackend> + 'static,
-        content: impl View<Message, IcedBackend> + 'static,
+        sidebar: impl View<Message, IcedBackend> + Send + Sync + 'static,
+        content: impl View<Message, IcedBackend> + Send + Sync + 'static,
     ) -> Self {
         Self::new_generic(sidebar, content)
     }
@@ -36,8 +36,8 @@ impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, IcedBa
 
 impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, TermBackend> {
     pub fn new_tui(
-        sidebar: impl View<Message, TermBackend> + 'static,
-        content: impl View<Message, TermBackend> + 'static,
+        sidebar: impl View<Message, TermBackend> + Send + Sync + 'static,
+        content: impl View<Message, TermBackend> + Send + Sync + 'static,
     ) -> Self {
         Self::new_generic(sidebar, content)
     }
@@ -45,8 +45,8 @@ impl<Message: Clone + Send + Sync + 'static> NavigationSplitView<Message, TermBa
 
 impl<Message: Clone + Send + Sync + 'static, B: Backend> NavigationSplitView<Message, B> {
     pub fn new_generic(
-        sidebar: impl View<Message, B> + 'static,
-        content: impl View<Message, B> + 'static,
+        sidebar: impl View<Message, B> + Send + Sync + 'static,
+        content: impl View<Message, B> + Send + Sync + 'static,
     ) -> Self {
         Self {
             sidebar: Box::new(sidebar),
@@ -71,7 +71,7 @@ impl<Message: Clone + Send + Sync + 'static, B: Backend> NavigationSplitView<Mes
         }
     }
 
-    pub fn inspector(mut self, inspector: impl View<Message, B> + 'static) -> Self {
+    pub fn inspector(mut self, inspector: impl View<Message, B> + Send + Sync + 'static) -> Self {
         self.inspector = Some(Box::new(inspector));
         self
     }
