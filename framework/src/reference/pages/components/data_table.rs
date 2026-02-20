@@ -46,47 +46,55 @@ pub fn view(ctx: &Context, render_mode: RenderMode) -> AppPageResult {
        "### High-Density Data\nData tables in PeakUI are more than just grids. They are semantic structures that handle complex layout logic across different display kernels.\n\n- **Kernel Agnostic**: The same `data_table!` DSL manifests as a rich interactive grid on Canvas, a character-based table in Terminal, and a structured array in Neural mode.\n- **Performance**: Built with virtualization in mind (planned) to handle thousands of rows without dropping frames."
     )
     .props_table(
-        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `sortable_column(n, w, f)` | `&str, Length, Fn` | Defines a sortable column with a callback. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `row_with_action(cells, m)` | `Vec<...>, Msg` | Adds an interactive row. |\n| `show_grid(b)` | `bool` | Toggles internal grid lines. |"
+        "| Modifier | Type | Description |\n| :--- | :--- | :--- |\n| `preset(p)` | `DataTablePreset` | Professional, Minimal, or Custom styles. |\n| `column(n, w)` | `&str, Length` | Defines a table column and its width. |\n| `sortable_column(n, w, f)` | `&str, Length, Fn` | Defines a sortable column with a callback. |\n| `row(cells)` | `Vec<Box<dyn View>>`| Adds a row of content. |\n| `row_with_action(cells, m)` | `Vec<...>, Msg` | Adds an interactive row. |\n| `on_selection_change(f)` | `Fn(HashSet<String>)` | Enables row selection with checkboxes. |\n| `on_page_change(f)` | `Fn(usize)` | Enables pagination controls. |"
     );
 
     AppPageResult::new(doc)
 }
 
 fn create_canvas_preview(_ctx: &Context) -> VStack<Message, IcedBackend> {
-    let sample_rows = || {
-        vec![
+    let sample_rows = |page: usize| {
+        let all_data = vec![
             ("001", "Primary Node C", "Active", "99.9%", Intent::Success),
             ("002", "Secondary Relay", "Standby", "98.5%", Intent::Info),
             ("003", "Storage Cluster", "Syncing", "100%", Intent::Warning),
-        ]
+            ("004", "Backup Module", "Offline", "0.0%", Intent::Danger),
+            ("005", "Cache Layer", "Active", "95.2%", Intent::Success),
+        ];
+        // Simulate pagination (page 1, size 3)
+        if page == 1 {
+            all_data[0..3].to_vec()
+        } else {
+            all_data[3..].to_vec()
+        }
     };
 
     vstack::<Message, IcedBackend>().spacing(32.0).push(
         vstack::<Message, IcedBackend>()
+            .width(Length::Fill)
             .spacing(8.0)
-            .push(text::<IcedBackend>("Sample Render").caption2().secondary())
             .push({
                 let mut table = crate::data_table![
                     preset(DataTablePreset::Professional),
-                    min_width(400.0),
-                    column("ID", Length::Fixed(60.0)),
+                    column("ID", Length::FillPortion(1)),
                 ]
-                .sortable_column("Name", Length::Fill, |asc| {
+                .sortable_column("Name", Length::FillPortion(4), |asc| {
                     Message::Unknown(format!("Sort Name {}", if asc { "Asc" } else { "Desc" }))
                 })
-                .column("Status", Length::Fixed(100.0));
+                .column("Status", Length::FillPortion(2))
+                .align_end();
 
-                for (id, name, status, _, intent) in sample_rows() {
+                for (id, name, status, _, intent) in sample_rows(1) {
                     table = table.row_with_action(
                         vec![
-                            Box::new(text::<IcedBackend>(id).secondary())
+                            Box::new(text::<IcedBackend>(id).secondary().wrap())
                                 as Box<dyn View<Message, IcedBackend> + Send + Sync>,
-                            Box::new(text::<IcedBackend>(name).bold())
+                            Box::new(text::<IcedBackend>(name).bold().wrap())
                                 as Box<dyn View<Message, IcedBackend> + Send + Sync>,
-                            Box::new(Badge::new(status).intent(intent))
+                            Box::new(Badge::new(status).intent(intent).wrap())
                                 as Box<dyn View<Message, IcedBackend> + Send + Sync>,
                         ],
-                        Message::Unknown(format!("Selected {}", name)),
+                        Message::Unknown(format!("Clicked Row {}", name)),
                     );
                 }
                 table

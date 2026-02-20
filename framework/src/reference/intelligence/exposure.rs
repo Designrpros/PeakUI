@@ -1,4 +1,5 @@
 use crate::reference::app::{Command, Message};
+
 use crate::reference::intelligence::mcp;
 use iced::futures::channel::mpsc::Sender;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -42,6 +43,11 @@ pub async fn run_server(sender: Sender<Message>) {
 
 You are interacting with the PeakUI framework via a direct network socket.
 
+## Chat
+POST /chat
+Body: {"message": "Hello"}
+Response: {"response": "Hi there!"}
+
 ## Navigation
 Use the `SetTab` command to navigate between pages. 
 Available pages: Colors, Typography, Layout, Icons, Buttons, etc.
@@ -76,6 +82,85 @@ Use the `Search` command to filter components or search for documentation within
                                     view_json
                                 );
                                 let _ = socket.write_all(response.as_bytes()).await;
+                            } else if request.starts_with("POST /chat") {
+                                if let Some(body_start) = request.find("\r\n\r\n") {
+                                    let json_body = &request[body_start + 4..];
+
+                                    let message = if let Ok(json) =
+                                        serde_json::from_str::<serde_json::Value>(json_body.trim())
+                                    {
+                                        json.get("message")
+                                            .and_then(|s| s.as_str())
+                                            .map(|s| s.to_string())
+                                    } else {
+                                        None
+                                    };
+
+                                    if let Some(msg) = message {
+                                        // 1. Send user message to UI for visibility
+                                        let _ = sender.try_send(Message::Intelligence(
+                                            crate::reference::app::IntelligenceMessage::Chat(
+                                                crate::views::chat::ChatViewMessage::InputChanged(
+                                                    msg.clone(),
+                                                ),
+                                            ),
+                                        ));
+
+                                        // 2. Call Bridge Directly if enabled
+                                        if let Some(bridge) =
+                                            crate::reference::intelligence::bridge::GLOBAL_BRIDGE
+                                                .get()
+                                        {
+                                            let chat_msg = crate::core::ChatCompletionMessage {
+                                                role: "user".to_string(),
+                                                content: msg,
+                                            };
+
+                                            let response_text =
+                                                match bridge.chat_direct(vec![chat_msg]).await {
+                                                    Ok(res) => res,
+                                                    Err(e) => format!("Error: {}", e),
+                                                };
+
+                                            // 3. Parse and Execute Actions
+                                            let actions = crate::reference::intelligence::ActionParser::parse_text(&response_text);
+                                            for action in actions {
+                                                let command = match action {
+                                                    crate::reference::intelligence::Action::Navigate(page) => Some(Command::SetTab(page)),
+                                                    crate::reference::intelligence::Action::SetThemeTone(tone) => Some(Command::SetTheme(tone)),
+                                                    crate::reference::intelligence::Action::SetThemeKind(kind) => Some(Command::SetThemeKind(kind)),
+                                                    crate::reference::intelligence::Action::SetLabMode(mode) => Some(Command::SetRenderMode(mode)),
+                                                    crate::reference::intelligence::Action::SetButtonVariant(v) => Some(Command::UpdateButtonVariant(v)),
+                                                    crate::reference::intelligence::Action::SetButtonIntent(i) => Some(Command::UpdateButtonIntent(i)),
+                                                    _ => None,
+                                                };
+
+                                                if let Some(cmd) = command {
+                                                    let _ = sender.try_send(cmd.into_message());
+                                                }
+                                            }
+
+                                            let response_json = serde_json::json!({
+                                                "response": response_text
+                                            });
+                                            let body = serde_json::to_string_pretty(&response_json)
+                                                .unwrap();
+
+                                            let response = format!(
+                                                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                                                body.len(),
+                                                body
+                                            );
+                                            let _ = socket.write_all(response.as_bytes()).await;
+                                        } else {
+                                            let response = "HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\nIntelligence Bridge not initialized";
+                                            let _ = socket.write_all(response.as_bytes()).await;
+                                        }
+                                    } else {
+                                        let response = "HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\nMissing 'message' field";
+                                        let _ = socket.write_all(response.as_bytes()).await;
+                                    }
+                                }
                             } else if request.starts_with("POST /command") {
                                 // Find end of headers
                                 if let Some(body_start) = request.find("\r\n\r\n") {

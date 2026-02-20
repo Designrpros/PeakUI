@@ -1388,14 +1388,50 @@ impl Backend for IcedBackend {
     }
 
     fn text_editor<Message: Clone + Send + Sync + 'static>(
-        _content: String,
+        content: String,
         _on_change: impl Fn(String) -> Message + Send + Sync + 'static,
-        _font: Option<iced::Font>,
-        _id: Option<iced::widget::Id>,
-        _context: &Context,
+        font: Option<iced::Font>,
+        id: Option<iced::widget::Id>,
+        context: &Context,
     ) -> Self::AnyView<Message> {
-        // Temporary stub to resolve lifetime issue with Iced text_editor content
-        iced::widget::text("Text Editor (Not Implemented)").into()
+        // STATELESS BACKEND LIMITATION:
+        // Proper `text_editor` requires `&'a Content` state which must persist across frames.
+        // Our `View` trait is stateless and passes `String`. Creating `Content` locally fails lifetime checks.
+        // For now, we render a read-only Scrollable Text block that looks like an editor.
+
+        // In a real app, the `Content` should be stored in the App State and passed in via a specific
+        // widget or we'd need a `StatefulView` trait.
+
+        let scale = context.theme.scaling;
+        let palette = context.theme.colors.clone();
+
+        let content_text =
+            iced::widget::text(content.clone()).font(font.unwrap_or(iced::Font::MONOSPACE));
+
+        let editor_mock = iced::widget::scrollable(content_text)
+            .height(Length::Fill)
+            .width(Length::Fill);
+
+        let mut container = iced::widget::container(editor_mock)
+            .padding(8.0 * scale)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(move |_theme| iced::widget::container::Style {
+                text_color: Some(palette.text_primary.into()),
+                background: Some(palette.surface.into()),
+                border: iced::Border {
+                    radius: (4.0 * scale).into(),
+                    width: 1.0 * scale,
+                    color: palette.border.into(),
+                },
+                ..Default::default()
+            });
+
+        if let Some(i) = id {
+            container = container.id(i);
+        }
+
+        container.into()
     }
 
     fn menu<Message: Clone + Send + Sync + 'static>(

@@ -146,6 +146,8 @@ pub enum Command {
     #[cfg(feature = "intelligence")]
     SetAIProvider(AIProviderChoice),
     SetExposure(bool),
+    #[cfg(feature = "intelligence")]
+    SendChat(String),
     // Lab
     SetRenderMode(RenderMode),
     UpdateButtonLabel(String),
@@ -202,6 +204,16 @@ impl Command {
             }
             Command::SetExposure(enable) => {
                 Message::Interaction(InteractionMessage::SetExposure(enable))
+            }
+            #[cfg(feature = "intelligence")]
+            Command::SendChat(msg) => {
+                // Simulate setting the input and pressing send in one go
+                // Wait, Message::Intelligence only takes one IntelligenceMessage.
+                // We'll map SendChat to InputChanged first, but actually we can just
+                // bypass that and handle it in app update, or we can just send SendPressed
+                // if we somehow set the input first.
+                // Let's create a specific command for this that we'll handle in update.rs
+                Message::Unknown(format!("NeuralSendChat:{}", msg))
             }
 
             Command::SetRenderMode(mode) => Message::Lab(LabMessage::SetRenderMode(mode)),

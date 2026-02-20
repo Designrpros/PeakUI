@@ -461,6 +461,10 @@ impl Default for App {
             ),
         );
 
+        #[cfg(feature = "intelligence")]
+        let _ =
+            crate::reference::intelligence::bridge::GLOBAL_BRIDGE.set(intelligence_bridge.clone());
+
         Self {
             shell: ShellState {
                 active_tab: AppPage::Introduction,

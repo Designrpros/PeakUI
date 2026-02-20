@@ -536,6 +536,21 @@ fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
         })
         .collect();
 
+    // Column weighting heuristic
+    let column_weights: Vec<u16> = header
+        .iter()
+        .map(|h| {
+            let h = h.to_lowercase();
+            if h.contains("description") || h.contains("summary") {
+                3
+            } else if h.contains("modifier") || h.contains("prop") || h.contains("name") {
+                1
+            } else {
+                1
+            }
+        })
+        .collect();
+
     // 3. Build the UI
     let tokens = context.theme;
 
@@ -543,6 +558,8 @@ fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
     let mut header_cells = Vec::new();
     for (i, cell) in header.iter().enumerate() {
         let align = alignments.get(i).cloned().unwrap_or(iced::Alignment::Start);
+        let weight = *column_weights.get(i).unwrap_or(&1);
+
         header_cells.push(B::container(
             B::text(
                 cell.clone(),
@@ -555,10 +572,9 @@ fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
                 Length::Fill,
                 iced::Alignment::Start,
                 context,
-            ), // Text alignment? Use B::text params carefully.
-            // B::text alignment param is relative to width. if width Fill, it works.
+            ),
             iced::Padding::ZERO,
-            Length::FillPortion(1),
+            Length::FillPortion(weight),
             Length::Shrink,
             None,
             0.0,
@@ -566,7 +582,7 @@ fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
             None,
             None,
             align,
-            iced::Alignment::Center, // Vertical center
+            iced::Alignment::Center,
             context,
         ));
     }
@@ -603,10 +619,12 @@ fn render_table<Message: Clone + Send + Sync + 'static, B: Backend>(
         let mut row_cells = Vec::new();
         for (i, cell) in row_data.iter().enumerate() {
             let align = alignments.get(i).cloned().unwrap_or(iced::Alignment::Start);
+            let weight = *column_weights.get(i).unwrap_or(&1);
+
             row_cells.push(B::container(
                 render_rich_text::<Message, B>(cell, size, context),
                 iced::Padding::ZERO,
-                Length::FillPortion(1),
+                Length::FillPortion(weight),
                 Length::Shrink,
                 None,
                 0.0,

@@ -7,6 +7,10 @@ use serde_json::Value;
 use std::sync::Arc;
 use uuid;
 
+use std::sync::OnceLock;
+
+pub static GLOBAL_BRIDGE: OnceLock<Arc<PeakIntelligenceBridge>> = OnceLock::new();
+
 pub struct PeakIntelligenceBridge {
     client: LlmClient,
     db: Arc<dyn crate::core::DataProvider>,
@@ -51,6 +55,83 @@ impl PeakIntelligenceBridge {
             client: LlmClient::new(provider, model.into(), api_key),
             db,
         }
+    }
+
+    pub async fn chat_direct(
+        &self,
+        messages: Vec<crate::core::ChatCompletionMessage>,
+    ) -> std::result::Result<String, String> {
+        let client = self.client.clone();
+        let db = self.db.clone();
+
+        let mut final_messages = Vec::new();
+
+        // Generate Action Schema
+        let schema = schemars::schema_for!(crate::reference::intelligence::Action);
+        let schema_json = serde_json::to_string_pretty(&schema).unwrap_or_default();
+
+        let system_instruction = format!(
+            "You are the PeakOS Intelligence AI Assistant. You perceive the UI as a Dense JSON tree.\n\n\
+             You can trigger UI actions and external tools by including valid JSON in your response using the format [action: {{...}})].\n\n\
+             REQUIRED ACTION SCHEMA:\n{}\n\n\
+             CRITICAL TOOLS:\n\
+             - Use 'WebSearch' for any information you don't know.\n\
+             - Use 'WriteFile' to save documents or code. ALWAYS prefer '~/Desktop/' for user visibility. DO NOT use the OS root '/' as it is read-only.\n\
+             - Use 'Navigate' to move between pages.\n\n\
+             CRITICAL: You MUST terminate actions with ')]'. \n\
+             Example: [action: {{\"WebSearch\": \"latest rust version\"}})]",
+            schema_json
+        );
+
+        final_messages.push(Message {
+            role: "system".to_string(),
+            content: system_instruction,
+        });
+
+        // 1. RAG: Search for context if we have a user message
+        if let Some(user_msg) = messages.iter().rev().find(|m| m.role == "user") {
+            let query = user_msg.content.clone();
+
+            let mut final_records = Vec::new();
+            // Try semantic search first
+            if let Ok(vector) = client.embeddings(&query).await {
+                if let Ok(semantic_records) = db.async_find_semantic(vector, 10).await {
+                    final_records = semantic_records;
+                }
+            }
+
+            // Fallback/Supplement with keyword search
+            if let Ok(keyword_records) = db.async_find(query).await {
+                for r in keyword_records {
+                    if !final_records.iter().any(|existing| existing.id == r.id) {
+                        final_records.push(r);
+                    }
+                }
+            }
+
+            if !final_records.is_empty() {
+                let context = final_records
+                    .iter()
+                    .map(|r| format!("[Memory: {}] {}", r.collection, r.content))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                final_messages.push(Message {
+                    role: "system".to_string(),
+                    content: format!("### LONG-TERM MEMORY (Neural Layer)\nThe following information was retrieved from your persistent memory bank. Priority context:\n\n{}", context),
+                });
+            }
+        }
+
+        // 2. Append original messages
+        for m in messages {
+            final_messages.push(Message {
+                role: m.role,
+                content: m.content,
+            });
+        }
+
+        client.chat(final_messages).await
     }
 }
 
