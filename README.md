@@ -74,13 +74,19 @@ PeakUI allows you to expose the entire application interface to external intelli
 - `GET /instructions`: Retrieves the "Neural Protocol" manual for AI interaction.
 - `GET /view`: Retrieves the **live, dynamic UI structure** (JSON) of the running application.
 - `POST /command`: Executes an application command (e.g., `{"SetTab": "Colors"}`).
+- `POST /chat`: Direct interface to the internal AI. **The AI can execute app commands based on your prompt.**
 
 ```bash
-# Example: Navigate the app to the Colors page via terminal
-curl -X POST http://127.0.0.1:8081/command -d '{"SetTab": "Colors"}'
+# Example 1: Chat with the internal AI
+curl -X POST http://127.0.0.1:8081/chat -d '{"message": "Hello"}'
+
+# Example 2: Instruct the AI to act (Voice Control / Agentic Loop)
+curl -X POST http://127.0.0.1:8081/chat -d '{"message": "Switch the theme to dark mode"}'
+# Response: "Switching to dark mode... [action: {"SetThemeTone": "Dark"})]"
+# Result: The app instantly updates to Dark Mode.
 ```
 
-For advanced testing, use the included `verify_exposure.py` script to validate schema retrieval and instruction delivery.
+For advanced testing, use the included `verify_exposure.py` script.
 
 ### 3. Motion & Spatial Design
 - **Physics-Driven**: Spring physics engine for fluid and interruptible motion.
@@ -137,3 +143,23 @@ PeakUI relies on a small set of powerful abstractions:
 - **Backend Trait**: A standardized interface for rendering, interaction, and perception.
 - **View Trait**: A declarative way to describe UI that is independent of the final rendering method.
 - **Context**: Thread-safe application state that flows through the view hierarchy.
+
+---
+
+## Progress & Status against Claims
+
+We believe in radical transparency. Here is an honest assessment of the framework's current progress against the ambitious architectural claims made in this document:
+
+| Feature / Claim | Status | Notes |
+| :--- | :--- | :--- |
+| **Semantic Serialization (99.99% Data Reduction)** | 🟢 **Finished** | Benchmark proven. Seamless conversion of View logic to `SemanticNode` trees. |
+| **Native Render Backend (Metal/Vulkan)** | 🟢 **Finished** | High-performance desktop targets via `iced` wgpu backend. |
+| **Web Render Backend (WASM)** | 🟢 **Finished** | Edge-deployed, 60fps web rendering, completely sharing Native codebase. |
+| **Terminal Render Backend (TUI)** | 🟡 **WIP** | Architectural scaffolding exists, but deep terminal rendering is still experimental. |
+| **Neural Exposure API (Agentic Control)** | 🟢 **Finished** | Live on Port 8081. Agents can query schemas, read states, and execute commands. |
+| **Neural Sudo (Action Safety)** | 🟢 **Finished** | Secure interception of destructive AI commands requiring human-in-the-loop approval. |
+| **PeakDB (Sovereign Local Memory)** | 🟢 **Finished** | Local RAG vector database integrated directly into the UI state loop. |
+| **Integrated AI Assistant** | 🟢 **Finished** | Fully functional cross-platform chat interface supporting Ollama, Llama.cpp, and OpenRouter. |
+| **Spatial Engine (Volumetric UI)** | 🟡 **WIP** | Coordinate systems and basic Z-indexing exist, but true 3D spatial computing requires further robust physics implementations. |
+
+*Legend: 🟢 Core Implementation Complete & Tested | 🟡 Architectural scaffolding done, but implementation is incomplete or experimental.*
