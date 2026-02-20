@@ -622,6 +622,13 @@ impl App {
             }
             Message::Unknown(s) => {
                 log::info!("Unknown message: {}", s);
+                #[cfg(feature = "intelligence")]
+                if s.starts_with("NeuralSendChat:") {
+                    let msg = s.trim_start_matches("NeuralSendChat:").to_string();
+                    if !msg.is_empty() {
+                        return self.start_ai_chat(msg);
+                    }
+                }
                 Task::none()
             }
             Message::None => Task::none(),
@@ -775,20 +782,14 @@ impl App {
                     );
                 }
                 Action::Shell(command) => {
-                    tasks.push(
-                        self.intelligence
-                            .bridge
-                            .execute_tool(
-                                "shell".to_string(),
-                                serde_json::json!({ "command": command }),
-                            )
-                            .map(move |res| {
-                                Message::Intelligence(IntelligenceMessage::ProcessToolResult(
-                                    "shell".to_string(),
-                                    res.unwrap_or_else(|e| serde_json::json!({"error": e})),
-                                ))
-                            }),
-                    );
+                    tasks.push(Task::perform(async {}, move |_| {
+                        Message::Interaction(InteractionMessage::SudoRequest(
+                            crate::reference::app::SudoAction {
+                                message: Box::new(Message::ExecuteShell(command.clone())),
+                                reason: format!("Execute Shell Command: `{}`", command),
+                            },
+                        ))
+                    }));
                 }
                 Action::Memorize(content) => {
                     tasks.push(
